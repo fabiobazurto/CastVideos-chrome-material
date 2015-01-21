@@ -1,0 +1,241 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="chromecast-button.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/core-icons/av-icons.html">
+<link href='//fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
+<!--
+This element represents the chromecast player bar.
+
+It uses mediaStatus to handle button state and fires core signal events to play/pause the video.
+
+It automatically updates the time remaining and slider bar through observing changes to local media
+current time.
+
+It includes the chromecast button for casting.
+-->
+<polymer-element name="chromecast-player-bar">
+  <template>
+    <style>
+      :host {
+        margin: 0 10%;
+        height: 39px;
+        background-color: #000000;
+        opacity: 0.6;
+        z-index: 1000;
+        border-radius: 10px;
+        box-shadow: 0px 6px 18px -1px rgba(0, 0, 0, 0.88);
+        padding: 10px 25px 10px 10px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: space-around;
+        align-items: center;
+      }
+
+      .button {
+        height: 39px;
+        fill: #ffffff;
+        display: flex;
+        min-width: 0;
+        flex-grow: 1;
+        justify-content: center;
+      }
+
+      #button_play_pause {
+        order: 1;
+      }
+
+      .button::shadow #ripple {
+        color: #eaeaea;
+      }
+
+      #slider_progress {
+        order: 3;
+        display: flex;
+        flex-grow: 20;
+      }
+
+      #slider_progress::shadow #sliderKnobInner,
+      #slider_progress::shadow #sliderBar::shadow #activeProgress {
+        background-color: #4F7DC9;
+      }
+
+      #label_time {
+        order: 4;
+        display: flex;
+        flex-grow: 1;
+        color: #ffffff;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 100;
+        width: 3em;
+      }
+
+      #button_flex {
+        display: flex;
+        order: 5;
+        flex-grow: 1;
+        flex-shrink: 10;
+        overflow: hidden;
+        justify-content: center;
+        min-width: 0px;
+      }
+
+      core-icon[icon="av:play-arrow"] {
+        height: 39px;
+        width: 39px;
+        color: #ffffff;
+      }
+
+      core-icon[icon="av:play-arrow"]:hover {
+        color: #4F7DC9;
+      }
+
+      core-icon[icon="av:pause"] {
+        height: 39px;
+        width: 39px;
+        color: #ffffff;
+      }
+
+      core-icon[icon="av:pause"]:hover {
+        color: #4F7DC9;
+      }
+
+      #button_queue {
+        order:4;
+      }
+
+      core-icon[icon="add"] {
+        height: 39px;
+        width: 39px;
+        color: #ffffff;
+      }
+
+      core-icon[icon="add"]:hover {
+        color: #4F7DC9;
+      }
+
+      .hidden {
+        display:none;
+      }
+
+    </style>
+
+    <paper-button id="button_play_pause" class="button">
+      <core-icon id="icon_play_pause"
+                 icon="av:play-arrow"></core-icon>
+    </paper-button>
+    <paper-slider id="slider_progress" immediateValue="{{ sliderValue }}"></paper-slider>
+    <label id="label_time">
+      {{ localTimeRemaining }}
+    </label>
+
+    <paper-button id="button_queue" class="button {{mediaStatus.isCasting ? '': 'hidden'}}">
+      <core-icon id="icon_queue"
+                 icon="add"></core-icon>
+    </paper-button>
+
+    <div id="button_flex">
+      <chromecast-button id="button_cast" appId="{{ appId }}" mediaStatus="{{ mediaStatus }}"
+                         color="white"></chromecast-button>
+    </div>
+  </template>
+  <script>
+    Polymer("chromecast-player-bar", {
+      sliderValue: 0,
+      localTimeRemaining: "00:00:00",
+      sliderAction: false,
+      publish: {
+        appId: null, //Id of chromecast receiver
+        mediaStatus: null //MediaStatus object
+      },
+      observe: {
+        'mediaStatus.localMedia.currentTime': 'currentTimeUpdate',
+        'mediaStatus.localMedia.duration': 'currentTimeUpdate',
+        'mediaStatus.localMedia.state': 'mediaStateUpdate'
+      },
+      ready: function () {
+        //Add event listener for button clicks
+        this.$.button_play_pause.addEventListener('click', function (event) {
+          if (this.mediaStatus.localMedia.state != cast.Media.STATE.PLAY) {
+            this.mediaStatus.play(cast.MediaStatus.SENDER.LOCAL);
+          } else {
+            this.mediaStatus.pause(cast.MediaStatus.SENDER.LOCAL);
+          }
+        }.bind(this));
+        //Add event listener for slider interaction
+        this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
+        this.$.slider_progress.addEventListener('immediate-value-change',
+            this.timeUpdate.bind(this));
+        this.$.slider_progress.addEventListener('mousedown', function(){
+          this.sliderAction = true;
+        }.bind(this));
+        this.$.slider_progress.addEventListener('mouseup', function(){
+          this.sliderAction = false;
+        }.bind(this));
+        this.$.button_queue.addEventListener('click', function(){
+          this.mediaStatus.addToQueue(this.mediaStatus.localMedia);
+        }.bind(this));
+        this.addEventListener('click', function(event) {
+          event.stopPropagation();
+        });
+      },
+      /**
+       * Updates time remaining based on current slider position
+       *
+       * @param newVal {number}  value 0-100 of percentage completion
+       */
+      timeUpdate: function (newVal) {
+        if(this.mediaStatus != null) {
+          var time =
+            this.mediaStatus.localMedia.floatToTime(this.sliderValue / 100);
+          this.localTimeRemaining =
+            cast.Media.secondsToHHMMSS(this.mediaStatus.localMedia.duration - time);
+        }
+      },
+      /**
+       * Updates user interaction with the slider to seek
+       *
+       * @param newVal {number} value 0-100 of percentage completion
+       */
+      sliderUpdate: function (newVal) {
+        //Convert percentage to seconds
+        var time = this.mediaStatus.localMedia.floatToTime(this.sliderValue / 100);
+        //If the current media is untouched change the state to paused if it's seeked
+        //This hides the thumbnail overlay
+        if (this.mediaStatus.localMedia.state == cast.Media.STATE.STOP) {
+          this.mediaStatus.localMedia.state = cast.Media.STATE.PAUSE;
+        }
+        //Seek to the corresponding time in the video
+        this.mediaStatus.seek(time, cast.MediaStatus.SENDER.LOCAL);
+      },
+      /**
+       * Observes localMedia currentTime and updates the slider value.
+       *
+       * Since the slider is based on video currentTime the player bar doesn't need to handle
+       * seek events.
+       *
+       * @param oldVal {number}
+       * @param newVal {number}
+       */
+      currentTimeUpdate: function (oldVal, newVal) {
+        if (!this.sliderAction) {
+          this.localTimeRemaining = this.mediaStatus.localMedia.timeRemainingString;
+          this.sliderValue = Math.round(this.mediaStatus.localMedia.getCurrentPercentageComplete() * 100);
+        }
+      },
+      /**
+       * Observe media state and update the play pause button accordingly
+       * @param oldVal
+       * @param newVal
+       */
+      mediaStateUpdate: function (oldVal, newVal) {
+        if(newVal == cast.Media.STATE.PLAY) {
+          this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+        } else {
+          this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+        }
+      }
+    });
+  </script>
+</polymer-element>

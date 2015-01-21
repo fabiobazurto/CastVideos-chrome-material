@@ -1,0 +1,200 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-animated-pages/core-animated-pages.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/core-icons/core-icons.html">
+<link rel="import" href="transitions/slide.html">
+<link rel="import" href="video-carousel-element.html">
+
+<link href='//fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
+      type='text/css'>
+
+<!--
+This element creates a carousel of the media elements.
+
+To generate the pages it takes the mediaList and converts it to a list of lists based on elementsPerPage.  Then renders the list of lists using polymer templates.
+
+Clicking on an element will set it as the localMedia in mediaStatus.  Elements matching localMedia
+are highlighted with the .currently-playing selector.
+
+The genre is displayed above the carousel.
+-->
+<polymer-element name="video-carousel">
+  <template>
+    <style>
+      :host {
+        width: 100%;
+        height: 360px;
+        position: relative;
+      }
+      .flex-row {
+        height:240px;
+        width:100%;
+        display:flex;
+        justify-content: space-between;
+        flex-direction: row;
+        align-items: center;
+      }
+      #label {
+        margin-left: 20px;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 100;
+        font-size: 27px;
+      }
+
+      core-icon[icon="chevron-left"], core-icon[icon="chevron-right"] {
+        display:flex;
+        height:39px;
+        width:39px;
+        color: #000000
+      }
+
+      paper-button {
+        display:flex;
+        justify-content: center;
+        max-width:40px;
+        height:60px;
+        flex-grow:1;
+      }
+
+      core-animated-pages {
+        overflow:hidden;
+        flex-grow:50;
+        height:100%;
+        display:flex;
+      }
+
+      #title {
+        display:block;
+      }
+
+      .currently-playing {
+        background-color: #4F7DC9;
+        color:#ffffff;
+      }
+      section {
+        justify-content:space-between;
+      }
+    </style>
+    <p id="label">{{ genre }}</p>
+    <div class="flex-row">
+    <paper-button id="previous" on-click="{{ previousPage }}">
+      <core-icon id="chevron_left" icon="chevron-left"></core-icon>
+    </paper-button>
+    <core-animated-pages id="pages" transitions="slide-from-right">
+      <template repeat="{{ split in splitMedia }}">
+        <section horizontal layout center>
+          <template repeat="{{ media in split }}">
+            <video-carousel-element media="{{ media }}"
+                class="{{ media.url == mediaStatus.localMedia.url ? 'currently-playing' : ''}}"
+                on-click="{{ clickHandler }}"
+                mediaStatus = "{{ mediaStatus }}"
+                ></video-carousel-element>
+          </template>
+        </section>
+      </template>
+    </core-animated-pages>
+    <paper-button id="next" on-click="{{ nextPage }}">
+      <core-icon id="chevron_right" icon="chevron-right"></core-icon>
+    </paper-button>
+    </div>
+  </template>
+  <script>
+    Polymer("video-carousel", {
+      /**
+       * Array of arrays of video to display per page
+       */
+      splitMedia:[],
+      /**
+       * Elements to display per page
+       */
+      elementsPerPage: 6,
+      publish: {
+        //cast.MediaStatus object
+        mediaStatus: null,
+        //List of cast.Media to display
+        mediaList:null,
+        //String to display above the carousel
+        genre: null
+      },
+      observe: {
+        //if elementsPerPage changes recreate the list of lists.
+        'elementsPerPage':'mediaListChanged'
+      },
+      ready: function() {
+        this.resize();
+        window.addEventListener('resize', this.resize.bind(this));
+      },
+      resize: function(){
+        if(window.innerWidth >= 1600) {
+          this.elementsPerPage = 6;
+        } else if (1320 <= window.innerWidth && window.innerWidth < 1600 ) {
+          this.elementsPerPage = 5;
+        } else if (window.innerWidth < 1320) {
+          this.elementsPerPage = 4;
+        }
+      },
+      /**
+       * When the mediaList changes, regenerate the list of lists
+       */
+      mediaListChanged: function() {
+        this.splitMedia = [];
+        var mediaLength = Object.keys(this.mediaList).length;
+        var keys = Object.keys(this.mediaList);
+        var counter = 0;
+        var splitCounter = 0;
+        var currentSplit = [];
+        while (counter < mediaLength) {
+          currentSplit.push(this.mediaList[keys[counter]]);
+          splitCounter++;
+          counter++;
+            if (splitCounter == this.elementsPerPage) {
+              this.splitMedia.push(currentSplit);
+              currentSplit = [];
+              splitCounter = 0;
+            }
+        }
+        if (currentSplit.length != 0) {
+          for (var i = currentSplit.length; i < this.elementsPerPage; i++){
+            currentSplit.push(null);
+          }
+          this.splitMedia.push(currentSplit);
+        }
+      },
+      /**
+       * When an element is clicked, set it as the local media
+       *
+       * @param event
+       * @param detail
+       * @param sender
+       */
+      clickHandler: function(event, detail, sender) {
+        var media = new cast.Media(sender.media);
+        this.mediaStatus.setLocalMedia(media);
+        console.log('element clicked: ' + sender.media.title);
+      },
+      /**
+       * Display the next carousel page
+       */
+      nextPage: function() {
+        this.$.pages.selected = (this.$.pages.selected + 1) % this.splitMedia.length;
+      },
+      /**
+       * Display the previous carousel page
+       */
+      previousPage: function() {
+        this.$.pages.selected = this.mod((this.$.pages.selected - 1), this.splitMedia.length);
+        console.log(this.$.pages.selected);
+      },
+      /**
+       * Mod helper function for negative numbers in javascript
+       *
+       * @param num
+       * @param modNum
+       * @returns {number}
+       */
+      mod: function(num, modNum) {
+        return ((num % modNum) + modNum) % modNum;
+      }
+    });
+  </script>
+</polymer-element>

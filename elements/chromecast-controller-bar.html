@@ -1,0 +1,546 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/core-icons/av-icons.html">
+<link rel="import" href="../bower_components/core-signals/core-signals.html">
+<link rel="import" href="controller-bar-media-element.html">
+
+<link href='//fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
+
+<!--
+Element renders and controls the queue of cast content.  The required parameter is the mediaStatus
+shared object.
+
+The controller bar appears if the number of videos in the queue > 1 or if the current local video
+doesn't match the remote video.
+
+Each queue item is rendered using controller-bar-media-element.  Actions on each item are handled
+by the item itself eg click, close.
+
+This element handles drag and drop reordering.
+
+To load the queue items, it observes castMedia.items.  Polymer handles binding/repeating the items
+in the template.
+
+Since cast only updates the currentMedia time on a change, we increment it with the local clock.
+
+The play/pause buttons are automatically updated from observing the cast media state.
+-->
+<polymer-element name="chromecast-controller-bar">
+  <template>
+    <style>
+      :host {
+        width:390px;
+        height:50px;
+        position:fixed;
+        bottom: -50px;
+        right: 100px;
+        background-color: #555555;
+        z-index: 10000;
+        transition: .3s ease-in-out;
+      }
+
+      #controller_bar {
+        padding: 0 10px;
+        display: flex;
+        flex-direction:row;
+        justify-content:space-around;
+        align-items:center;
+        height:50px;
+      }
+
+      label.title {
+        display: flex;
+        flex-grow: 1;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 400;
+        font-size:1.3em;
+        color: #ffffff;
+      }
+
+      core-icon[icon="av:play-arrow"] {
+        height: 39px;
+        width: 39px;
+        color: #ffffff;
+      }
+
+      core-icon[icon="av:play-arrow"]:hover {
+        color: #4F7DC9;
+      }
+
+      core-icon[icon="av:pause"] {
+        height: 39px;
+        width: 39px;
+        color: #ffffff;
+      }
+
+      core-icon[icon="av:pause"]:hover {
+        color: #4F7DC9;
+      }
+
+      #button_play_pause {
+        height: 40px;
+        min-width: 0px;
+        display: flex;
+        flex-grow: 1;
+        justify-content: center;
+      }
+
+      #label_time {
+        order: 4;
+        display: flex;
+        flex-grow: 2;
+        color: #ffffff;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 100;
+        width: 3em;
+      }
+
+      #slider_progress {
+        display:flex;
+        flex-grow:7;
+        width:100px;
+      }
+
+      #slider_progress::shadow #sliderKnobInner,
+      #slider_progress::shadow #sliderBar::shadow #activeProgress {
+        background-color: #4F7DC9;
+      }
+
+      #content_bar {
+        display: flex;
+        flex-direction: column;
+        align-content: space-around;
+        justify-content: center;
+      }
+
+      #content_window {
+        max-height:300px;
+        width:100%;
+        overflow-y:scroll;
+      }
+      .top-border {
+        border-top: 2px solid #000000;
+      }
+
+      .bottom-border {
+        border-bottom: 2px solid #000000;
+      }
+
+    </style>
+    <div id="controller_bar">
+      <label class="title">Queue</label>
+      <paper-button id="button_play_pause">
+        <core-icon id="icon_play_pause"
+                   icon="av:play-arrow"></core-icon>
+      </paper-button>
+      <paper-slider id="slider_progress" immediateValue="{{ sliderValue }}"></paper-slider>
+      <label id="label_time">
+        {{ castTimeRemaining }}
+      </label>
+    </div>
+    <div id="content_window">
+      <div id="content_bar">
+        <template repeat="{{ item in queueItems }}">
+          <controller-bar-media-element media="{{ item }}" mediaStatus="{{ mediaStatus }}"
+                                        on-dragover="{{ dragoverHandler }}"
+                                        on-drop="{{ dropHandler }}"
+                                        on-dragstart="{{ dragstartHandler }}"
+                                        on-dragleave="{{ dragleaveHandler }}"
+                                        draggable="true"></controller-bar-media-element>
+        </template>
+      </div>
+    </div>
+    </template>
+    <script>
+      var VISIBILITY = {
+        hidden: 0,
+        minimized: 1,
+        maximized: 2
+      };
+
+      Polymer("chromecast-controller-bar", {
+        publish: {
+          mediaStatus: null
+        },
+        /**
+         * Time remaining String
+         */
+        castTimeRemaining: '00:00:00',
+        /**
+         * Default media element height
+         */
+        itemHeight: 60,
+        /**
+         * Seek bar slider value
+         */
+        sliderValue: 0,
+        /**
+         * Id of interval that appends to the current media time.
+         */
+        intervalId: null,
+        /**
+         * Id of timeout to hide the queue
+         */
+        hideTimeoutId: null,
+        /**
+         * current time
+         */
+        currTime: null,
+        /**
+         * previous time of interval
+         */
+        prevTime: null,
+        /**
+         * shortcut reference to castMedia.items
+         */
+        queueItems: [],
+        /**
+         * Observed boolean to show the controller bar
+         */
+        visible: VISIBILITY.hidden,
+        /**
+         * Time to display before automatically hiding
+         */
+        visibleDuration: 2000,
+        /**
+         * Prevent slider from updating when it's being interacted with
+         */
+        sliderAction: false,
+        observe: {
+          /**
+           * Observe the contentId to see if it matches the locally playing media
+           */
+          'mediaStatus.castMedia.media.contentId': 'mediaMatchObserver',
+          /**
+           * Observe the local media to see if it matches casting media
+           */
+          'mediaStatus.localMedia.url': 'mediaMatchObserver',
+          /**
+           * Observe the cast player state to update our play pause buttons
+           */
+          'mediaStatus.castMedia.playerState': 'playerStateObserver',
+          /**
+           * Observe any cast media current time changes and update our time remaining
+           */
+          'mediaStatus.castMedia.currentTime': 'currentTimeObserver',
+          /**
+           * Observe when items is loaded and make a short cut
+           */
+          'mediaStatus.castMedia.items': 'queueItemObserver',
+          /**
+           * Observe when cast disconnects
+           */
+          'mediaStatus.isCasting': 'castingObserver'
+
+        },
+        ready: function() {
+          //Handle play pause clicks and fire respective actions
+          this.$.button_play_pause.addEventListener('click', function (event) {
+            if (this.mediaStatus.castMedia.playerState != chrome.cast.media.PlayerState.PLAYING) {
+              this.mediaStatus.play(cast.MediaStatus.SENDER.CASTCONTROLLER);
+            } else {
+              this.mediaStatus.pause(cast.MediaStatus.SENDER.CASTCONTROLLER);
+            }
+          }.bind(this));
+
+          //Handle seek requests
+          this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
+          this.$.slider_progress.addEventListener('immediate-value-change',
+              this.timeUpdate.bind(this));
+
+          this.$.slider_progress.addEventListener('mousedown', function(){
+            this.sliderAction = true;
+          }.bind(this));
+          this.$.slider_progress.addEventListener('mouseup', function(){
+            this.sliderAction = false;
+          }.bind(this));
+
+          this.addEventListener('mouseout', function(){
+            this.setHideTimeout();
+          }.bind(this));
+
+          this.$.controller_bar.addEventListener('mouseover', function() {
+            if (this.hideTimeoutId != null) {
+              window.clearTimeout(this.hideTimeoutId);
+            }
+            this.hideTimeoutId = null;
+          }.bind(this));
+
+          this.$.content_window.addEventListener('mouseover', function(){
+            if (this.hideTimeoutId != null) {
+              window.clearTimeout(this.hideTimeoutId);
+            }
+            this.hideTimeoutId = null;
+            this.visible = VISIBILITY.maximized;
+          }.bind(this));
+
+          //Prevent clicks on this element from propagating to the rest of the dom
+          this.addEventListener('click', function(event) {
+            event.stopPropagation();
+          });
+        },
+        /**
+         * Observe the chromecast player state and update the play pause button/time remaining
+         *
+         * @param oldVal {chrome.cast.media.PlayerState}
+         * @param newVal {chrome.cast.media.PlayerState}
+         */
+        playerStateObserver: function(oldVal,newVal) {
+          if (newVal === chrome.cast.media.PlayerState.PLAYING) {
+            this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+            //If the media is playing, set an interval to calculate elapsed time
+            if(this.intervalId == null) {
+              this.intervalId = window.setInterval(function(){
+                var currTime = new Date();
+                if(this.prevTime == null) {
+                  this.prevTime = new Date();
+                }
+                var deltaS = (currTime - this.prevTime)/1000;
+                this.mediaStatus.castMedia.currentTime += deltaS;
+                this.prevTime = currTime;
+              }.bind(this),1000);
+            }
+          } else {
+            //Otherwise clear the interval and reset previous time
+            this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+            window.clearInterval(this.intervalId);
+            this.intervalId = null;
+            this.prevTime = null;
+          }
+        },
+        /**
+         * Updates time remaining based on current slider position
+         *
+         * @param newVal {number}  value 0-100 of percentage completion
+         */
+        timeUpdate: function (newVal) {
+          if(this.mediaStatus != null) {
+            var duration = this.mediaStatus.castMedia.media.duration;
+            var time =
+                duration * (this.sliderValue / 100);
+            this.castTimeRemaining =
+                cast.Media.secondsToHHMMSS(duration - time);
+          }
+        },
+        /**
+         * Sends seek requests on events from the slider.
+         *
+         * @param newVal {number} slider value 0-100
+         */
+        sliderUpdate: function (newVal) {
+          if(this.mediaStatus.hasCastMedia()) {
+            var duration = this.mediaStatus.castMedia.media.duration;
+            //covert slider % to duration
+            var time = (this.sliderValue / 100) * duration;
+            this.mediaStatus.seek(time, cast.MediaStatus.SENDER.CASTCONTROLLER);
+          }
+        },
+        /**
+         * Observer to display the time remaining
+         *
+         * @param oldVal {number}
+         * @param newVal {number}
+         */
+        currentTimeObserver: function(oldVal, newVal) {
+          if (this.mediaStatus.hasCastMedia() && !this.sliderAction) {
+            var duration = this.mediaStatus.castMedia.media.duration;
+            var currentTime = this.mediaStatus.castMedia.currentTime;
+            this.castTimeRemaining = cast.Media.secondsToHHMMSS(duration - currentTime);
+            this.sliderValue = Math.round(currentTime / duration * 100);
+          }
+        },
+        /**
+         * Checks if the local media and chrome remote media matches.  Also observes for queue
+         * status if the media doesn't match or if the queue length > 1 display the cast
+         * controller.  Otherwise hide the cast controller.
+         *
+         * @param oldVal
+         * @param newVal
+         */
+        mediaMatchObserver: function(oldVal, newVal) {
+          if (this.mediaStatus.castMedia.currentItemId != null
+              && (!this.mediaStatus.isMediaMatch()
+              || (this.mediaStatus.hasCastMedia()
+              && this.mediaStatus.hasQueueItems()))) {
+               if (this.visible == VISIBILITY.hidden) {
+                 this.visible = VISIBILITY.maximized;
+                 this.setHideTimeout();
+               }
+          } else {
+            this.visible = VISIBILITY.hidden;
+          }
+        },
+        /**
+         * Observes for changes in the chromecast queue.  When media is loaded it creates a short
+         * cut reference once.
+         *
+         * Observes the content in the queue and updates queue display.  If media is loaded and
+         * the queue is > 1 display show that an item has been added to the queue then minimize.
+         *
+         * @param oldVal
+         * @param newVal
+         */
+        queueItemObserver: function(oldVal, newVal) {
+          if (this.mediaStatus.hasCastMedia()
+              && this.queueItems !== this.mediaStatus.castMedia.items) {
+            this.queueItems = this.mediaStatus.castMedia.items;
+          }
+          if (this.mediaStatus.castMedia.currentItemId != null
+              && (this.mediaStatus.hasCastMedia()
+              && this.mediaStatus.hasQueueItems()
+              || !this.mediaStatus.isMediaMatch())) {
+            this.visible = VISIBILITY.maximized;
+            this.showControllerBar();
+            this.setHideTimeout();
+          } else {
+            this.visible = VISIBILITY.hidden;
+          }
+        },
+        /**
+         * Observes for changes in the chromecast connection.  When disconnected it hides the
+         * cast controller bar
+         */
+        castingObserver: function(oldVal, newVal) {
+          if (newVal == false) {
+            //hide bar
+            this.visible = VISIBILITY.hidden;
+            //stop timer
+            window.clearInterval(this.intervalId);
+          }
+        },
+        /**
+         * Shows/Hides the controller bar based on visible
+         */
+        visibleChanged: function(oldVal, newVal) {
+          switch(this.visible) {
+            case VISIBILITY.maximized:
+              this.showControllerBar();
+              break;
+            case VISIBILITY.hidden:
+              this.hideControllerBar();
+              break;
+            case VISIBILITY.minimized:
+              this.minimizeControllerBar();
+              break;
+          }
+        },
+        /**
+         * Sets a hide timer to minimize the controller bar
+         */
+        setHideTimeout: function() {
+          if(this.hideTimeoutId == null) {
+            this.hideTimeoutId = window.setTimeout(function(){
+              this.visible = VISIBILITY.minimized;
+            }.bind(this), this.visibleDuration);
+          } else {
+            window.clearTimeout(this.hideTimeoutId);
+            this.hideTimeoutId = null;
+            this.setHideTimeout();
+          }
+        },
+        /**
+         * Shows the full controller bar
+         */
+        showControllerBar: function() {
+          if(this.mediaStatus.isCasting) {
+            var items = this.queueItems != null ? this.queueItems.length : 0;
+            this.style.transform = 'translateY('
+            + (-50 - this.itemHeight * Math.min(5, items))
+            + 'px)';
+          }
+        },
+        /**
+         * Shows the queue elements
+         */
+        minimizeControllerBar:function() {
+          this.style.transform = 'translateY(-65px)';
+        },
+        /**
+         * Hides the controller bar
+         */
+        hideControllerBar: function() {
+          this.style.transform = '';
+          if (this.hideTimeoutId != null) {
+            window.clearTimeout(this.hideTimeoutId);
+          }
+
+        },
+        /**
+         * Handles dragover events and updates the controller bar element border to indicate where
+         * in the queue media will be inserted.
+         *
+         * @param event
+         * @param detail
+         * @param sender
+         */
+        dragoverHandler: function(event, detail, sender) {
+          event.preventDefault();
+
+          //Calculate mouse y and element bounds
+          var mouseY = event.clientY + document.body.scrollTop
+              + document.documentElement.scrollTop;
+
+          var currElement = sender.getBoundingClientRect();
+
+          //If dragging element is < 50% of the way down of the element below, add a top border
+          if (mouseY < currElement.top + currElement.height/2) {
+            sender.classList.add('top-border');
+            sender.classList.remove('bottom-border');
+          } else {
+            //Otherwise add a bottom border
+            sender.classList.add('bottom-border');
+            sender.classList.remove('top-border');
+          }
+        },
+        /**
+         * Handles the drop event, calculates where in the queue the element should be moved to
+         * and issues the request.
+         *
+         * @param event
+         * @param detail
+         * @param sender
+         */
+        dropHandler: function(event, detail, sender) {
+          //remove all borders
+          sender.classList.remove('bottom-border');
+          sender.classList.remove('top-border');
+
+          var draggingId = parseInt(event.dataTransfer.getData("text/plain"));
+          if(draggingId != sender.media.itemId){
+            //Get mouse position and element bounds
+            var mouseY = event.clientY + document.body.scrollTop;
+            var currElement = sender.getBoundingClientRect();
+            //Get the index of the background element
+            var index = this.queueItems.indexOf(sender.media);
+            //If the drop occurred on the bottom half of the element insert it after
+            if (mouseY >= currElement.top + currElement.height/2) {
+              index++;
+            }
+            this.mediaStatus.queueMoveItemToNewIndex(draggingId, index);
+          }
+        },
+        /**
+         * When the mouse leaves the background element, remove all borders
+         *
+         * @param event
+         * @param detail
+         * @param sender
+         */
+        dragleaveHandler: function(event, detail, sender) {
+          sender.classList.remove('bottom-border');
+          sender.classList.remove('top-border');
+        },
+        /**
+         * When dragging starts store the element id
+         *
+         * @param event
+         * @param detail
+         * @param sender
+         */
+        dragstartHandler: function(event, detail, sender) {
+          event.dataTransfer.setData('text/plain', sender.media.itemId);
+        }
+      });
+    </script>
+</polymer-element>
