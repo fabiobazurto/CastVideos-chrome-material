@@ -1,0 +1,37 @@
+{
+  "name": "castvideos-material",
+  "version": "0.0.1",
+  "authors": [
+    "Peng Ying <pying@google.com>"
+  ],
+  "description": "castvideos-material sample",
+  "main": "index.html",
+  "keywords": [
+    "chromecast",
+    "material"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.5.2",
+    "paper-dialog": "Polymer/paper-dialog#~0.5.3",
+    "paper-shadow": "Polymer/paper-shadow#~0.5.3",
+    "core-animated-pages": "Polymer/core-animated-pages#~0.5.5",
+    "core-header-panel": "Polymer/core-header-panel#~0.5.3",
+    "core-selector": "Polymer/core-selector#~0.5.3",
+    "paper-slider": "Polymer/paper-slider#~0.5.3",
+    "paper-ripple": "Polymer/paper-ripple#~0.5.3",
+    "core-tooltip": "Polymer/core-tooltip#~0.5.5",
+    "core-signals": "Polymer/core-signals#~0.5.5",
+    "jasmine-core": "~2.2.1",
+    "paper-menu-button": "Polymer/paper-menu-button#~0.5.5",
+    "paper-spinner": "Polymer/paper-spinner#~0.5.5"
+  }
+}

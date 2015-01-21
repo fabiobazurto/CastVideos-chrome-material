@@ -1,0 +1,164 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/core-icons/av-icons.html">
+<!--
+This element represents the volume bar.  It handles both the volume bar in the main player bar
+and in the cast controller element.  It publishes 2 properties:
+
+mediaStatus - the mediaStatus object
+cast - boolean defining if it's purely for cast.
+
+The element uses flexbox to grow to fill up the size of the element.
+-->
+<polymer-element name="volume-controller">
+  <template>
+    <style>
+      :host {
+        display: flex;
+        height: 39px;
+        overflow: visible;
+        justify-content: space-between;
+        align-items: center;
+        flex-grow: 4;
+      }
+
+      #button_volume {
+        height: 39px;
+        min-width: 39px;
+        flex-grow: 1;
+        justify-content: center;
+        color: #ffffff;
+        padding: 0;
+      }
+
+      #button_volume::shadow #icon {
+        height: 39px;
+        width: 39px;
+      }
+
+      #button_volume::shadow #ripple {
+        color: #eaeaea;
+      }
+
+      #button_volume:hover {
+        color: #4F7DC9;
+      }
+
+      #slider_volume {
+        flex-grow: 10;
+        min-width: 60px;
+        width: 100%;
+      }
+
+      #slider_volume::shadow #sliderKnobInner,
+      #slider_volume::shadow #sliderBar::shadow #activeProgress {
+        background-color: #4F7DC9;
+      }
+    </style>
+
+    <paper-icon-button id="button_volume"
+                       icon="av:volume-up"></paper-icon-button>
+
+    <paper-slider id="slider_volume"
+                  value="50"
+                  immediateValue="{{ volumeSliderValue }}">
+    </paper-slider>
+
+  </template>
+  <script>
+    Polymer("volume-controller", {
+      //slider volume only handles integers 0-100
+      volumeSliderValue: 50,
+      //last set volume used for mute/unmute
+      lastVolume: 50,
+      //defines the controller to send requests as
+      controller: cast.MediaStatus.SENDER.LOCAL,
+      publish: {
+        //MediaStatus object
+        mediaStatus: null,
+        //Should it function as the volume controller in the cast controller bar or video bar
+        cast: false
+      },
+      observe: {
+        /**
+         * Observe volume levels and update the slider when they change
+         */
+        'mediaStatus.localMedia.volume': 'volumeObserver',
+        'mediaStatus.castMedia.volume.level': 'volumeObserver',
+        /**
+         * If starts/casting ends, update the volume to match currently playing content
+         */
+        'mediaStatus.isCasting': 'castingObserver'
+      },
+      ready: function () {
+        //When a user interacts with the slider send a volume change request
+        this.$.slider_volume.addEventListener('change', function () {
+          this.mediaStatus.volume(this.controller, this.volumeSliderValue / 100);
+        }.bind(this));
+
+        //When a user clicks the volume button mute or unmute the content
+        this.$.button_volume.addEventListener('click', function () {
+          if (this.volumeSliderValue == 0) {
+            this.mediaStatus.volume(this.controller, this.lastVolume / 100);
+          } else {
+            this.lastVolume = this.volumeSliderValue;
+            this.mediaStatus.volume(this.controller, 0);
+          }
+        }.bind(this));
+      },
+      /**
+       * If the cast boolean changes update the controller field.  Cast - true means this volume
+       * controller should control the cast controller bar volume.  False means it controls the
+       * main player bar volume
+       *
+       * @param oldVal
+       * @param newVal
+       */
+      castChanged: function (oldVal, newVal) {
+        this.controller = newVal ? cast.MediaStatus.SENDER.CASTCONTROLLER :
+            cast.MediaStatus.SENDER.LOCAL;
+      },
+      /**
+       * Observe the volume and update the slider appropraitely
+       *
+       * @param oldVal
+       * @param newVal {number} volume between 0-1
+       */
+      volumeObserver: function (oldVal, newVal) {
+        //If this controller represents the volume during casting
+        if (this.mediaStatus.isCasting
+            && (this.mediaStatus.isMediaMatch() || this.cast)
+            && this.mediaStatus.castMedia.volume != null) {
+          this.volumeSliderValue = Math.round(this.mediaStatus.castMedia.volume.level * 100);
+        } else if (!this.cast) {
+          this.volumeSliderValue = Math.round(this.mediaStatus.localMedia.volume * 100);
+        }
+      },
+      /**
+       * When the slider value changes if it reaches 0 change the icon to a muted icon
+       *
+       * @param attrName
+       * @param oldVal
+       * @param newVal
+       */
+      volumeSliderValueChanged: function (attrName, oldVal, newVal) {
+        if (this.volumeSliderValue == 0) {
+          this.$.button_volume.setAttribute('icon', 'av:volume-off');
+        } else {
+          this.$.button_volume.setAttribute('icon', 'av:volume-up');
+        }
+      },
+      /**
+       * Observe when casting starts/ends and update volume to match the correct source.
+       *
+       * @param oldVal
+       * @param newVal
+       */
+      castingObserver: function (oldVal, newVal) {
+        this.volumeObserver(null, null);
+      }
+
+    });
+  </script>
+</polymer-element>
