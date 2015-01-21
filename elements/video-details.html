@@ -1,0 +1,72 @@
+<!--
+Copyright 2014 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link href='//fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
+      type='text/css'>
+<!--
+Represents the currently playing media details.  Displays castManager.localMedia.title,studio and
+description.
+-->
+<polymer-element name="video-details">
+  <template>
+    <style>
+      :host {
+        width: 100%;
+        display: block;
+        position: relative;
+      }
+
+      p {
+        margin: 10px 20px;
+        font-family: 'Roboto', sans-serif;
+        color: #eaeaea;
+        font-weight: 100;
+      }
+
+      #title {
+        font-weight: 700;
+        font-size: 27px;
+        margin-right: 10px;
+      }
+
+      #sub_title {
+        font-weight: 100;
+        font-size: 27px;
+      }
+    </style>
+    <p>
+      <span id="title">{{ castManager.localMedia.title }}</span>
+      <span id="sub_title">{{ castManager.localMedia.studio }}</span>
+    </p>
+
+    <p id="description"></p>
+  </template>
+  <script>
+    Polymer('video-details', {
+      publish: {
+        castManager: null
+      },
+      observe: {
+        'castManager.localMedia.description': 'descriptionObserver'
+      },
+      descriptionObserver: function(oldVal, newVal) {
+        //Using innerHTML since filling the text in the template doesn't html decode entities.
+        this.$.description.innerHTML = newVal;
+      }
+    });
+  </script>
+</polymer-element>

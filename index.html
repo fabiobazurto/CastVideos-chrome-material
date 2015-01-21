@@ -1,0 +1,155 @@
+<!--
+Copyright 2014 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+  <script src="js/media.js"></script>
+  <script src="js/castmanager.js"></script>
+
+  <link rel="import" href="bower_components/core-header-panel/core-header-panel.html">
+  <link rel="import" href="elements/chromecast-video.html">
+  <link rel="import" href="elements/video-details.html">
+  <link rel="import" href="elements/video-carousel.html">
+  <link rel="import" href="elements/chromecast-controller-bar.html">
+
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" media="only screen and (max-width: 1109px)"
+        href="css/max-1110-styles.css">
+  <link rel="stylesheet" media="only screen and (min-width: 1110px) and (max-width: 1359px)"
+        href="css/mw-1110-styles.css">
+  <link rel="stylesheet" media="only screen and (min-width: 1360px) and (max-width: 1599px)"
+        href="css/mw-1360-styles.css">
+  <link rel="stylesheet" media="only screen and (min-width: 1600px)"
+        href="css/mw-1600-styles.css">
+
+  <script>
+    var mediaList;
+    var media;
+    var castManager;
+    var ROOT = '//commondatastorage.googleapis.com/gtv-videos-bucket/sample/';
+    var isPolymerReady = false;
+
+    window.addEventListener('polymer-ready', function() {
+      isPolymerReady = true;
+    });
+
+    // Create the XHR object.
+    function createCorsRequest(method, url) {
+      var xhr = new XMLHttpRequest();
+      if ('withCredentials' in xhr) {
+        // XHR for Chrome/Firefox/Opera/Safari.
+        xhr.open(method, url, true);
+      } else if (typeof XDomainRequest !== 'undefined') {
+        // XDomainRequest for IE.
+        xhr = new XDomainRequest();
+        xhr.open(method, url);
+      } else {
+        // CORS not supported.
+        xhr = null;
+      }
+      return xhr;
+    }
+
+    function makeCorsRequest() {
+      var url = ROOT + 'd.json';
+      var xhr = createCorsRequest('GET', url);
+      if (!xhr) {
+        alert('CORS not supported');
+        return;
+      }
+      // Response handlers.
+      xhr.onload = function() {
+        var content = JSON.parse(xhr.responseText);
+        mediaList = processMediaList(content);
+        media = new cast.Media(mediaList[Object.keys(mediaList)[0]]);
+
+        castManager = new cast.CastManager(media);
+
+        if (isPolymerReady) {
+          loadDataIntoPolymer(castManager);
+        } else {
+          window.addEventListener('polymer-ready', function() {
+            loadDataIntoPolymer(castManager);
+          });
+        }
+      };
+      xhr.onerror = function() {
+        alert('Woops, there was an error making the request.');
+      };
+      xhr.send();
+    }
+
+    function loadDataIntoPolymer(castManager) {
+      var videoPlayer = document.querySelector('chromecast-video');
+      videoPlayer.castManager = castManager;
+      var videoDetails = document.querySelector('video-details');
+      videoDetails.castManager = castManager;
+      var videoCarousels = document.querySelectorAll('video-carousel');
+      for (var carousel in videoCarousels) {
+        videoCarousels[carousel].mediaList = mediaList;
+        videoCarousels[carousel].castManager = castManager;
+      }
+      var controllerBar = document.querySelector('chromecast-controller-bar');
+      controllerBar.castManager = castManager;
+    }
+
+    function processMediaList(content) {
+      var mediaList = {};
+      var contentArray = content.categories[0].videos;
+      for (var i = 0; i < contentArray.length; i++) {
+        var title = contentArray[i].title.replace(/\s+/g, '-').toLowerCase();
+        mediaList[title] = {
+          'title': contentArray[i].title,
+          'description': contentArray[i].subtitle,
+          'url': contentArray[i].sources[0],
+          'studio': contentArray[i].studio,
+          'thumbnailImageUrl': ROOT + contentArray[i]['image-480x270'],
+          'largeImageUrl': ROOT + contentArray[i]['image-780x1200']
+        };
+      }
+      return mediaList;
+    }
+    makeCorsRequest();
+
+  </script>
+</head>
+<body fullbleed layout vertical>
+<core-header-panel flex mode="seamed">
+  <div class="core-header center-box-shadow width">
+    <img src="images/logo.png">
+  </div>
+  <div class="center-box-shadow width bgcolor translate-hack min-height">
+    <div class="content">
+      <div class="video-width video-height shadow">
+        <chromecast-video appId="4F8B3483"></chromecast-video>
+      </div>
+
+      <video-details class="video-width"></video-details>
+    </div>
+    <video-carousel genre="Movies" class="carousel-width"></video-carousel>
+    <video-carousel genre="Comedy" class="carousel-width"></video-carousel>
+    <video-carousel genre="Related Content" class="carousel-width"></video-carousel>
+    <div id="footer" class="width"></div>
+  </div>
+
+</core-header-panel>
+<chromecast-controller-bar></chromecast-controller-bar>
+</body>
+</html>

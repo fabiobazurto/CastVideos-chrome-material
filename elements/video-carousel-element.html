@@ -1,0 +1,97 @@
+<!--
+Copyright 2014 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link href='//fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
+      type='text/css'>
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-dropdown/paper-dropdown.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/core-menu/core-menu.html">
+<!--
+Represents each element in the video carousel.  Rendered from media.title, media.studio and
+media.thumbnail
+-->
+<polymer-element name="video-carousel-element">
+  <template>
+    <style>
+      :host {
+        height: 220px;
+        max-height: 220px;
+        width: 220px;
+        overflow: visible;;
+        position: relative;
+        background-color: #ffffff;
+        font-family: 'Roboto', sans-serif;
+        padding: 2px 2px 2px 2px;
+        color: #000000;
+        cursor: pointer;
+      }
+
+      #thumbnail {
+        width: 220px;
+        height: 124px;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: 50% 50%;
+      }
+
+      p {
+        margin-left: 10px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+
+      .studio {
+        font-weight: 100;
+        font-size: 1em;
+      }
+
+      .title {
+        font-weight: 400;
+        font-size: 1.2em;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+    <div id="thumbnail"></div>
+    <p class="title">{{ media.title }}</p>
+
+    <p class="studio">{{ media.studio }}</p>
+  </template>
+  <script>
+    Polymer('video-carousel-element', {
+      publish: {
+        media: null,
+        castManager: null
+      },
+      observe: {
+        'media.thumbnailImageUrl': 'thumbnailUpdater'
+      },
+      ready: function () {
+        if (this.media === null) {
+          this.style.visibility = 'hidden';
+        }
+      },
+      thumbnailUpdater: function (oldVal, newVal) {
+        this.$.thumbnail.style.backgroundImage = 'url(\'' + newVal + '\')';
+      }
+    });
+  </script>
+</polymer-element>
