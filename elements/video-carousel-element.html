@@ -1,0 +1,129 @@
+<!--
+Copyright 2014 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="../bower_components/core-icons/av-icons.html">
+
+<link href='//fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
+      type='text/css'>
+
+<!--
+Represents each element in the video carousel.  Rendered from media.title, media.studio and
+media.thumbnail
+-->
+<polymer-element name="video-carousel-element">
+  <template>
+    <style>
+      :host {
+        height: 220px;
+        max-height: 220px;
+        width: 220px;
+        overflow: visible;;
+        position: relative;
+        background-color: #ffffff;
+        font-family: 'Roboto', sans-serif;
+        padding: 2px 2px 2px 2px;
+        color: #000000;
+        cursor: pointer;
+      }
+
+      #thumbnail {
+        width: 220px;
+        height: 124px;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: 50% 50%;
+        display:-webkit-box;
+        display:-webkit-flex;
+        display:-ms-flexbox;
+        display:flex;
+        -webkit-box-align:center;
+        -webkit-align-items:center;
+        -ms-flex-align:center;
+        align-items:center;
+        -webkit-box-pack: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+      }
+
+      p {
+        margin-left: 10px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+
+      .studio {
+        font-weight: 100;
+        font-size: 1em;
+      }
+
+      .title {
+        font-weight: 400;
+        font-size: 1.2em;
+      }
+
+      #play.hidden {
+        opacity: 0;
+        filter: alpha(opacity=0);
+      }
+
+      #play {
+        opacity: .8;
+        filter: alpha(opacity=80);
+        width: 100px;
+        height: 100px;
+        fill:#ffffff;
+        display:block;
+        -webkit-transition: .3s ease-in-out;
+        transition: .3s ease-in-out;
+      }
+    </style>
+      <div id="thumbnail">
+        <core-icon id="play" icon="av:play-arrow" class="hidden"></core-icon>
+      </div>
+      <p class="title">{{ media.title }}</p>
+
+      <p class="studio">{{ media.studio }}</p>
+      <paper-ripple fit></paper-ripple>
+  </template>
+  <script>
+    Polymer('video-carousel-element', {
+      publish: {
+        media: null,
+        castManager: null
+      },
+      observe: {
+        'media.thumbnailImageUrl': 'thumbnailUpdater'
+      },
+      ready: function () {
+        if (this.media === null) {
+          this.style.visibility = 'hidden';
+        }
+        this.addEventListener('mouseenter', function() {
+          this.$.play.classList.remove('hidden');
+        }.bind(this));
+        this.addEventListener('mouseout', function() {
+          this.$.play.classList.add('hidden');
+        }.bind(this));
+      },
+      thumbnailUpdater: function (oldVal, newVal) {
+        this.$.thumbnail.style.backgroundImage = 'url(\'' + newVal + '\')';
+      }
+    });
+  </script>
+</polymer-element>

@@ -1,0 +1,360 @@
+<!--
+Copyright 2014 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-signals/core-signals.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+
+<link rel="import" href="chromecast-player-bar.html">
+
+<link href='//fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
+
+<!--
+This element handles video functionality.
+
+An interval updates localMedia.currentTime every second to match the currentTime time in the video.
+
+To play/pause, this element listens for core signal events and then determines the appropriate
+action based on the sender.
+
+Before a video starts playing, an image overlay is displayed if it has one.
+
+The element includes chromecast-player-bar as the media controller.
+-->
+<polymer-element name="chromecast-video">
+  <template>
+    <style>
+      :host {
+        height: 100%;
+        width: 100%;
+        display: block;
+        position: relative;
+        background-color: #000000;
+      }
+
+      .overlay-content {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+
+      #image_overlay {
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: 50% 50%;
+        border: none;
+        padding: 0;
+        margin: 0;
+        z-index: 10;
+      }
+
+      .player-bar-holder {
+        position: absolute;
+        bottom: 8%;
+        width: 100%;
+        z-index: 2000;
+        -webkit-transition: opacity .5s ease-in-out;
+        transition: opacity .5s ease-in-out;
+      }
+
+      #image_overlay.hidden {
+        display: none;
+      }
+
+      video {
+        background-color: #000000;
+      }
+
+      #spinner_overlay {
+        z-index: 100;
+      }
+
+      paper-spinner {
+        height: 100px;
+        width: 100px;
+        position: relative;
+        margin: auto;
+        z-index: 100;
+        display: block;
+        top: 50%;
+        -webkit-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        transform: translateY(-50%);
+      }
+
+      paper-spinner::shadow .circle {
+        border-width: 8px;
+      }
+
+      #cast_label {
+        position: absolute;
+        bottom: 20%;
+        width: 100%;
+        z-index: 1000;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 100;
+        font-size: 1.3em;
+        text-align: center;
+        color: #ffffff;
+      }
+
+      #text_overlay {
+        -webkit-transition: opacity .5s ease-in-out;
+        transition: opacity .5s ease-in-out;
+        z-index: 1000;
+      }
+
+      .hidden {
+        opacity: 0;
+        filter: alpha(opacity=0);
+      }
+
+      .gradient {
+        /* FF3.6+ */
+
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(0, 0, 0, 0.01)), color-stop(70%, rgba(0, 0, 0, 0.16)), color-stop(100%, rgba(0, 0, 0, 1))); /* Chrome,Safari4+ */
+        background: -webkit-linear-gradient(top, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* Chrome10+,Safari5.1+ */
+        /* Opera 11.10+ */
+        /* IE10+ */
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* W3C */
+        filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='rgba(3, 0, 0, 0)', endColorstr='#000000', GradientType=0); /* IE6-9 */
+      }
+
+      .player-bar-holder.hidden {
+        opacity: 0;
+        filter: alpha(opacity=0);
+      }
+    </style>
+
+    <div id="text_overlay"
+         class="overlay-content gradient {{castManager.isCasting ? '' : 'hidden'}}">
+      <span id="cast_label"></span>
+    </div>
+
+    <div id="spinner_overlay" class="overlay-content">
+      <paper-spinner
+          active="{{ castManager.showSpinner }}"></paper-spinner>
+    </div>
+
+    <div id="image_overlay"
+         class="overlay-content
+            {{ (castManager.localMedia.state != 2 && !castManager.isCasting) ? 'hidden': ''}}">
+    </div>
+    <video id="video_content" class="overlay-content">
+    </video>
+    <div id='player_bar' class="player-bar-holder">
+      <chromecast-player-bar appId="{{ appId }}"
+                             castManager="{{ castManager }}"></chromecast-player-bar>
+    </div>
+    <core-signals on-core-signal-media-action="{{ mediaActionHandler }}"></core-signals>
+  </template>
+  <script>
+    Polymer('chromecast-video', {
+      publish: {
+        appId: null,
+        castManager: null
+      },
+      /**
+       * Holds refresh interval ID
+       */
+      intervalId: null,
+      /**
+       * Interval to poll video state and update
+       */
+      refreshIntervalMs: 1000,
+      /**
+       * Show the player controller bar
+       */
+      showPlayerBar: true,
+      fullscreenElement: null,
+      hideTimeoutId: null,
+      visibleDuration: 3000,
+      observe: {
+        'castManager.localMedia': 'mediaObserver',
+        'castManager.isCasting': 'castingObserver'
+      },
+      ready: function() {
+        var ev;
+        if (this.requestFullscreen) {
+          ev = 'fullscreenchange';
+        } else if (this.msRequestFullscreen) {
+          ev = 'msfullscreenchange';
+        } else if (this.mozRequestFullScreen) {
+          ev = 'mozfullscreenchange';
+        } else if (this.webkitRequestFullscreen) {
+          ev = 'webkitfullscreenchange';
+        }
+        document.addEventListener(ev, this.fullscreenObserver.bind(this));
+        this.$.video_content.addEventListener('loadeddata', this.onMediaLoaded.bind(this));
+        this.addEventListener('click', function() {
+          if (this.hideTimeoutId != null) {
+            window.clearTimeout(this.hideTimeoutId);
+          }
+          if (this.castManager.localMedia.state !== cast.Media.STATE.PLAY) {
+            this.castManager.play(cast.CastManager.SENDER.LOCAL);
+          } else {
+            this.castManager.pause(cast.CastManager.SENDER.LOCAL);
+          }
+        }.bind(this));
+
+        // Hide the bar on mouse out
+        this.addEventListener('mouseout', function() {
+          this.setHideTimeout();
+        }.bind(this));
+
+        // Show player bar when mouse moves
+        this.addEventListener('mousemove', function() {
+          if (this.hideTimeoutId !== null) {
+            window.clearTimeout(this.hideTimeoutId);
+          }
+          this.hideTimeoutId = null;
+          this.showPlayerBar();
+          this.setHideTimeout();
+        }.bind(this));
+        this.setHideTimeout();
+      },
+      /**
+       * When the media is loaded update the localMedia details.
+       */
+      onMediaLoaded: function() {
+        this.castManager.localMedia.setDuration(this.$.video_content.duration);
+        this.castManager.localMedia.setCurrentTime(this.$.video_content.currentTime);
+      },
+      /**
+       * Observes castManager.localMedia for changes and sets the new video upon a change
+       *
+       */
+      mediaObserver: function(oldVal, newVal) {
+        this.$.image_overlay.style.backgroundImage = 'url(\'' + newVal.thumbnailImageUrl + '\')';
+        this.$.video_content.src = newVal.url;
+      },
+      castingObserver: function(oldVal, newVal) {
+        if (newVal === true) {
+          this.$.video_content.pause();
+          this.$.cast_label.innerHTML =
+              'Casting to ' + this.castManager.session.receiver.friendlyName;
+        } else if (newVal === false
+            && Object.keys(this.castManager.castMedia).length > 0
+            && this.castManager.isMediaMatch()) {
+          //If we stop casting and the content matches, sync the local media with cast.
+          this.$.video_content.currentTime = this.castManager.castMedia.currentTime;
+          this.castManager.localMedia.currentTime = this.castManager.castMedia.currentTime;
+        }
+      },
+      /**
+       * Handles media events
+       *
+       * @param e
+       * @param data event information
+       * @param sender
+       */
+      mediaActionHandler: function(e, data, sender) {
+        //If the local media matches chromecast or if the sender is controlling local content
+        //take action
+        if (!this.castManager.isCasting) {
+          switch (data.action) {
+            case 'seek':
+              this.$.video_content.currentTime = data.currentTime;
+              this.castManager.localMedia.setCurrentTime(data.currentTime);
+              break;
+            case
+            'play':
+              this.$.video_content.play();
+              this.intervalId = window.setInterval(function() {
+                this.castManager.localMedia.setCurrentTime(this.$.video_content.currentTime);
+              }.bind(this), this.refreshIntervalMs);
+              this.castManager.localMedia.state = cast.Media.STATE.PLAY;
+              break;
+            case
+            'pause':
+              this.$.video_content.pause();
+              if (this.intervalId !== null) {
+                window.clearInterval(this.intervalId);
+                this.intervalId = null;
+              }
+              this.castManager.localMedia.state = cast.Media.STATE.PAUSE;
+              break;
+            case 'volume':
+              this.$.video_content.volume = data.volume;
+              this.castManager.localMedia.volume = data.volume;
+              break;
+            case 'fullscreen':
+              var elem = this;
+              if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+              } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+              } else if (elem.mozRequestFullScreen) {
+                elem.mozRequestFullScreen();
+              } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+              }
+              this.castManager.isFullScreen = true;
+              break;
+            case 'exitFullscreen':
+              if (document.exitFullscreen) {
+                document.exitFullscreen();
+              } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+              } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+              } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+              }
+              this.castManager.isFullScreen = false;
+              break;
+          }
+        }
+      },
+      fullscreenObserver: function(event) {
+        var fullscreenElement = document.fullscreenElement
+            || document.mozFullScreenElement
+            || document.webkitFullscreenElement;
+        if (fullscreenElement === null) {
+          this.castManager.isFullScreen = false;
+        }
+      },
+      /**
+       * Sets a hide timer to minimize the controller bar
+       */
+      setHideTimeout: function() {
+        if (this.hideTimeoutId === null) {
+          this.hideTimeoutId = window.setTimeout(function() {
+            this.hidePlayerBar();
+          }.bind(this), this.visibleDuration);
+        } else {
+          window.clearTimeout(this.hideTimeoutId);
+          this.hideTimeoutId = null;
+          this.setHideTimeout();
+        }
+      },
+      showPlayerBar: function() {
+        this.$.player_bar.classList.remove('hidden');
+        this.style.cursor = 'auto';
+      },
+      hidePlayerBar: function() {
+        this.$.player_bar.classList.add('hidden');
+        this.style.cursor = 'none';
+
+        if (this.hideTimeoutId !== null) {
+          window.clearTimeout(this.hideTimeoutId);
+        }
+      }
+    });
+  </script>
+</polymer-element>
