@@ -1,0 +1,204 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
+
+<polymer-element name="chromecast-button">
+  <template>
+    <style>
+:host {
+  display: block;
+  width:100%;
+  height:100%;
+
+}
+
+.hidden {
+  display:none;
+}
+
+svg {
+  width:100%;
+  height:100%;
+  outline: 0;
+  border: 0;
+}
+
+#button_cast:hover {
+  cursor: pointer;
+  opacity:0.6;
+}
+
+.button-black {
+  fill: black;
+}
+
+/*.button-black:hover {*/
+  /*fill: #777777;*/
+/*}*/
+
+.button-white {
+  fill: white;
+}
+
+/*.button-white:hover {*/
+  /*fill: #aeaeae;*/
+/*}*/
+
+svg.connected {
+  fill: #00B9E7;
+}
+    </style>
+    <svg version="1.1" id="button_cast" xmlns="http://www.w3.org/2000/svg"
+         xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+         class="{{color == 'white' ? 'button-white' : 'button-black'}} {{connected ? 'connected' : ''}}"
+	 viewBox="0 0 51 39" enable-background="new 0 0 51 39" xml:space="preserve">
+    <g id="cast_x5F_icon_x5F_on_x5F_light_x5F_mono_1_">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M3,0v16.5c1.4,0.3,2.7,0.7,4,1.2V4h40v28H21.3
+        c0.5,1.3,0.9,2.6,1.2,4H51V0H3z" />
+      <path visibility="{{connected ? 'visibile' : 'hidden'}}" fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M10,7v12.1c4.2,2.3,7.6,5.8,9.9,9.9H44V7H10z"/>
+      <path fill="{{connectingCounter == 0 ? '#00B9E7' : ''}}"
+            d="M0,33.3V39h5.7C5,36.2,2.8,34,0,33.3z"/>
+      <path fill="{{connectingCounter == 1 ? '#00B9E7' : ''}}"
+      d="M0,26.1v4C4.5,31,8,34.5,8.8,39h4C12,32.3,6.7,27,0,26.1z"/>
+      <path fill="{{connectingCounter == 2 ? '#00B9E7' : ''}}"
+      d="M0,19.1v4C8.3,24,15,30.7,15.9,39h4C19,28.4,10.6,20,0,19.1z"/>
+    </g>
+    </svg>
+  </template>
+  <script>
+    Polymer("chromecast-button", {
+      currentMedia:null,
+      display: false,
+      autoplay: true,
+      connected: false,
+      connectingCounter: -1,
+      intervalId: null,
+      publish: {
+        appId: null,
+        mediaStatus: null,
+        color: 'black',
+        animationInterval: 400
+      },
+      ready: function(){
+        if (this.appId != null) {
+          var initializeCastApi = function () {
+            if (!chrome.cast || !chrome.cast.isAvailable) {
+              setTimeout(initializeCastApi.bind(this), 1000);
+            } else {
+              var sessionRequest = new chrome.cast.SessionRequest(this.appId);
+              var apiConfig = new chrome.cast.ApiConfig(sessionRequest,
+                  this.sessionListener.bind(this),
+                  this.receiverListener.bind(this));
+              chrome.cast.initialize(apiConfig, this.initSuccess.bind(this), this.errorHandler);
+            }
+          }.bind(this);
+          initializeCastApi();
+        } else {
+          throw "No receiver app id defined"
+        }
+      },
+      sessionListener: function (e) {
+        console.log("Session listener");
+        this.setMediaSession(e);
+      },
+      receiverListener: function (e) {
+        if( e === chrome.cast.ReceiverAvailability.AVAILABLE) {
+          this.display = true;
+          this.$.button_cast.addEventListener("click", function() {
+            if (this.mediaStatus.session == chrome.cast.SessionStatus.CONNECTED) {
+              this.stopCasting.bind(this)();
+            } else {
+              if (this.intervalId == null) {
+                this.intervalId = window.setInterval(function () {
+                  this.connectingCounter = (this.connectingCounter + 1) % 3;
+                }.bind(this), this.animationInterval);
+              }
+              this.startCasting.bind(this)();
+            }
+          }.bind(this));
+        }
+      },
+      initSuccess: function (e) {
+        console.log("Chromecast init success");
+      },
+      startCasting: function () {
+        chrome.cast.requestSession(this.onRequestSessionSuccess.bind(this),
+            this.onLaunchError.bind(this));
+      },
+      stopCasting: function () {
+        this.mediaStatus.session.stop(this.onStopSuccess.bind(this),
+            this.onStopFailure.bind(this));
+      },
+      loadMedia: function (media) {
+        var mediaInfo = new chrome.cast.media.MediaInfo(media.mediaData.url);
+        mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+        mediaInfo.metadata.metadataType = chrome.cast.media.MetadataType.GENERIC;
+        mediaInfo.contentType = 'video/mp4';
+
+        mediaInfo.metadata.title = media.mediaData.title;
+        mediaInfo.metadata.images = [{'url': media.mediaData.thumbnailImageUrl}];
+
+        var request = new chrome.cast.media.LoadRequest(mediaInfo);
+        request.autoplay = this.autoplay;
+        this.mediaStatus.session.loadMedia(request, this.onMediaDiscovered.bind(this),
+            this.onMediaError.bind(this));
+      },
+      onRequestSessionSuccess: function (e) {
+        console.log('Launch success');
+        this.setMediaSession(e);
+        this.loadMedia(this.mediaStatus);
+      },
+      onLaunchError: function(e) {
+        console.log('Launch error: ' + JSON.stringify(e));
+        this.stopAnimation();
+      },
+      onMediaDiscovered: function(media) {
+        console.log('Media loaded');
+        media.addUpdateListener(this.onMediaStatusUpdate.bind(this));
+        this.mediaStatus.media = media;
+      },
+      onMediaStatusUpdate: function () {
+        console.log('Media changed');
+      },
+      onMediaError: function(e) {
+        console.log('Media error: ' + JSON.stringify(e));
+      },
+      onStopSuccess: function() {
+        console.log('Disconnecting succeeded');
+      },
+      onStopFailure: function(e) {
+        console.log('Disconnecting failed: ' + JSON.stringify(e));
+      },
+      setMediaSession: function(session) {
+        this.mediaStatus.session = session;
+        Object.observe(this.mediaStatus.session, this.mediaStatusObserver.bind(this));
+        this.mediaStatusObserver();
+      },
+      mediaStatusObserver: function() {
+        console.log("media status changed");
+        if(this.mediaStatus.session.status) {
+          var colorClass = 'button-black-connected';
+          if (this.color == 'white') {
+            colorClass = 'button-white-connected';
+          }
+          if (this.mediaStatus.session.status == chrome.cast.SessionStatus.CONNECTED) {
+            this.connected = true;
+            this.stopAnimation();
+          } else {
+            this.connected = false;
+          }
+        }
+      },
+      stopAnimation: function () {
+        window.clearInterval(this.intervalId);
+        this.intervalId = null;
+        this.connectingCounter = -1;
+      },
+      play: function() {
+
+      }
+    });
+  </script>
+</polymer-element>

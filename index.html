@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+  <script src="js/mediastatus.js"></script>
+  <link rel="import" href="bower_components/core-header-panel/core-header-panel.html">
+
+
+  <link rel="import" href="elements/player-bar.html">
+  <link rel="stylesheet" href="css/styles.css">
+  <script>
+    var mediaStatus =
+        new
+            cast.MediaStatus({
+          title: 'Big Buck Bunny',
+          url:'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          thumbnailImageUrl:
+              "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
+        });
+    window.addEventListener('polymer-ready', function() {
+      var playerBar = document.querySelector('player-bar');
+      playerBar.mediaStatus = mediaStatus;
+    });
+  </script>
+</head>
+<body fullbleed layout vertical>
+<core-header-panel class="waterfall-tall">
+  <div class="core-header">
+    <div id="video_main">
+      <video src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"></video>
+      <player-bar appId="4F8B3483"></player-bar>
+    </div>
+  </div>
+  <div class="content" fit>body content goes here</div>
+</core-header-panel>
+</body>
+</html>
