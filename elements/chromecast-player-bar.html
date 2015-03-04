@@ -1,0 +1,144 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="chromecast-button.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/core-icons/av-icons.html">
+<link href='http://fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
+
+<polymer-element name="chromecast-player-bar">
+<template>
+  <style>
+    :host {
+      margin:0 10%;
+      height: 39px;
+      background-color: #000000;
+      opacity: 0.6;
+      z-index: 1000;
+      border-radius: 10px;
+      box-shadow: 0px 6px 18px -1px rgba(0,0,0,0.88);
+      padding: 10px 25px 10px 10px;
+      display:flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: space-around;
+      align-items:center;
+    }
+
+    .play-pause {
+      height: 39px;
+      fill: #ffffff;
+    }
+
+    #button_play_pause {
+      height:39px;
+      display:flex;
+      min-width:0;
+      order:1;
+      flex-grow:1;
+    }
+
+    #button_play_pause::shadow #ripple {
+      color:#eaeaea;
+    }
+
+    #slider_progress {
+      order:3;
+      display:flex;
+      flex-grow:20;
+
+    }
+
+    #slider_progress::shadow #sliderKnobInner,
+    #slider_progress::shadow #sliderBar::shadow #activeProgress {
+      background-color: #4F7DC9;
+    }
+
+    #label_time {
+      order:4;
+      display:flex;
+      flex-grow:1;
+      color:#ffffff;
+      font-family: 'Roboto', sans-serif;
+      font-weight:100;
+      width:3em;
+    }
+
+    chromecast-button {
+      display:flex;
+      order:5;
+      flex-grow:1;
+    }
+
+    core-icon[icon="av:play-arrow"] {
+      height:39px;
+      width:39px;
+      color:#ffffff;
+    }
+    core-icon[icon="av:play-arrow"]:hover {
+      color:#4F7DC9;
+    }
+
+    core-icon[icon="av:pause"] {
+      height:39px;
+      width:39px;
+      color:#ffffff;
+    }
+    core-icon[icon="av:pause"]:hover {
+      color:#4F7DC9;
+    }
+
+
+  </style>
+  <div class="play-pause">
+    <paper-button id="button_play_pause">
+      <core-icon id="icon_play_pause"
+          icon="av:play-arrow"></core-icon>
+    </paper-button>
+  </div>
+  <paper-slider id="slider_progress" immediateValue="{{ sliderValue }}"></paper-slider>
+  <label id="label_time">
+    {{ mediaStatus.timeRemainingString }}
+  </label>
+  <chromecast-button id="button_cast" appId="{{ appId }}" mediaStatus="{{ mediaStatus }}"
+                     style="height: 30px;width: 39px" color="white"></chromecast-button>
+
+</template>
+<script>
+  Polymer("chromecast-player-bar", {
+    time:"0:00:00",
+    sliderValue: 0,
+    publish: {
+      appId: null,
+      mediaStatus: null
+    },
+    observe: {
+      'mediaStatus.state': 'updatePlayButton',
+      'mediaStatus.currentTimeS': 'currentTimeUpdate'
+    },
+    ready: function() {
+      this.$.button_play_pause.addEventListener('click', function(){
+        if(this.mediaStatus.state != cast.MediaStatus.STATE.PLAY) {
+          this.mediaStatus.play();
+        } else {
+          this.mediaStatus.pause();
+        }
+      }.bind(this));
+      this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
+    },
+    sliderUpdate: function(newVal) {
+      var time = this.mediaStatus.floatToTime(this.sliderValue/100);
+      this.mediaStatus.seek(time);
+    },
+    currentTimeUpdate: function (oldVal, newVal) {
+      this.sliderValue = Math.round(this.mediaStatus.getCurrentPercentageComplete() * 100);
+    },
+    updatePlayButton : function(oldVal, newVal) {
+      if(newVal != cast.MediaStatus.STATE.PLAY) {
+        this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+      } else {
+        this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+      }
+    }
+  });
+</script>
+</polymer-element>

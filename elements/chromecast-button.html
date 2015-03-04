@@ -71,7 +71,7 @@ svg.connected {
     Polymer("chromecast-button", {
       currentMedia:null,
       display: false,
-      autoplay: true,
+      autoplay: false,
       connected: false,
       connectingCounter: -1,
       intervalId: null,
@@ -80,6 +80,9 @@ svg.connected {
         mediaStatus: null,
         color: 'black',
         animationInterval: 400
+      },
+      observe: {
+        'mediaStatus.state': 'mediaStatusStateObserver'
       },
       ready: function(){
         if (this.appId != null) {
@@ -158,6 +161,21 @@ svg.connected {
         console.log('Media loaded');
         media.addUpdateListener(this.onMediaStatusUpdate.bind(this));
         this.mediaStatus.media = media;
+        Object.observe(this.mediaStatus.media, this.mediaStatusPlayerStateObserver.bind(this));
+        //Check if the media is already playing
+        if (media.playerState == chrome.cast.media.PlayerState.PAUSED) {
+          //If it's at the beginning of a video
+          if (media.currentTime == 0) {
+            if (this.mediaStatus.currentTime != 0) {
+              this.seek(this.mediaStatus.currentTime);
+            }
+            //Start the video
+            this.play();
+          } else {
+            //Sync state with existing video
+            this.mediaState.seek(media.currentTime);
+          }
+        }
       },
       onMediaStatusUpdate: function () {
         console.log('Media changed');
@@ -173,10 +191,16 @@ svg.connected {
       },
       setMediaSession: function(session) {
         this.mediaStatus.session = session;
-        Object.observe(this.mediaStatus.session, this.mediaStatusObserver.bind(this));
-        this.mediaStatusObserver();
+        Object.observe(this.mediaStatus.session, this.mediaStatusSessionObserver.bind(this));
+        this.mediaStatusSessionObserver();
       },
-      mediaStatusObserver: function() {
+      onSuccess: function (e) {
+
+      },
+      onFailure: function (e) {
+
+      },
+      mediaStatusSessionObserver: function() {
         console.log("media status changed");
         if(this.mediaStatus.session.status) {
           var colorClass = 'button-black-connected';
@@ -185,11 +209,28 @@ svg.connected {
           }
           if (this.mediaStatus.session.status == chrome.cast.SessionStatus.CONNECTED) {
             this.connected = true;
+            this.mediaStatus.isCasting = true;
             this.stopAnimation();
           } else {
             this.connected = false;
+            this.mediaStatus.isCasting = false;
           }
         }
+      },
+      mediaStatusStateObserver: function(oldVal, newVal) {
+        if(this.mediaStatus.media != null) {
+          if (newVal == cast.MediaStatus.STATE.PLAY) {
+            this.play();
+          } else if (newVal == cast.MediaStatus.STATE.PAUSE) {
+            this.pause();
+          } else if (newVal == cast.MediaStatus.STATE.SEEK) {
+            this.seek(this.mediaStatus.seekTimeS);
+            this.mediaStatus.toPreviousState();
+          }
+        }
+      },
+      mediaStatusPlayerStateObserver: function(oldVal, newVal) {
+        console.log('Chromecast player state changed');
       },
       stopAnimation: function () {
         window.clearInterval(this.intervalId);
@@ -197,7 +238,13 @@ svg.connected {
         this.connectingCounter = -1;
       },
       play: function() {
-
+        this.mediaStatus.media.play(null, this.onSuccess.bind(this), this.onFailure.bind(this));
+      },
+      seek: function(time){
+        this.mediaStatus.media.seek({'currentTime': time}, this.onSuccess.bind(this), this.onFailure.bind(this));
+      },
+      pause: function() {
+        this.mediaStatus.media.pause(null, this.onSuccess.bind(this), this.onFailure.bind(this));
       }
     });
   </script>

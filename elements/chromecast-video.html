@@ -1,0 +1,100 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="chromecast-player-bar.html">
+
+<polymer-element name="chromecast-video">
+  <template>
+    <style>
+      :host {
+        height:531px;
+        width:944px;
+        display:block;
+        position:relative;
+      }
+
+      #image_overlay, #video_content {
+        height:100%;
+        width:100%;
+        position:absolute;
+        left:0px;
+        top:0px;
+
+      }
+      #image_overlay {
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: 50% 50%;
+        border: none;
+        padding: 0px;
+        margin: 0px;
+        z-index:10;
+      }
+
+      .player-bar-holder {
+        position: absolute;
+        bottom: 40px;
+        width:100%;
+        z-index:1000;
+      }
+
+      #image_overlay.hidden {
+        display:none;
+      }
+
+    </style>
+    <div id="image_overlay"
+         class="{{ mediaStatus.state == 2 ? '': 'hidden'}}"></div>
+    <video id="video_content">
+
+    </video>
+    <div class="player-bar-holder">
+    <chromecast-player-bar appId="{{ appId }}"
+                           mediaStatus="{{ mediaStatus }}"></chromecast-player-bar>
+    </div>
+  </template>
+  <script>
+Polymer("chromecast-video",{
+
+  publish: {
+    appId: null,
+    mediaStatus: null
+  },
+  intervalId: null,
+  refreshIntervalMS: 1000,
+  observe: {
+    'mediaStatus.mediaData':'mediaDataObserver',
+    'mediaStatus.state':'mediaStateObserver'
+  },
+  ready: function() {
+    this.$.video_content.addEventListener('loadeddata', this.onMediaLoaded.bind(this));
+  },
+  onMediaLoaded: function() {
+    this.mediaStatus.setDuration(this.$.video_content.duration);
+    this.mediaStatus.setCurrentTime(this.$.video_content.currentTime);
+  },
+  mediaDataObserver: function(oldVal, newVal) {
+    this.$.image_overlay.style.backgroundImage = "url('" + newVal.thumbnailImageUrl + "')";
+    this.$.video_content.src = newVal.url;
+  },
+  mediaStateObserver: function(oldVal, newVal) {
+    if(newVal == cast.MediaStatus.STATE.PLAY){
+      this.$.video_content.play();
+      if (this.intervalId == null) {
+        this.intervalId = window.setInterval(function () {
+          this.mediaStatus.setCurrentTime(this.$.video_content.currentTime);
+        }.bind(this), this.refreshIntervalMS);
+      }
+    } else if(newVal == cast.MediaStatus.STATE.PAUSE) {
+      this.$.video_content.pause();
+      if(this.intervalId != null) {
+        window.clearInterval(this.intervalId);
+        this.intervalId = null;
+      }
+    } else if(newVal == cast.MediaStatus.STATE.SEEK) {
+      this.$.video_content.currentTime = this.mediaStatus.seekTimeS;
+      this.mediaStatus.toPreviousState();
+    }
+  }
+
+});
+  </script>
+</polymer-element>
