@@ -21,7 +21,8 @@ var cast = window.cast || {};
   MediaStatus.STATE = {
     'PAUSE': 0, //has started playing but is currently paused
     'PLAY': 1, //currently playing
-    'STOP': 2 //has never started playing
+    'STOP': 2, //has never started playing
+    'BUFFERING':3
   };
 
   /**

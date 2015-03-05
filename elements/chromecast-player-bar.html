@@ -63,10 +63,13 @@
       width:3em;
     }
 
-    chromecast-button {
+    #button_flex {
       display:flex;
       order:5;
       flex-grow:1;
+      flex-shrink:10;
+      overflow:hidden;
+      min-width:0px;
     }
 
     core-icon[icon="av:play-arrow"] {
@@ -99,9 +102,10 @@
   <label id="label_time">
     {{ mediaStatus.timeRemainingString }}
   </label>
+  <div id="button_flex">
   <chromecast-button id="button_cast" appId="{{ appId }}" mediaStatus="{{ mediaStatus }}"
-                     style="height: 30px;width: 39px" color="white"></chromecast-button>
-
+                      color="white"></chromecast-button>
+  </div>
 </template>
 <script>
   Polymer("chromecast-player-bar", {

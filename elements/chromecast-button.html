@@ -8,9 +8,6 @@
     <style>
 :host {
   display: block;
-  width:100%;
-  height:100%;
-
 }
 
 .hidden {
@@ -18,8 +15,8 @@
 }
 
 svg {
-  width:100%;
-  height:100%;
+  width:39px;
+  height:30px;
   outline: 0;
   border: 0;
 }
@@ -51,7 +48,7 @@ svg.connected {
     </style>
     <svg version="1.1" id="button_cast" xmlns="http://www.w3.org/2000/svg"
          xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-         class="{{color == 'white' ? 'button-white' : 'button-black'}} {{connected ? 'connected' : ''}}"
+         class="{{color == 'white' ? 'button-white' : 'button-black'}} {{connected ? 'connected' : ''}} {{display ? '': 'hidden'}}"
 	 viewBox="0 0 51 39" enable-background="new 0 0 51 39" xml:space="preserve">
     <g id="cast_x5F_icon_x5F_on_x5F_light_x5F_mono_1_">
       <path fill-rule="evenodd" clip-rule="evenodd" d="M3,0v16.5c1.4,0.3,2.7,0.7,4,1.2V4h40v28H21.3
@@ -167,6 +164,11 @@ svg.connected {
         console.log('Launch error: ' + JSON.stringify(e));
         this.stopAnimation();
       },
+      /**
+       * Handle media status
+       *
+       * @param media
+       */
       onMediaDiscovered: function(media) {
         console.log('Media loaded');
         media.addUpdateListener(this.onMediaStatusUpdate.bind(this));
@@ -174,7 +176,6 @@ svg.connected {
 
         //Check if the media is already playing
         if (media.playerState == chrome.cast.media.PlayerState.PAUSED) {
-          this.mediaStatus.state = cast.MediaStatus.STATE.PAUSE;
           //If it's at the beginning of a video
           if (media.currentTime == 0) {
             if (this.mediaStatus.currentTimeS != 0) {
@@ -189,15 +190,17 @@ svg.connected {
           } else {
             //Sync state with existing video
             this.mediaStatus.seek(media.currentTime, this.tagName);
+            this.mediaStatus.state = cast.MediaStatus.STATE.PAUSE;
           }
         } else if(media.playerState == chrome.cast.media.PlayerState.PLAYING) {
           this.mediaStatus.state = cast.MediaStatus.STATE.PLAY;
           this.mediaStatus.seek(media.currentTime, this.tagName);
-
         }
       },
       onMediaStatusUpdate: function () {
-        console.log('Media changed');
+        //this.mediaStatus.seek(this.mediaStatus.media.currentTime, this.tagName);
+
+        console.log('Media changed' + JSON.stringify(this.mediaStatus.media));
       },
       onMediaError: function(e) {
         console.log('Media error: ' + JSON.stringify(e));
@@ -241,6 +244,8 @@ svg.connected {
             this.seek(this.mediaStatus.seekTimeS);
             this.mediaStatus.toPreviousState();
           }
+        } else if(this.mediaStatus.session.status == chrome.cast.SessionStatus.CONNECTED) {
+          this.loadMedia(this.mediaStatus);
         }
       },
       setMediaSession: function(session) {
