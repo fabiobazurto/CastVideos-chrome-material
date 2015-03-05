@@ -171,8 +171,10 @@ svg.connected {
        */
       onMediaDiscovered: function(media) {
         console.log('Media loaded');
+        this.mediaStatus.isCasting = true;
         media.addUpdateListener(this.onMediaStatusUpdate.bind(this));
         this.mediaStatus.media = media;
+        this.mediaStatus.durationS = media.media.duration;
 
         //Check if the media is already playing
         if (media.playerState == chrome.cast.media.PlayerState.PAUSED) {

@@ -43,7 +43,7 @@
 
     </style>
     <div id="image_overlay"
-         class="{{ mediaStatus.state == 2 ? '': 'hidden'}}"></div>
+         class="{{ mediaStatus.state != 2 || mediaStatus.isCasting ? 'hidden': ''}}"></div>
     <video id="video_content" class="seek-listener">
 
     </video>

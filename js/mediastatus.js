@@ -66,6 +66,7 @@ var cast = window.cast || {};
             }
           });
       document.dispatchEvent(seekEvent);
+      this.currentTimeS = time;
 
       if (this.durationS != 0) {
         this.timeRemainingString = this.secondsToHHMMSS(this.durationS - time);
