@@ -127,7 +127,10 @@
     },
     sliderUpdate: function(newVal) {
       var time = this.mediaStatus.floatToTime(this.sliderValue/100);
-      this.mediaStatus.seek(time);
+      if(this.mediaStatus.state == cast.MediaStatus.STATE.STOP) {
+        this.mediaStatus.state = cast.MediaStatus.STATE.PAUSE;
+      }
+      this.mediaStatus.seek(time, this.tagname);
     },
     currentTimeUpdate: function (oldVal, newVal) {
       this.sliderValue = Math.round(this.mediaStatus.getCurrentPercentageComplete() * 100);

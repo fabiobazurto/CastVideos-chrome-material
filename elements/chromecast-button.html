@@ -1,4 +1,5 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-signals/core-signals.html">
 
 <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
 
@@ -66,6 +67,7 @@ svg.connected {
       d="M0,19.1v4C8.3,24,15,30.7,15.9,39h4C19,28.4,10.6,20,0,19.1z"/>
     </g>
     </svg>
+    <core-signals on-core-signal-seek="{{ seekTime }}"></core-signals>
   </template>
   <script>
     Polymer("chromecast-button", {
@@ -102,9 +104,12 @@ svg.connected {
           throw "No receiver app id defined"
         }
       },
-      sessionListener: function (e) {
+      sessionListener: function (session) {
         console.log("Session listener");
-        this.setMediaSession(e);
+        this.setMediaSession(session);
+        if(session.media.length > 0 && session.media[0].playerState != chrome.cast.media.PlayerState.IDLE ) {
+          this.onMediaDiscovered(session.media[0]);
+        }
       },
       receiverListener: function (e) {
         if( e === chrome.cast.ReceiverAvailability.AVAILABLE) {
@@ -148,9 +153,14 @@ svg.connected {
         this.mediaStatus.session.loadMedia(request, this.onMediaDiscovered.bind(this),
             this.onMediaError.bind(this));
       },
-      onRequestSessionSuccess: function (e) {
+      /**
+       * Called when a new session has been successfully created
+       *
+       * @param session
+       */
+      onRequestSessionSuccess: function (session) {
         console.log('Launch success');
-        this.setMediaSession(e);
+        this.setMediaSession(session);
         this.loadMedia(this.mediaStatus);
       },
       onLaunchError: function(e) {
@@ -161,20 +171,29 @@ svg.connected {
         console.log('Media loaded');
         media.addUpdateListener(this.onMediaStatusUpdate.bind(this));
         this.mediaStatus.media = media;
-        Object.observe(this.mediaStatus.media, this.mediaStatusPlayerStateObserver.bind(this));
+
         //Check if the media is already playing
         if (media.playerState == chrome.cast.media.PlayerState.PAUSED) {
+          this.mediaStatus.state = cast.MediaStatus.STATE.PAUSE;
           //If it's at the beginning of a video
           if (media.currentTime == 0) {
-            if (this.mediaStatus.currentTime != 0) {
-              this.seek(this.mediaStatus.currentTime);
+            if (this.mediaStatus.currentTimeS != 0) {
+              this.seek(this.mediaStatus.currentTimeS);
+            } else {
+              this.mediaStatus.state = cast.MediaStatus.STATE.PLAY;
             }
-            //Start the video
-            this.play();
+            //If the current state is play and the user starts casting, auto play the content
+            if (this.mediaStatus.state === cast.MediaStatus.STATE.PLAY) {
+              this.play();
+            }
           } else {
             //Sync state with existing video
-            this.mediaState.seek(media.currentTime);
+            this.mediaStatus.seek(media.currentTime, this.tagName);
           }
+        } else if(media.playerState == chrome.cast.media.PlayerState.PLAYING) {
+          this.mediaStatus.state = cast.MediaStatus.STATE.PLAY;
+          this.mediaStatus.seek(media.currentTime, this.tagName);
+
         }
       },
       onMediaStatusUpdate: function () {
@@ -189,16 +208,11 @@ svg.connected {
       onStopFailure: function(e) {
         console.log('Disconnecting failed: ' + JSON.stringify(e));
       },
-      setMediaSession: function(session) {
-        this.mediaStatus.session = session;
-        Object.observe(this.mediaStatus.session, this.mediaStatusSessionObserver.bind(this));
-        this.mediaStatusSessionObserver();
-      },
       onSuccess: function (e) {
-
+        console.log(JSON.stringify(e));
       },
       onFailure: function (e) {
-
+        console.log(JSON.stringify(e));
       },
       mediaStatusSessionObserver: function() {
         console.log("media status changed");
@@ -229,8 +243,15 @@ svg.connected {
           }
         }
       },
-      mediaStatusPlayerStateObserver: function(oldVal, newVal) {
-        console.log('Chromecast player state changed');
+      setMediaSession: function(session) {
+        this.mediaStatus.session = session;
+        Object.observe(this.mediaStatus.session, this.mediaStatusSessionObserver.bind(this));
+        this.mediaStatusSessionObserver();
+      },
+      seekTime: function (e, data, sender) {
+        if(this.mediaStatus.media != null && data.sender != this.tagName){
+          this.seek(data.currentTime);
+        }
       },
       stopAnimation: function () {
         window.clearInterval(this.intervalId);
@@ -241,7 +262,10 @@ svg.connected {
         this.mediaStatus.media.play(null, this.onSuccess.bind(this), this.onFailure.bind(this));
       },
       seek: function(time){
-        this.mediaStatus.media.seek({'currentTime': time}, this.onSuccess.bind(this), this.onFailure.bind(this));
+        var request = new chrome.cast.media.SeekRequest();
+        request.currentTime = Math.round(time);
+
+        this.mediaStatus.media.seek(request, this.onSuccess.bind(this), this.onFailure.bind(this));
       },
       pause: function() {
         this.mediaStatus.media.pause(null, this.onSuccess.bind(this), this.onFailure.bind(this));

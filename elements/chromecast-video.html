@@ -1,4 +1,5 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-signals/core-signals.html">
 <link rel="import" href="chromecast-player-bar.html">
 
 <polymer-element name="chromecast-video">
@@ -43,13 +44,14 @@
     </style>
     <div id="image_overlay"
          class="{{ mediaStatus.state == 2 ? '': 'hidden'}}"></div>
-    <video id="video_content">
+    <video id="video_content" class="seek-listener">
 
     </video>
     <div class="player-bar-holder">
     <chromecast-player-bar appId="{{ appId }}"
                            mediaStatus="{{ mediaStatus }}"></chromecast-player-bar>
     </div>
+    <core-signals on-core-signal-seek="{{ seekTime }}"></core-signals>
   </template>
   <script>
 Polymer("chromecast-video",{
@@ -89,12 +91,13 @@ Polymer("chromecast-video",{
         window.clearInterval(this.intervalId);
         this.intervalId = null;
       }
-    } else if(newVal == cast.MediaStatus.STATE.SEEK) {
-      this.$.video_content.currentTime = this.mediaStatus.seekTimeS;
-      this.mediaStatus.toPreviousState();
+    }
+  },
+  seekTime: function(e, data, sender) {
+    if(data.sender != this.tagName){
+      this.$.video_content.currentTime = data.currentTime;
     }
   }
-
 });
   </script>
 </polymer-element>

@@ -28,6 +28,7 @@
     "core-selector": "Polymer/core-selector#~0.5.3",
     "paper-slider": "Polymer/paper-slider#~0.5.3",
     "paper-ripple": "Polymer/paper-ripple#~0.5.3",
-    "core-tooltip": "Polymer/core-tooltip#~0.5.5"
+    "core-tooltip": "Polymer/core-tooltip#~0.5.5",
+    "core-signals": "Polymer/core-signals#~0.5.5"
   }
 }
