@@ -84,7 +84,17 @@ var cast = window.cast || {};
       document.dispatchEvent(playEvent);
     },
     pause: function (sender) {
-      this.state = MediaStatus.STATE.PAUSE;
+      var pauseEvent = new CustomEvent('core-signal',
+          {
+            'detail': {
+              'name': 'media-action',
+              'data': {
+                'action': 'pause',
+                'sender': sender
+              }
+            }
+          });
+      document.dispatchEvent(pauseEvent);
     },
     seek: function (time, sender) {
       //Fire a core-signal event
