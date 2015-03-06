@@ -17,40 +17,73 @@ var cast = window.cast || {};
     });
   }
 
-
-  MediaStatus.STATE = {
-    'PAUSE': 0, //has started playing but is currently paused
-    'PLAY': 1, //currently playing
-    'STOP': 2, //has never started playing
-    'BUFFERING':3
+  /**
+   * Defines the sender of the request
+   *
+   * @type {{LOCAL: number, CHROMECAST: number}}
+   */
+  MediaStatus.SENDER = {
+    'LOCAL': 0,
+    'CHROMECAST': 1
   };
 
   /**
    * Class to glue together video player UI
    *
    * MediaData is expected in the format of
-   * @param mediaData
+   * @param media
    * @constructor
    */
-  function MediaStatus(mediaData) {
-    this.mediaData = mediaData;
-    this.media = null;
+  function MediaStatus(media) {
+
+    /**
+     * Local media object reference
+     *
+     * @type {cast.Media}
+     */
+    this.localMedia = media;
+
+    /**
+     * Chromecast media object reference
+     *
+     * @type {chrome.cast.media.Media}
+     */
+    this.castMedia = {};
+
+    /**
+     * Chromecast session object reference
+     *
+     * @type {chrome.cast.Session}
+     */
     this.session = {};
-    this.state = MediaStatus.STATE.STOP;
-    this.timeRemainingString = "0:00:00";
-    this.durationS = 50000;
-    this.currentTimeS;
-    this.volume = 50;
+
+    /**
+     * Content queue
+     */
+    this.mediaQueue;
+
+    /**
+     * Tracks whether cast is connected
+     * @type {boolean}
+     */
     this.isCasting = false;
-    this.castMediaData = null;
-    this.previousState = MediaStatus.STATE.PAUSE;
   }
 
   MediaStatus.prototype = {
-    play: function () {
-      this.state = MediaStatus.STATE.PLAY;
+    play: function (sender) {
+      var playEvent = new CustomEvent('core-signal',
+          {
+            'detail': {
+              'name': 'media-action',
+              'data': {
+                'action': 'play',
+                'sender': sender
+              }
+            }
+          });
+      document.dispatchEvent(playEvent);
     },
-    pause: function () {
+    pause: function (sender) {
       this.state = MediaStatus.STATE.PAUSE;
     },
     seek: function (time, sender) {
@@ -58,47 +91,39 @@ var cast = window.cast || {};
       var seekEvent = new CustomEvent('core-signal',
           {
             'detail': {
-              'name': 'seek',
+              'name': 'media-action',
               'data': {
+                'action': 'seek',
                 'currentTime': time,
                 'sender': sender
               }
             }
           });
       document.dispatchEvent(seekEvent);
-      this.currentTimeS = time;
-
-      if (this.durationS != 0) {
-        this.timeRemainingString = this.secondsToHHMMSS(this.durationS - time);
+    },
+    setCastMedia: function(media) {
+      this.castMedia = media;
+      //If the media doesn't match and nothing is playing, load casting media into local media
+      if (!this.isMediaMatch() && this.localMedia.state == cast.Media.STATE.STOP
+          && media.metadata != null) {
+        var metadata = media.metadata;
+        var localMedia = cast.Media({
+          'title': metadata.title,
+          'url': media.contentId,
+          'thumbnailImageUrl': metadata.images[0].url
+        });
+        localMedia.duration = media.duration;
+        this.localMedia = localMedia;
       }
     },
-    setDuration: function (durationS) {
-      this.durationS = durationS;
-      this.timeRemainingString = this.secondsToHHMMSS(durationS);
-    },
-    setCurrentTime: function (timeS) {
-      this.currentTimeS = timeS;
-      this.timeRemainingString = this.secondsToHHMMSS(this.durationS - timeS);
-    },
-    getCurrentPercentageComplete: function () {
-      return this.currentTimeS / this.durationS;
-    },
-    floatToTime: function (floatVal) {
-      return floatVal * this.durationS;
-    },
-    secondsToHHMMSS: function (seconds) {
-      var hours = Math.floor(seconds / 3600);
-      var minutes = Math.floor((seconds % 3600) / 60);
-      var seconds = Math.floor(seconds % 60);
-
-      if (minutes < 10) {
-        minutes = "0" + minutes;
-      }
-      if (seconds < 10) {
-        seconds = "0" + seconds;
-      }
-
-      return hours + ':' + minutes + ':' + seconds;
+    /**
+     * Returns true if the current local media matches cast media or if no Castmedia is loaded
+     *
+     * @returns {boolean}
+     */
+    isMediaMatch: function() {
+      return (this.castMedia.media == null
+      || this.localMedia.url == this.castMedia.media.contentId);
     }
   };
 

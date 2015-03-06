@@ -48,12 +48,12 @@ svg.connected {
     </style>
     <svg version="1.1" id="button_cast" xmlns="http://www.w3.org/2000/svg"
          xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-         class="{{color == 'white' ? 'button-white' : 'button-black'}} {{connected ? 'connected' : ''}} {{display ? '': 'hidden'}}"
+         class="{{color == 'white' ? 'button-white' : 'button-black'}} {{mediaStatus.isCasting ? 'connected' : ''}} {{display ? '': 'hidden'}}"
 	 viewBox="0 0 51 39" enable-background="new 0 0 51 39" xml:space="preserve">
     <g id="cast_x5F_icon_x5F_on_x5F_light_x5F_mono_1_">
       <path fill-rule="evenodd" clip-rule="evenodd" d="M3,0v16.5c1.4,0.3,2.7,0.7,4,1.2V4h40v28H21.3
         c0.5,1.3,0.9,2.6,1.2,4H51V0H3z" />
-      <path visibility="{{connected ? 'visibile' : 'hidden'}}" fill-rule="evenodd"
+      <path visibility="{{mediaStatus.isCasting ? 'visibile' : 'hidden'}}" fill-rule="evenodd"
             clip-rule="evenodd"
             d="M10,7v12.1c4.2,2.3,7.6,5.8,9.9,9.9H44V7H10z"/>
       <path fill="{{connectingCounter == 0 ? '#00B9E7' : ''}}"
@@ -64,14 +64,12 @@ svg.connected {
       d="M0,19.1v4C8.3,24,15,30.7,15.9,39h4C19,28.4,10.6,20,0,19.1z"/>
     </g>
     </svg>
-    <core-signals on-core-signal-seek="{{ seekTime }}"></core-signals>
+    <core-signals on-core-signal-media-action="{{ mediaActionHandler }}"></core-signals>
   </template>
   <script>
     Polymer("chromecast-button", {
-      currentMedia:null,
       display: false,
       autoplay: false,
-      connected: false,
       connectingCounter: -1,
       intervalId: null,
       publish: {
@@ -85,6 +83,7 @@ svg.connected {
       },
       ready: function(){
         if (this.appId != null) {
+          //Inits cast
           var initializeCastApi = function () {
             if (!chrome.cast || !chrome.cast.isAvailable) {
               setTimeout(initializeCastApi.bind(this), 1000);
@@ -94,6 +93,20 @@ svg.connected {
                   this.sessionListener.bind(this),
                   this.receiverListener.bind(this));
               chrome.cast.initialize(apiConfig, this.initSuccess.bind(this), this.errorHandler);
+
+              //Add an event listener to try and connect when clicked
+              this.$.button_cast.addEventListener("click", function() {
+                if (this.mediaStatus.session == chrome.cast.SessionStatus.CONNECTED) {
+                  this.stopCasting.bind(this)();
+                } else {
+                  if (this.intervalId == null) {
+                    this.intervalId = window.setInterval(function () {
+                      this.connectingCounter = (this.connectingCounter + 1) % 3;
+                    }.bind(this), this.animationInterval);
+                  }
+                  this.startCasting.bind(this)();
+                }
+              }.bind(this));
             }
           }.bind(this);
           initializeCastApi();
@@ -101,28 +114,29 @@ svg.connected {
           throw "No receiver app id defined"
         }
       },
+      /**
+       * Handles when new sessions are connected.
+       */
       sessionListener: function (session) {
         console.log("Session listener");
         this.setMediaSession(session);
+        //Check if the session has existing media
         if(session.media.length > 0 && session.media[0].playerState != chrome.cast.media.PlayerState.IDLE ) {
+          //If the session has existing media update local info with media details
           this.onMediaDiscovered(session.media[0]);
         }
       },
+      /**
+       * Handles receiver update events
+       */
       receiverListener: function (e) {
+        console.log('receiver listener');
         if( e === chrome.cast.ReceiverAvailability.AVAILABLE) {
+          //If a receiver is available display the button
           this.display = true;
-          this.$.button_cast.addEventListener("click", function() {
-            if (this.mediaStatus.session == chrome.cast.SessionStatus.CONNECTED) {
-              this.stopCasting.bind(this)();
-            } else {
-              if (this.intervalId == null) {
-                this.intervalId = window.setInterval(function () {
-                  this.connectingCounter = (this.connectingCounter + 1) % 3;
-                }.bind(this), this.animationInterval);
-              }
-              this.startCasting.bind(this)();
-            }
-          }.bind(this));
+        } else {
+          //If no receiver is available, hide the button
+          this.display = false;
         }
       },
       initSuccess: function (e) {
@@ -136,72 +150,87 @@ svg.connected {
         this.mediaStatus.session.stop(this.onStopSuccess.bind(this),
             this.onStopFailure.bind(this));
       },
+      /**
+       * Loads media onto the Chromecast
+       *
+       * @param media {cast.Media}
+       */
       loadMedia: function (media) {
-        var mediaInfo = new chrome.cast.media.MediaInfo(media.mediaData.url);
+        var mediaInfo = new chrome.cast.media.MediaInfo(media.url);
         mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
         mediaInfo.metadata.metadataType = chrome.cast.media.MetadataType.GENERIC;
         mediaInfo.contentType = 'video/mp4';
 
-        mediaInfo.metadata.title = media.mediaData.title;
-        mediaInfo.metadata.images = [{'url': media.mediaData.thumbnailImageUrl}];
+        mediaInfo.metadata.title = media.title;
+        mediaInfo.metadata.images = [{'url': media.thumbnailImageUrl}];
 
         var request = new chrome.cast.media.LoadRequest(mediaInfo);
         request.autoplay = this.autoplay;
+
         this.mediaStatus.session.loadMedia(request, this.onMediaDiscovered.bind(this),
             this.onMediaError.bind(this));
       },
       /**
-       * Called when a new session has been successfully created
+       * Called when a new session has been successfully connected
        *
        * @param session
        */
       onRequestSessionSuccess: function (session) {
         console.log('Launch success');
         this.setMediaSession(session);
-        this.loadMedia(this.mediaStatus);
+        this.loadMedia(this.mediaStatus.localMedia);
       },
       onLaunchError: function(e) {
         console.log('Launch error: ' + JSON.stringify(e));
         this.stopAnimation();
       },
       /**
-       * Handle media status
+       * Updates mediastatus when media is loaded on Chromecast
        *
        * @param media
        */
       onMediaDiscovered: function(media) {
         console.log('Media loaded');
-        this.mediaStatus.isCasting = true;
-        media.addUpdateListener(this.onMediaStatusUpdate.bind(this));
-        this.mediaStatus.media = media;
-        this.mediaStatus.durationS = media.media.duration;
 
-        //Check if the media is already playing
+        //Adds an listener for any changes to media
+        media.addUpdateListener(this.onMediaStatusUpdate.bind(this));
+        this.mediaStatus.setCastMedia(media);
+
+        //Sync local media state with the chromecast state
         if (media.playerState == chrome.cast.media.PlayerState.PAUSED) {
-          //If it's at the beginning of a video
+          //If media is paused at the beginning
           if (media.currentTime == 0) {
-            if (this.mediaStatus.currentTimeS != 0) {
-              this.seek(this.mediaStatus.currentTimeS);
+            //If the local media time is not at the beginning and the media matches
+            if (this.mediaStatus.localMedia.currentTime != 0
+                && this.mediaStatus.isMediaMatch()) {
+              //Match time in local media
+              this.seek(this.mediaStatus.localMedia.currentTime);
             } else {
-              this.mediaStatus.state = cast.MediaStatus.STATE.PLAY;
+              //If the localMedia time hasn't started yet, auto play both cast and local
+              this.mediaStatus.play(cast.MediaStatus.SENDER.CHROMECAST);
+              this.play();
             }
-            //If the current state is play and the user starts casting, auto play the content
-            if (this.mediaStatus.state === cast.MediaStatus.STATE.PLAY) {
+            //If the current local state is play and the user starts casting
+            //auto play the content
+            if (this.mediaStatus.localMedia.state === cast.Media.STATE.PLAY) {
               this.play();
             }
           } else {
-            //Sync state with existing video
-            this.mediaStatus.seek(media.currentTime, this.tagName);
-            this.mediaStatus.state = cast.MediaStatus.STATE.PAUSE;
+            //If the Chromecast media isn't at the beginning,
+            //sync local state with existing video
+            this.mediaStatus.seek(media.currentTime, cast.MediaStatus.SENDER.CHROMECAST);
+            this.mediaStatus.pause(cast.MediaStatus.SENDER.CHROMECAST);
           }
         } else if(media.playerState == chrome.cast.media.PlayerState.PLAYING) {
-          this.mediaStatus.state = cast.MediaStatus.STATE.PLAY;
-          this.mediaStatus.seek(media.currentTime, this.tagName);
+          //If the current media state is playing send a play event
+          this.mediaStatus.seek(media.currentTime, cast.MediaStatus.SENDER.CHROMECAST);
+          this.mediaStatus.play(cast.MediaStatus.SENDER.CHROMECAST);
         }
       },
+      /**
+       * Called anytime the media status on Chromecast changes
+       */
       onMediaStatusUpdate: function () {
-        //this.mediaStatus.seek(this.mediaStatus.media.currentTime, this.tagName);
-
         console.log('Media changed' + JSON.stringify(this.mediaStatus.media));
       },
       onMediaError: function(e) {
@@ -213,69 +242,94 @@ svg.connected {
       onStopFailure: function(e) {
         console.log('Disconnecting failed: ' + JSON.stringify(e));
       },
+      /**
+       * Generic on success
+       */
       onSuccess: function (e) {
         console.log(JSON.stringify(e));
       },
+      /**
+       * Generic on failure
+       */
       onFailure: function (e) {
         console.log(JSON.stringify(e));
       },
+      /**
+       * Observes session status and updates the button UI to reflect current session status
+       */
       mediaStatusSessionObserver: function() {
-        console.log("media status changed");
-        if(this.mediaStatus.session.status) {
-          var colorClass = 'button-black-connected';
-          if (this.color == 'white') {
-            colorClass = 'button-white-connected';
-          }
-          if (this.mediaStatus.session.status == chrome.cast.SessionStatus.CONNECTED) {
-            this.connected = true;
-            this.mediaStatus.isCasting = true;
-            this.stopAnimation();
-          } else {
-            this.connected = false;
-            this.mediaStatus.isCasting = false;
-          }
+        console.log("Chromecast session content changed");
+        //If a session status exists and if session is connected
+        if (this.mediaStatus.session.status
+            && this.mediaStatus.session.status == chrome.cast.SessionStatus.CONNECTED) {
+          //If it is set casting to true and stop the connecting animation
+          this.mediaStatus.isCasting = true;
+          this.stopAnimation();
+        } else {
+          //Otherwise casting remains false;
+          this.mediaStatus.isCasting = false;
         }
       },
-      mediaStatusStateObserver: function(oldVal, newVal) {
-        if(this.mediaStatus.media != null) {
-          if (newVal == cast.MediaStatus.STATE.PLAY) {
-            this.play();
-          } else if (newVal == cast.MediaStatus.STATE.PAUSE) {
-            this.pause();
-          } else if (newVal == cast.MediaStatus.STATE.SEEK) {
-            this.seek(this.mediaStatus.seekTimeS);
-            this.mediaStatus.toPreviousState();
-          }
-        } else if(this.mediaStatus.session.status == chrome.cast.SessionStatus.CONNECTED) {
-          this.loadMedia(this.mediaStatus);
+      /**
+       * Handles events for Chromecast
+       *
+       */
+      mediaActionHandler: function (e, data, sender) {
+        //If media is loaded on cast and the aciton sender isn't chromecast
+        if(data.sender != cast.MediaStatus.SENDER.CHROMECAST
+            && Object.keys(this.mediaStatus.castMedia).length > 0) {
+            switch (data.action) {
+              case 'seek':
+                this.seek(data.currentTime);
+                break;
+              case 'play':
+                this.play();
+                break;
+              case 'pause':
+                this.pause();
+                break;
+            }
         }
       },
+      /**
+       * Stores the session data in local Media status and starts observing changes to
+       * session status.
+       */
       setMediaSession: function(session) {
         this.mediaStatus.session = session;
         Object.observe(this.mediaStatus.session, this.mediaStatusSessionObserver.bind(this));
         this.mediaStatusSessionObserver();
       },
-      seekTime: function (e, data, sender) {
-        if(this.mediaStatus.media != null && data.sender != this.tagName){
-          this.seek(data.currentTime);
-        }
-      },
+      /**
+       * Stops the connection animation
+       */
       stopAnimation: function () {
         window.clearInterval(this.intervalId);
         this.intervalId = null;
         this.connectingCounter = -1;
       },
+      /**
+       * Local helper function to play the video on cast.
+       */
       play: function() {
-        this.mediaStatus.media.play(null, this.onSuccess.bind(this), this.onFailure.bind(this));
+        this.mediaStatus.castMedia.play(null, this.onSuccess.bind(this), this.onFailure.bind(this));
       },
+      /**
+       * Local helper function to seek the video on cast.
+       *
+       * @param time {number} time in seconds to seek to
+       */
       seek: function(time){
         var request = new chrome.cast.media.SeekRequest();
         request.currentTime = Math.round(time);
 
-        this.mediaStatus.media.seek(request, this.onSuccess.bind(this), this.onFailure.bind(this));
+        this.mediaStatus.castMedia.seek(request, this.onSuccess.bind(this), this.onFailure.bind(this));
       },
+      /**
+       * Local helper function to pause the video on cast
+       */
       pause: function() {
-        this.mediaStatus.media.pause(null, this.onSuccess.bind(this), this.onFailure.bind(this));
+        this.mediaStatus.castMedia.pause(null, this.onSuccess.bind(this), this.onFailure.bind(this));
       }
     });
   </script>

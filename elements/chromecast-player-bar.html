@@ -3,149 +3,181 @@
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/core-icons/av-icons.html">
+<link rel="import" href="../bower_components/core-signals/core-signals.html">
 <link href='http://fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
 
 <polymer-element name="chromecast-player-bar">
-<template>
-  <style>
-    :host {
-      margin:0 10%;
-      height: 39px;
-      background-color: #000000;
-      opacity: 0.6;
-      z-index: 1000;
-      border-radius: 10px;
-      box-shadow: 0px 6px 18px -1px rgba(0,0,0,0.88);
-      padding: 10px 25px 10px 10px;
-      display:flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      justify-content: space-around;
-      align-items:center;
-    }
+  <template>
+    <style>
+      :host {
+        margin: 0 10%;
+        height: 39px;
+        background-color: #000000;
+        opacity: 0.6;
+        z-index: 1000;
+        border-radius: 10px;
+        box-shadow: 0px 6px 18px -1px rgba(0, 0, 0, 0.88);
+        padding: 10px 25px 10px 10px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: space-around;
+        align-items: center;
+      }
 
-    .play-pause {
-      height: 39px;
-      fill: #ffffff;
-    }
+      .play-pause {
+        height: 39px;
+        fill: #ffffff;
+      }
 
-    #button_play_pause {
-      height:39px;
-      display:flex;
-      min-width:0;
-      order:1;
-      flex-grow:1;
-    }
+      #button_play_pause {
+        height: 39px;
+        display: flex;
+        min-width: 0;
+        order: 1;
+        flex-grow: 1;
+      }
 
-    #button_play_pause::shadow #ripple {
-      color:#eaeaea;
-    }
+      #button_play_pause::shadow #ripple {
+        color: #eaeaea;
+      }
 
-    #slider_progress {
-      order:3;
-      display:flex;
-      flex-grow:20;
+      #slider_progress {
+        order: 3;
+        display: flex;
+        flex-grow: 20;
 
-    }
+      }
 
-    #slider_progress::shadow #sliderKnobInner,
-    #slider_progress::shadow #sliderBar::shadow #activeProgress {
-      background-color: #4F7DC9;
-    }
+      #slider_progress::shadow #sliderKnobInner,
+      #slider_progress::shadow #sliderBar::shadow #activeProgress {
+        background-color: #4F7DC9;
+      }
 
-    #label_time {
-      order:4;
-      display:flex;
-      flex-grow:1;
-      color:#ffffff;
-      font-family: 'Roboto', sans-serif;
-      font-weight:100;
-      width:3em;
-    }
+      #label_time {
+        order: 4;
+        display: flex;
+        flex-grow: 1;
+        color: #ffffff;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 100;
+        width: 3em;
+      }
 
-    #button_flex {
-      display:flex;
-      order:5;
-      flex-grow:1;
-      flex-shrink:10;
-      overflow:hidden;
-      min-width:0px;
-    }
+      #button_flex {
+        display: flex;
+        order: 5;
+        flex-grow: 1;
+        flex-shrink: 10;
+        overflow: hidden;
+        min-width: 0px;
+      }
 
-    core-icon[icon="av:play-arrow"] {
-      height:39px;
-      width:39px;
-      color:#ffffff;
-    }
-    core-icon[icon="av:play-arrow"]:hover {
-      color:#4F7DC9;
-    }
+      core-icon[icon="av:play-arrow"] {
+        height: 39px;
+        width: 39px;
+        color: #ffffff;
+      }
 
-    core-icon[icon="av:pause"] {
-      height:39px;
-      width:39px;
-      color:#ffffff;
-    }
-    core-icon[icon="av:pause"]:hover {
-      color:#4F7DC9;
-    }
+      core-icon[icon="av:play-arrow"]:hover {
+        color: #4F7DC9;
+      }
+
+      core-icon[icon="av:pause"] {
+        height: 39px;
+        width: 39px;
+        color: #ffffff;
+      }
+
+      core-icon[icon="av:pause"]:hover {
+        color: #4F7DC9;
+      }
 
 
-  </style>
-  <div class="play-pause">
-    <paper-button id="button_play_pause">
-      <core-icon id="icon_play_pause"
-          icon="av:play-arrow"></core-icon>
-    </paper-button>
-  </div>
-  <paper-slider id="slider_progress" immediateValue="{{ sliderValue }}"></paper-slider>
-  <label id="label_time">
-    {{ mediaStatus.timeRemainingString }}
-  </label>
-  <div id="button_flex">
-  <chromecast-button id="button_cast" appId="{{ appId }}" mediaStatus="{{ mediaStatus }}"
-                      color="white"></chromecast-button>
-  </div>
-</template>
-<script>
-  Polymer("chromecast-player-bar", {
-    time:"0:00:00",
-    sliderValue: 0,
-    publish: {
-      appId: null,
-      mediaStatus: null
-    },
-    observe: {
-      'mediaStatus.state': 'updatePlayButton',
-      'mediaStatus.currentTimeS': 'currentTimeUpdate'
-    },
-    ready: function() {
-      this.$.button_play_pause.addEventListener('click', function(){
-        if(this.mediaStatus.state != cast.MediaStatus.STATE.PLAY) {
-          this.mediaStatus.play();
-        } else {
-          this.mediaStatus.pause();
+    </style>
+    <div class="play-pause">
+      <paper-button id="button_play_pause">
+        <core-icon id="icon_play_pause"
+                   icon="av:play-arrow"></core-icon>
+      </paper-button>
+    </div>
+    <paper-slider id="slider_progress" immediateValue="{{ sliderValue }}"></paper-slider>
+    <label id="label_time">
+      {{ mediaStatus.localMedia.timeRemainingString }}
+    </label>
+
+    <div id="button_flex">
+      <chromecast-button id="button_cast" appId="{{ appId }}" mediaStatus="{{ mediaStatus }}"
+                         color="white"></chromecast-button>
+    </div>
+    <core-signals on-core-signal-media-action="{{ mediaActionHandler }}"></core-signals>
+  </template>
+  <script>
+    Polymer("chromecast-player-bar", {
+      sliderValue: 0,
+      publish: {
+        appId: null, //Id of chromecast receiver
+        mediaStatus: null //MediaStatus object
+      },
+      observe: {
+        'mediaStatus.localMedia.currentTime': 'currentTimeUpdate'
+      },
+      ready: function () {
+        //Add event listener for button clicks
+        this.$.button_play_pause.addEventListener('click', function () {
+          if (this.mediaStatus.localMedia.state != cast.Media.STATE.PLAY) {
+            this.mediaStatus.play(cast.MediaStatus.SENDER.LOCAL);
+          } else {
+            this.mediaStatus.pause(cast.MediaStatus.SENDER.LOCAL);
+          }
+        }.bind(this));
+        //Add event listener for slider interaction
+        this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
+      },
+      /**
+       * Updates user interaction with the slider to seek
+       *
+       * @param newVal {number} value 0-100 of percentage completion
+       */
+      sliderUpdate: function (newVal) {
+        //Convert percentage to seconds
+        var time = this.mediaStatus.localMedia.floatToTime(this.sliderValue / 100);
+        //If the current media is untouched change the state to paused if it's seeked
+        //This hides the thumbnail overlay
+        if (this.mediaStatus.localMedia.state == cast.Media.STATE.STOP) {
+          this.mediaStatus.localMedia.state = cast.Media.STATE.PAUSE;
         }
-      }.bind(this));
-      this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
-    },
-    sliderUpdate: function(newVal) {
-      var time = this.mediaStatus.floatToTime(this.sliderValue/100);
-      if(this.mediaStatus.state == cast.MediaStatus.STATE.STOP) {
-        this.mediaStatus.state = cast.MediaStatus.STATE.PAUSE;
+        //Seek to the corresponding time in the video
+        this.mediaStatus.seek(time, this.tagname);
+      },
+      /**
+       * Observes localMedia currentTime and updates the slider value.
+       *
+       * Since the slider is based on video currentTime the player bar doesn't need to handle
+       * seek events.
+       *
+       * @param oldVal {number}
+       * @param newVal {number}
+       */
+      currentTimeUpdate: function (oldVal, newVal) {
+        this.sliderValue = Math.round(this.mediaStatus.localMedia.getCurrentPercentageComplete() * 100);
+      },
+      mediaActionHandler: function (e, data, sender) {
+        switch (data.action) {
+          case 'play':
+            if (this.mediaStatus.isMediaMatch()
+                || data.sender === cast.MediaStatus.SENDER.LOCAL) {
+              this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+            }
+            break;
+          case 'pause':
+            if (this.mediaStatus.isMediaMatch()
+                || data.sender === cast.MediaStatus.SENDER.LOCAL) {
+              this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+            }
+            break;
+        }
       }
-      this.mediaStatus.seek(time, this.tagname);
-    },
-    currentTimeUpdate: function (oldVal, newVal) {
-      this.sliderValue = Math.round(this.mediaStatus.getCurrentPercentageComplete() * 100);
-    },
-    updatePlayButton : function(oldVal, newVal) {
-      if(newVal != cast.MediaStatus.STATE.PLAY) {
-        this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
-      } else {
-        this.$.icon_play_pause.setAttribute('icon', 'av:pause');
-      }
-    }
-  });
-</script>
+    });
+  </script>
 </polymer-element>

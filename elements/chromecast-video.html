@@ -1,103 +1,133 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/core-signals/core-signals.html">
 <link rel="import" href="chromecast-player-bar.html">
-
+<!--
+This element handles video functionality.
+-->
 <polymer-element name="chromecast-video">
   <template>
     <style>
       :host {
-        height:531px;
-        width:944px;
-        display:block;
-        position:relative;
+        height: 531px;
+        width: 944px;
+        display: block;
+        position: relative;
       }
 
       #image_overlay, #video_content {
-        height:100%;
-        width:100%;
-        position:absolute;
-        left:0px;
-        top:0px;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
 
       }
+
       #image_overlay {
         background-size: cover;
         background-repeat: no-repeat;
         background-position: 50% 50%;
         border: none;
-        padding: 0px;
-        margin: 0px;
-        z-index:10;
+        padding: 0;
+        margin: 0;
+        z-index: 10;
       }
 
       .player-bar-holder {
         position: absolute;
         bottom: 40px;
-        width:100%;
-        z-index:1000;
+        width: 100%;
+        z-index: 1000;
       }
 
       #image_overlay.hidden {
-        display:none;
+        display: none;
       }
 
     </style>
     <div id="image_overlay"
-         class="{{ mediaStatus.state != 2 || mediaStatus.isCasting ? 'hidden': ''}}"></div>
-    <video id="video_content" class="seek-listener">
-
+         class="{{ mediaStatus.localMedia.state != 2 || mediaStatus.isCasting ? 'hidden': ''}}"></div>
+    <video id="video_content">
     </video>
     <div class="player-bar-holder">
-    <chromecast-player-bar appId="{{ appId }}"
-                           mediaStatus="{{ mediaStatus }}"></chromecast-player-bar>
+      <chromecast-player-bar appId="{{ appId }}"
+                             mediaStatus="{{ mediaStatus }}"></chromecast-player-bar>
     </div>
-    <core-signals on-core-signal-seek="{{ seekTime }}"></core-signals>
+    <core-signals on-core-signal-media-action="{{ mediaActionHandler }}"></core-signals>
   </template>
   <script>
-Polymer("chromecast-video",{
+    Polymer("chromecast-video", {
+      publish: {
+        appId: null,
+        mediaStatus: null
+      },
+      /**
+       * Holds refresh interval ID
+       */
+      intervalId: null,
+      /**
+       * Interval to poll video state and update
+       */
+      refreshIntervalMs: 1000,
+      observe: {
+        'mediaStatus.localMedia': 'mediaObserver'
+      },
+      ready: function () {
+        this.$.video_content.addEventListener('loadeddata', this.onMediaLoaded.bind(this));
+      },
+      /**
+       * When the media is loaded update the localMedia details.
+       */
+      onMediaLoaded: function () {
+        this.mediaStatus.localMedia.setDuration(this.$.video_content.duration);
+        this.mediaStatus.localMedia.setCurrentTime(this.$.video_content.currentTime);
+      },
+      /**
+       * Observes mediaStatus.localMedia for changes and sets the new video upon a change
+       *
+       */
+      mediaObserver: function (oldVal, newVal) {
+        this.$.image_overlay.style.backgroundImage = "url('" + newVal.thumbnailImageUrl + "')";
+        this.$.video_content.src = newVal.url;
+      },
+      /**
+       * Handles media events
+       *
+       * @param e
+       * @param data event information
+       * @param sender
+       */
+      mediaActionHandler: function (e, data, sender) {
+        //If the local media matches chromecast or if the sender is controlling local content
+        //take action
+        if (this.mediaStatus.isMediaMatch()
+            || data.sender === cast.MediaStatus.SENDER.LOCAL) {
+          switch (data.action) {
+            case 'seek':
+              this.$.video_content.currentTime = data.currentTime;
+              this.mediaStatus.localMedia.setCurrentTime(data.currentTime);
+              break;
+            case
+            'play':
+              this.$.video_content.play();
+              this.mediaStatus.localMedia.state = cast.Media.STATE.PLAY;
+              this.intervalId = window.setInterval(function () {
+                this.mediaStatus.localMedia.setCurrentTime(this.$.video_content.currentTime);
+              }.bind(this), this.refreshIntervalMs);
+              break;
+            case
+            'pause':
+              this.$.video_content.pause();
+              this.mediaStatus.localMedia.state = cast.Media.STATE.PAUSE;
+              if (this.intervalId != null) {
+                window.clearInterval(this.intervalId);
+                this.intervalId = null;
+              }
+              break;
+          }
+        }
+      }
 
-  publish: {
-    appId: null,
-    mediaStatus: null
-  },
-  intervalId: null,
-  refreshIntervalMS: 1000,
-  observe: {
-    'mediaStatus.mediaData':'mediaDataObserver',
-    'mediaStatus.state':'mediaStateObserver'
-  },
-  ready: function() {
-    this.$.video_content.addEventListener('loadeddata', this.onMediaLoaded.bind(this));
-  },
-  onMediaLoaded: function() {
-    this.mediaStatus.setDuration(this.$.video_content.duration);
-    this.mediaStatus.setCurrentTime(this.$.video_content.currentTime);
-  },
-  mediaDataObserver: function(oldVal, newVal) {
-    this.$.image_overlay.style.backgroundImage = "url('" + newVal.thumbnailImageUrl + "')";
-    this.$.video_content.src = newVal.url;
-  },
-  mediaStateObserver: function(oldVal, newVal) {
-    if(newVal == cast.MediaStatus.STATE.PLAY){
-      this.$.video_content.play();
-      if (this.intervalId == null) {
-        this.intervalId = window.setInterval(function () {
-          this.mediaStatus.setCurrentTime(this.$.video_content.currentTime);
-        }.bind(this), this.refreshIntervalMS);
-      }
-    } else if(newVal == cast.MediaStatus.STATE.PAUSE) {
-      this.$.video_content.pause();
-      if(this.intervalId != null) {
-        window.clearInterval(this.intervalId);
-        this.intervalId = null;
-      }
-    }
-  },
-  seekTime: function(e, data, sender) {
-    if(data.sender != this.tagName){
-      this.$.video_content.currentTime = data.currentTime;
-    }
-  }
-});
+    });
   </script>
 </polymer-element>

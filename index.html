@@ -4,6 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+  <script src="js/media.js"></script>
   <script src="js/mediastatus.js"></script>
 
   <link rel="import" href="bower_components/core-header-panel/core-header-panel.html">
@@ -13,14 +14,13 @@
   <link rel="stylesheet" media="(min-width: 1824px)" href="css/mw-1824-styles.css">
   <link rel="stylesheet" media="(min-width: 1224px)" href="css/mw-1224-styles.css">
   <script>
-    var mediaStatus =
-        new
-            cast.MediaStatus({
+    var media = new cast.Media({
           title: 'Big Buck Bunny',
           url:'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
           thumbnailImageUrl:
               "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
         });
+    var mediaStatus = new cast.MediaStatus(media);
     window.addEventListener('polymer-ready', function() {
       var videoPlayer = document.querySelector('chromecast-video');
       videoPlayer.mediaStatus = mediaStatus;
