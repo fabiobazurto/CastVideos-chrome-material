@@ -1,3 +1,16 @@
 core-header-panel {
   width:100%;
 }
+
+.core-header.tall {
+  height:850px;
+}
+
+.video-width {
+  width:944px;
+  margin: 40px auto;
+}
+
+.video-height {
+  height:531px;
+}

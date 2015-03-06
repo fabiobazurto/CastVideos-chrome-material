@@ -9,21 +9,28 @@
 
   <link rel="import" href="bower_components/core-header-panel/core-header-panel.html">
   <link rel="import" href="elements/chromecast-video.html">
+  <link rel="import" href="elements/video-details.html">
 
   <link rel="stylesheet" href="css/common.css">
-  <link rel="stylesheet" media="(min-width: 1824px)" href="css/mw-1824-styles.css">
-  <link rel="stylesheet" media="(min-width: 1224px)" href="css/mw-1224-styles.css">
+  <link rel="stylesheet" media="only screen and (min-width: 1224px) and (max-width: 1823px)" href="css/mw-1224-styles.css">
+  <link rel="stylesheet" media="only screen and (min-width: 1824px)" href="css/mw-1824-styles.css">
+
   <script>
     var media = new cast.Media({
+          creator: 'Blender Foundation',
           title: 'Big Buck Bunny',
           url:'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
           thumbnailImageUrl:
-              "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
-        });
+              'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg',
+          description: "Big Buck Bunny tells the story of a giant rabbit with a heart bigger than himself. When one sunny day three rodents rudely harass him, something snaps... and the rabbit ain't no bunny anymore! In the typical cartoon tradition he prepares the nasty rodents a comical revenge.<br/><br/>Licensed under the Creative Commons Attribution license http://www.bigbuckbunny.org"
+
+    });
     var mediaStatus = new cast.MediaStatus(media);
     window.addEventListener('polymer-ready', function() {
       var videoPlayer = document.querySelector('chromecast-video');
       videoPlayer.mediaStatus = mediaStatus;
+      var videoDetails = document.querySelector('video-details');
+      videoDetails.mediaStatus = mediaStatus;
     });
   </script>
 </head>
@@ -33,7 +40,8 @@
     <div class="logo-bar">
       <img src="images/logo.png">
     </div>
-    <chromecast-video appId="4F8B3483" class="video-player shadow"></chromecast-video>
+    <chromecast-video appId="4F8B3483" class="video-width video-height shadow"></chromecast-video>
+    <video-details class="video-width"></video-details>
   </div>
   <div class="content" fit>body content goes here</div>
 </core-header-panel>

@@ -17,6 +17,8 @@ var cast = window.cast || {};
     this.title = media.title;
     this.url = media.url;
     this.thumbnailImageUrl = media.thumbnailImageUrl;
+    this.creator = media.creator;
+    this.description = media.description;
 
     /**
      * Current media state

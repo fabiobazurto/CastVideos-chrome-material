@@ -26,10 +26,6 @@ core-header-panel {
   background: linear-gradient(to bottom, #1b1b1b 0%,#3f3f3f 100%); /* W3C */
 }
 
-.core-header.tall {
-  height:720px;
-}
-
 .logo-bar {
   width:100%;
   background: #4F7DC9;
@@ -43,12 +39,6 @@ core-header-panel {
 .content {
   width:100%;
   background-color: #ffffff;
-}
-
-.video-player {
-  width:944px;
-  height:531px;
-  margin: 40px auto;
 }
 
 .shadow {

@@ -1,0 +1,50 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link href='http://fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
+      type='text/css'>
+<polymer-element name="video-details">
+  <template>
+    <style>
+      :host {
+        width: 100%;
+        display: block;
+        position: relative;
+      }
+
+      p {
+        margin: 10px 20px;
+        font-family: 'Roboto', sans-serif;
+        color: #eaeaea;
+        font-weight: 100;
+      }
+
+      #title {
+        font-weight: 700;
+        font-size:27px;
+        margin-right:10px;
+      }
+
+      #sub_title {
+        font-weight: 100;
+        font-size:27px;
+      }
+    </style>
+    <p>
+      <span id="title">{{ mediaStatus.localMedia.creator }}</span>
+      <span id="sub_title">{{ mediaStatus.localMedia.title }}</span>
+    </p>
+    <p id="description"></p>
+  </template>
+  <script>
+    Polymer("video-details", {
+      publish: {
+        mediaStatus: null
+      },
+      observe: {
+        'mediaStatus.localMedia.description': 'descriptionObserver'
+      },
+      descriptionObserver: function(oldVal, newVal) {
+        this.$.description.innerHTML = newVal;
+      }
+    });
+  </script>
+</polymer-element>

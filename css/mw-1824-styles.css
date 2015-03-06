@@ -1,3 +1,16 @@
 core-header-panel {
   max-width: 1600px;
 }
+
+.core-header.tall {
+  height:970px;
+}
+
+.video-width {
+  width:1184px;
+  margin: 40px auto;
+}
+
+.video-height {
+  height:666px;
+}

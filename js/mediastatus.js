@@ -114,10 +114,11 @@ var cast = window.cast || {};
     setCastMedia: function(media) {
       this.castMedia = media;
       //If the media doesn't match and nothing is playing, load casting media into local media
+      //TODO(pying): revisit this to see if it's necessary
       if (!this.isMediaMatch() && this.localMedia.state == cast.Media.STATE.STOP
           && media.metadata != null) {
         var metadata = media.metadata;
-        var localMedia = cast.Media({
+        var localMedia = new cast.Media({
           'title': metadata.title,
           'url': media.contentId,
           'thumbnailImageUrl': metadata.images[0].url
