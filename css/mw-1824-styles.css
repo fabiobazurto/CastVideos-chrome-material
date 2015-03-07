@@ -1,10 +1,7 @@
-core-header-panel {
-  max-width: 1600px;
-}
 
-.core-header.tall {
-  height:970px;
-}
+/*.core-header.tall {*/
+  /*height:970px;*/
+/*}*/
 
 .video-width {
   width:1184px;
@@ -13,4 +10,12 @@ core-header-panel {
 
 .video-height {
   height:666px;
+}
+
+.full-width {
+  width:100%;
+}
+
+.width {
+  width: 1600px;
 }

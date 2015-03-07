@@ -1,0 +1,21 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<polymer-element name="video-carousel-element">
+  <template>
+    <style>
+      :host {
+        width: 100%;
+        display: inline-block;
+        position: relative;
+      }
+    </style>
+
+  </template>
+  <script>
+    Polymer("video-carousel-element", {
+      publish: {
+        media: null
+      }
+    });
+  </script>
+</polymer-element>
