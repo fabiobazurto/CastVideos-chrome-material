@@ -1,5 +1,5 @@
 body {
-  background-color: #eaeaea;
+  background-color: #aeaeae;
 }
 
 core-header-panel {
@@ -47,10 +47,11 @@ video-details {
 }
 
 .bgcolor {
-  background-color: #ffffff;
+  background-color: #eaeaea;
 }
 
 #footer {
+  margin-top:20px;
   height: 41px;
   background: #1b1b1b; /* Old browsers */
   background: -moz-linear-gradient(top, #1b1b1b 0%, #3f3f3f 100%); /* FF3.6+ */

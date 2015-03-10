@@ -131,7 +131,8 @@ var cast = window.cast || {};
       }
     },
     setLocalMedia: function(media) {
-
+      this.localMedia = media;
+      this.localMedia.state = cast.Media.STATE.PAUSE;
     },
     getVideoNameFromHashUrl: function() {
 

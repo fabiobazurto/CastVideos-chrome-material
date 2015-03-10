@@ -120,7 +120,8 @@
         mediaStatus: null //MediaStatus object
       },
       observe: {
-        'mediaStatus.localMedia.currentTime': 'currentTimeUpdate'
+        'mediaStatus.localMedia.currentTime': 'currentTimeUpdate',
+        'mediaStatus.localMedia.state': 'mediaStateUpdate'
       },
       ready: function () {
         //Add event listener for button clicks
@@ -162,18 +163,23 @@
       currentTimeUpdate: function (oldVal, newVal) {
         this.sliderValue = Math.round(this.mediaStatus.localMedia.getCurrentPercentageComplete() * 100);
       },
+      mediaStateUpdate: function (oldVal, newVal) {
+        if(newVal == cast.Media.STATE.PLAY) {
+          this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+        } else {
+          this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+        }
+      },
       mediaActionHandler: function (e, data, sender) {
         switch (data.action) {
           case 'play':
             if (this.mediaStatus.isMediaMatch()
                 || data.sender === cast.MediaStatus.SENDER.LOCAL) {
-              this.$.icon_play_pause.setAttribute('icon', 'av:pause');
             }
             break;
           case 'pause':
             if (this.mediaStatus.isMediaMatch()
                 || data.sender === cast.MediaStatus.SENDER.LOCAL) {
-              this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
             }
             break;
         }
