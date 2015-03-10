@@ -78,6 +78,13 @@ This element handles video functionality.
       },
       ready: function () {
         this.$.video_content.addEventListener('loadeddata', this.onMediaLoaded.bind(this));
+        this.addEventListener('click', function () {
+              if (this.mediaStatus.localMedia.state != cast.Media.STATE.PLAY) {
+                this.mediaStatus.play(cast.MediaStatus.SENDER.LOCAL);
+              } else {
+                this.mediaStatus.pause(cast.MediaStatus.SENDER.LOCAL);
+              }
+        }.bind(this));
       },
       /**
        * When the media is loaded update the localMedia details.

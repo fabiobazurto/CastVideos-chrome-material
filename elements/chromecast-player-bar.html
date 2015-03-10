@@ -3,7 +3,6 @@
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/core-icons/av-icons.html">
-<link rel="import" href="../bower_components/core-signals/core-signals.html">
 <link href='http://fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
 
 <polymer-element name="chromecast-player-bar">
@@ -110,7 +109,6 @@
       <chromecast-button id="button_cast" appId="{{ appId }}" mediaStatus="{{ mediaStatus }}"
                          color="white"></chromecast-button>
     </div>
-    <core-signals on-core-signal-media-action="{{ mediaActionHandler }}"></core-signals>
   </template>
   <script>
     Polymer("chromecast-player-bar", {
@@ -125,7 +123,8 @@
       },
       ready: function () {
         //Add event listener for button clicks
-        this.$.button_play_pause.addEventListener('click', function () {
+        this.$.button_play_pause.addEventListener('click', function (event) {
+          event.stopPropagation();
           if (this.mediaStatus.localMedia.state != cast.Media.STATE.PLAY) {
             this.mediaStatus.play(cast.MediaStatus.SENDER.LOCAL);
           } else {
@@ -164,24 +163,13 @@
         this.sliderValue = Math.round(this.mediaStatus.localMedia.getCurrentPercentageComplete() * 100);
       },
       mediaStateUpdate: function (oldVal, newVal) {
-        if(newVal == cast.Media.STATE.PLAY) {
-          this.$.icon_play_pause.setAttribute('icon', 'av:pause');
-        } else {
-          this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
-        }
-      },
-      mediaActionHandler: function (e, data, sender) {
-        switch (data.action) {
-          case 'play':
-            if (this.mediaStatus.isMediaMatch()
-                || data.sender === cast.MediaStatus.SENDER.LOCAL) {
-            }
-            break;
-          case 'pause':
-            if (this.mediaStatus.isMediaMatch()
-                || data.sender === cast.MediaStatus.SENDER.LOCAL) {
-            }
-            break;
+        if (this.mediaStatus.isMediaMatch()
+            || data.sender === cast.MediaStatus.SENDER.LOCAL) {
+          if(newVal == cast.Media.STATE.PLAY) {
+            this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+          } else {
+            this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+          }
         }
       }
     });

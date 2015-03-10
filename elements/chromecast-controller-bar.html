@@ -1,0 +1,29 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../bower_components/core-icons/av-icons.html">
+<link rel="import" href="../bower_components/core-signals/core-signals.html">
+<link href='http://fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
+
+<polymer-element name="chromecast-controller-bar">
+  <template>
+    <style>
+      :host {
+        width:200px;
+
+      }
+    </style>
+
+    <script>
+      Polymer("chromecast-controller-bar", {
+        publish: {
+          width: '200px',
+          height: '39px',
+          color:'#ffff00',
+          mediaStatus: null
+        }
+      });
+    </script>
+  </template>
+</polymer-element>
