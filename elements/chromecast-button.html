@@ -322,7 +322,6 @@ svg.connected {
       seek: function(time){
         var request = new chrome.cast.media.SeekRequest();
         request.currentTime = Math.round(time);
-
         this.mediaStatus.castMedia.seek(request, this.onSuccess.bind(this), this.onFailure.bind(this));
       },
       /**

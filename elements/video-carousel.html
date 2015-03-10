@@ -13,50 +13,118 @@
     <style>
       :host {
         width: 100%;
-        height: 240px;
-        display: block;
+        height: 360px;
         position: relative;
       }
-
+      .flex-row {
+        height:100%;
+        width:100%;
+        display:flex;
+        justify-content: space-between;
+        flex-direction: row;
+        align-items: center;
+      }
       #label {
         margin-left: 20px;
         font-family: 'Roboto', sans-serif;
         font-weight: 100;
         font-size: 27px;
       }
+
+      core-icon[icon="chevron-left"], core-icon[icon="chevron-right"] {
+        display:flex;
+        height:39px;
+        width:39px;
+        color: #000000
+      }
+
+      paper-button {
+        display:flex;
+        justify-content: center;
+        max-width:40px;
+        height:240px;
+        flex-grow:1;
+      }
+      core-animated-pages {
+        flex-grow:50;
+        display:flex;
+      }
+
+      #title {
+        display:block;
+      }
+
+      .currently-playing {
+        background-color: #4F7DC9;
+      }
+
     </style>
-
-    <p id="label">{{ title }}</p>
-
-    <core-animated-pages>
+    <p id="label">{{ genre }}</p>
+    <div class="flex-row">
+    <paper-button id="previous" on-click="{{ previousPage }}">
+      <core-icon id="chevron_left" icon="chevron-left"></core-icon>
+    </paper-button>
+    <core-animated-pages id="pages" transitions="slide-from-right">
       <template repeat="{{ split in splitMedia }}">
         <section horizontal layout center>
-          <paper-button id="previous">
-            <core-icon id="chevron_left" icon="chevron-left"></core-icon>
-          </paper-button>
           <template repeat="{{ media in split }}">
             <video-carousel-element media="{{ media }}"
+                                    class="{{ media.url == mediaStatus.localMedia.url ? 'currently-playing' : ''}}"
                                     on-click="{{ clickHandler }}"></video-carousel-element>
           </template>
-          <button id="next"></button>
         </section>
       </template>
     </core-animated-pages>
+    <paper-button id="next" on-click="{{ nextPage }}">
+      <core-icon id="chevron_right" icon="chevron-right"></core-icon>
+    </paper-button>
+    </div>
   </template>
   <script>
     Polymer("video-carousel", {
-      splitMedia:null,
-      elementsPerPage: 5,
+      /**
+       * Array of arrays of video to display per page
+       */
+      splitMedia:[],
+      elementsPerPage: 6,
       publish: {
         mediaStatus: null,
         mediaList:null,
-        title: null
+        genre: null
       },
-      mediaChange: function() {
-
+      mediaListChanged: function() {
+        this.splitMedia = [];
+        var mediaLength = Object.keys(this.mediaList).length;
+        var keys = Object.keys(this.mediaList);
+        var counter = 0;
+        var splitCounter = 0;
+        var currentSplit = [];
+        while (counter < mediaLength) {
+          currentSplit.push(this.mediaList[keys[counter]]);
+          splitCounter++;
+          counter++;
+            if (splitCounter == this.elementsPerPage) {
+              this.splitMedia.push(currentSplit);
+              currentSplit = [];
+              splitCounter = 0;
+            }
+        }
+        if (currentSplit.length != 0) {
+          this.splitMedia.push(currentSplit);
+        }
       },
       clickHandler: function(event, detail, sender) {
-
+        console.log('element clicked: ' + sender.media.title);
+      },
+      nextPage: function() {
+        this.$.pages.selected = (this.$.pages.selected + 1) % this.splitMedia.length;
+      },
+      previousPage: function() {
+        this.$.pages.selected = this.mod((this.$.pages.selected - 1), this.splitMedia.length);
+        console.log(this.$.pages.selected);
+      },
+      mod: function(num, modNum) {
+        return ((num % modNum) + modNum) % modNum;
       }
     });
   </script>

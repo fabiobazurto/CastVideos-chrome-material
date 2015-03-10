@@ -45,3 +45,18 @@ video-details {
   overflow: hidden;
   box-shadow: 0px 6px 18px -1px rgba(0,0,0,0.88);
 }
+
+.bgcolor {
+  background-color: #ffffff;
+}
+
+#footer {
+  height: 41px;
+  background: #1b1b1b; /* Old browsers */
+  background: -moz-linear-gradient(top, #1b1b1b 0%, #3f3f3f 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#1b1b1b), color-stop(100%,#3f3f3f)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, #1b1b1b 0%,#3f3f3f 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, #1b1b1b 0%,#3f3f3f 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, #1b1b1b 0%,#3f3f3f 100%); /* IE10+ */
+  background: linear-gradient(to bottom, #1b1b1b 0%,#3f3f3f 100%); /* W3C */
+}

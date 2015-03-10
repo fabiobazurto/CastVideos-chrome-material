@@ -67,6 +67,9 @@ var cast = window.cast || {};
      * @type {boolean}
      */
     this.isCasting = false;
+
+
+    this.setUrl = false;
   }
 
   MediaStatus.prototype = {
@@ -126,6 +129,12 @@ var cast = window.cast || {};
         localMedia.duration = media.duration;
         this.localMedia = localMedia;
       }
+    },
+    setLocalMedia: function(media) {
+
+    },
+    getVideoNameFromHashUrl: function() {
+
     },
     /**
      * Returns true if the current local media matches cast media or if no Castmedia is loaded
