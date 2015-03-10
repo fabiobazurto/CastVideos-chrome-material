@@ -50,6 +50,10 @@ video-details {
   background-color: #eaeaea;
 }
 
+.full-width {
+  width:100%;
+}
+
 #footer {
   margin-top:20px;
   height: 41px;
