@@ -133,6 +133,7 @@ var cast = window.cast || {};
     setLocalMedia: function(media) {
       this.localMedia = media;
       this.localMedia.state = cast.Media.STATE.PAUSE;
+      //TODO(pying): set the URL hash so reload functions properly
     },
     getVideoNameFromHashUrl: function() {
 
