@@ -1,5 +1,4 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/core-icons/av-icons.html">
@@ -10,20 +9,176 @@
   <template>
     <style>
       :host {
-        width:200px;
-
+        padding: 0px 10px;
+        width:370px;
+        height:50px;
+        position:fixed;
+        bottom: -50px;
+        right: 100px;
+        background-color: #555555;
+        z-index: 10000;
+        transition: .3s ease-in-out;
+        opacity:.8;
       }
-    </style>
 
+      #controller_bar {
+        display: flex;
+        flex-direction:row;
+        justify-content:space-around;
+        align-items:center;
+        height:100%;
+        width:100%;
+      }
+
+      label.title {
+        display: flex;
+        flex-grow: 1;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 400;
+        font-size:1.3em;
+        color: #ffffff;
+      }
+
+      core-icon[icon="av:play-arrow"] {
+        height: 39px;
+        width: 39px;
+        color: #ffffff;
+      }
+
+      core-icon[icon="av:play-arrow"]:hover {
+        color: #4F7DC9;
+      }
+
+      core-icon[icon="av:pause"] {
+        height: 39px;
+        width: 39px;
+        color: #ffffff;
+      }
+
+      core-icon[icon="av:pause"]:hover {
+        color: #4F7DC9;
+      }
+
+      #button_play_pause {
+        height: 40px;
+        min-width: 0px;
+        display: flex;
+        flex-grow: 1;
+      }
+
+      #label_time {
+        order: 4;
+        display: flex;
+        flex-grow: 3;
+        color: #ffffff;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 100;
+        width: 3em;
+      }
+
+      #slider_progress {
+        display:flex;
+        flex-grow:4;
+      }
+
+      #slider_progress::shadow #sliderKnobInner,
+      #slider_progress::shadow #sliderBar::shadow #activeProgress {
+        background-color: #4F7DC9;
+      }
+
+    </style>
+    <div id="controller_bar">
+      <label class="title">Cast</label>
+      <paper-button id="button_play_pause">
+        <core-icon id="icon_play_pause"
+                   icon="av:play-arrow"></core-icon>
+      </paper-button>
+      <paper-slider id="slider_progress" immediateValue="{{ sliderValue }}"></paper-slider>
+      <label id="label_time">
+        {{ castTimeRemaining }}
+      </label>
+    </div>
+    <div id="content_bar">
+
+    </div>
+    </template>
     <script>
       Polymer("chromecast-controller-bar", {
         publish: {
-          width: '200px',
-          height: '39px',
-          color:'#ffff00',
           mediaStatus: null
+        },
+        castTimeRemaining: '00:00:00',
+        sliderValue: 0,
+        intervalId: null,
+        currTime: null,
+        prevTime: null,
+        observe: {
+          'mediaStatus.castMedia.media.contentId': 'mediaMatchObserver',
+          'mediaStatus.localMedia.url': 'mediaMatchObserver',
+          'mediaStatus.castMedia.playerState': 'playerStateObserver',
+          'mediaStatus.castMedia.currentTime': 'currentTimeObserver'
+        },
+        ready: function() {
+          this.$.button_play_pause.addEventListener('click', function (event) {
+            if (this.mediaStatus.castMedia.playerState != chrome.cast.media.PlayerState.PLAYING) {
+              this.mediaStatus.play(cast.MediaStatus.SENDER.CASTCONTROLLER);
+            } else {
+              this.mediaStatus.pause(cast.MediaStatus.SENDER.CASTCONTROLLER);
+            }
+          }.bind(this));
+          this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
+          this.addEventListener('click', function(event) {
+            event.stopPropagation();
+          });
+        },
+        /**
+         * Observe the chromecast player state and update
+         * @param oldVal {chrome.cast.media.PlayerState}
+         * @param newVal {chrome.cast.media.PlayerState}
+         */
+        playerStateObserver: function(oldVal,newVal) {
+          if (newVal === chrome.cast.media.PlayerState.PLAYING) {
+            this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+            if(this.intervalId == null) {
+              this.intervalId = window.setInterval(function(){
+                var currTime = new Date();
+                if(this.prevTime == null) {
+                  this.prevTime = new Date();
+                }
+                var deltaS = (currTime - this.prevTime)/1000;
+                this.mediaStatus.castMedia.currentTime += deltaS;
+                this.prevTime = currTime;
+              }.bind(this),1000);
+            }
+          } else {
+            this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+            window.clearInterval(this.intervalId);
+            this.intervalId = null;
+            this.prevTime = null;
+          }
+        },
+        sliderUpdate: function (newVal) {
+          if(this.mediaStatus.hasCastMedia()) {
+            var duration = this.mediaStatus.castMedia.media.duration;
+            var time = (this.sliderValue / 100) * duration;
+            this.mediaStatus.seek(time, cast.MediaStatus.SENDER.CASTCONTROLLER);
+          }
+        },
+        currentTimeObserver: function(oldVal, newVal) {
+          if (this.mediaStatus.hasCastMedia()) {
+            var duration = this.mediaStatus.castMedia.media.duration;
+            var currentTime = this.mediaStatus.castMedia.currentTime;
+            this.castTimeRemaining = cast.Media.secondsToHHMMSS(duration - currentTime);
+            this.sliderValue = Math.round(currentTime / duration * 100);
+          }
+        },
+        mediaMatchObserver: function(oldVal, newVal) {
+          if (!this.mediaStatus.isMediaMatch()) {
+            this.style.transform = 'translateY(-50px)';
+          } else {
+            this.style.transform = '';
+          }
         }
       });
     </script>
-  </template>
 </polymer-element>

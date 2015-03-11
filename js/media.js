@@ -52,6 +52,26 @@ var cast = window.cast || {};
     this.timeRemainingString = "0:00:00";
   }
 
+  /**
+   * Converts time in seconds to HH:MM:SS
+   *
+   * @param seconds {number}
+   * @returns {string}
+   */
+  Media.secondsToHHMMSS = function (seconds) {
+    var hours = Math.floor(seconds / 3600);
+    var minutes = Math.floor((seconds % 3600) / 60);
+    var seconds = Math.floor(seconds % 60);
+
+    if (minutes < 10) {
+      minutes = "0" + minutes;
+    }
+    if (seconds < 10) {
+      seconds = "0" + seconds;
+    }
+    return hours + ':' + minutes + ':' + seconds;
+  };
+
   Media.prototype = {
     /**
      * Sets the content duration
@@ -68,7 +88,7 @@ var cast = window.cast || {};
      */
     setCurrentTime: function (time) {
       this.currentTime = time;
-      this.timeRemainingString = this.secondsToHHMMSS(this.duration - time);
+      this.timeRemainingString = Media.secondsToHHMMSS(this.duration - time);
     },
     /**
      * Returns the current percentage of completion for the content
@@ -86,25 +106,6 @@ var cast = window.cast || {};
      */
     floatToTime: function (floatVal) {
       return floatVal * this.duration;
-    },
-    /**
-     * Converts time in seconds to HH:MM:SS
-     *
-     * @param seconds {number}
-     * @returns {string}
-     */
-    secondsToHHMMSS: function (seconds) {
-      var hours = Math.floor(seconds / 3600);
-      var minutes = Math.floor((seconds % 3600) / 60);
-      var seconds = Math.floor(seconds % 60);
-
-      if (minutes < 10) {
-        minutes = "0" + minutes;
-      }
-      if (seconds < 10) {
-        seconds = "0" + seconds;
-      }
-      return hours + ':' + minutes + ':' + seconds;
     }
   };
   cast.Media = Media;

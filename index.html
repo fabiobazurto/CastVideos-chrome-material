@@ -11,6 +11,7 @@
   <link rel="import" href="elements/chromecast-video.html">
   <link rel="import" href="elements/video-details.html">
   <link rel="import" href="elements/video-carousel.html">
+  <link rel="import" href="elements/chromecast-controller-bar.html">
 
   <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" media="only screen and (min-width: 1224px) and (max-width: 1823px)"
@@ -131,6 +132,8 @@
         videoCarousels[carousel].mediaList = mediaList;
         videoCarousels[carousel].mediaStatus = mediaStatus;
       }
+      var controllerBar = document.querySelector('chromecast-controller-bar');
+      controllerBar.mediaStatus = mediaStatus;
     });
   </script>
 </head>
@@ -151,5 +154,6 @@
   </div>
 
 </core-header-panel>
+<chromecast-controller-bar></chromecast-controller-bar>
 </body>
 </html>

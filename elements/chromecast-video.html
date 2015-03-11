@@ -76,6 +76,7 @@ This element handles video functionality.
       observe: {
         'mediaStatus.localMedia': 'mediaObserver'
       },
+      //Todo(pying): if media is playing hide current media with overlay
       ready: function () {
         this.$.video_content.addEventListener('loadeddata', this.onMediaLoaded.bind(this));
         this.addEventListener('click', function () {

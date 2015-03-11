@@ -124,7 +124,6 @@
       ready: function () {
         //Add event listener for button clicks
         this.$.button_play_pause.addEventListener('click', function (event) {
-          event.stopPropagation();
           if (this.mediaStatus.localMedia.state != cast.Media.STATE.PLAY) {
             this.mediaStatus.play(cast.MediaStatus.SENDER.LOCAL);
           } else {
@@ -133,6 +132,9 @@
         }.bind(this));
         //Add event listener for slider interaction
         this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
+        this.addEventListener('click', function(event) {
+          event.stopPropagation();
+        });
       },
       /**
        * Updates user interaction with the slider to seek
@@ -148,7 +150,7 @@
           this.mediaStatus.localMedia.state = cast.Media.STATE.PAUSE;
         }
         //Seek to the corresponding time in the video
-        this.mediaStatus.seek(time, this.tagname);
+        this.mediaStatus.seek(time, cast.MediaStatus.SENDER.LOCAL);
       },
       /**
        * Observes localMedia currentTime and updates the slider value.
@@ -163,13 +165,10 @@
         this.sliderValue = Math.round(this.mediaStatus.localMedia.getCurrentPercentageComplete() * 100);
       },
       mediaStateUpdate: function (oldVal, newVal) {
-        if (this.mediaStatus.isMediaMatch()
-            || data.sender === cast.MediaStatus.SENDER.LOCAL) {
-          if(newVal == cast.Media.STATE.PLAY) {
-            this.$.icon_play_pause.setAttribute('icon', 'av:pause');
-          } else {
-            this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
-          }
+        if(newVal == cast.Media.STATE.PLAY) {
+          this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+        } else {
+          this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
         }
       }
     });

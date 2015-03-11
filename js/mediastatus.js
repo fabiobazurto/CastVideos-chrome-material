@@ -24,7 +24,8 @@ var cast = window.cast || {};
    */
   MediaStatus.SENDER = {
     'LOCAL': 0,
-    'CHROMECAST': 1
+    'CHROMECAST': 1,
+    'CASTCONTROLLER': 2
   };
 
   /**
@@ -134,9 +135,13 @@ var cast = window.cast || {};
       this.localMedia = media;
       this.localMedia.state = cast.Media.STATE.PAUSE;
       //TODO(pying): set the URL hash so reload functions properly
+      //Todo(pying):sync player when local video content matches chromecast
     },
     getVideoNameFromHashUrl: function() {
 
+    },
+    hasCastMedia: function() {
+      return (Object.keys(this.castMedia).length > 0);
     },
     /**
      * Returns true if the current local media matches cast media or if no Castmedia is loaded

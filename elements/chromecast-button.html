@@ -230,8 +230,8 @@ svg.connected {
       /**
        * Called anytime the media status on Chromecast changes
        */
-      onMediaStatusUpdate: function () {
-        console.log('Media changed' + JSON.stringify(this.mediaStatus.media));
+      onMediaStatusUpdate: function (media) {
+        console.log('Media changed' + JSON.stringify(this.mediaStatus.castMedia));
       },
       onMediaError: function(e) {
         console.log('Media error: ' + JSON.stringify(e));
@@ -276,8 +276,11 @@ svg.connected {
        */
       mediaActionHandler: function (e, data, sender) {
         //If media is loaded on cast and the aciton sender isn't chromecast
-        if(data.sender != cast.MediaStatus.SENDER.CHROMECAST
-            && Object.keys(this.mediaStatus.castMedia).length > 0) {
+        if (this.mediaStatus.hasCastMedia()
+            && ((this.mediaStatus.isMediaMatch()
+              && data.sender != cast.MediaStatus.SENDER.CHROMECAST)
+            || (!this.mediaStatus.isMediaMatch()
+              && data.sender === cast.MediaStatus.SENDER.CASTCONTROLLER))) {
             switch (data.action) {
               case 'seek':
                 this.seek(data.currentTime);
@@ -308,6 +311,7 @@ svg.connected {
         this.intervalId = null;
         this.connectingCounter = -1;
       },
+      //Todo(pying): capture if the content is session is not loaded
       /**
        * Local helper function to play the video on cast.
        */
