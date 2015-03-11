@@ -5,7 +5,7 @@ var cast = window.cast || {};
   var loadCoreSignal = function () {
     var coreSignalImport = document.createElement('link');
     coreSignalImport.setAttribute('rel', 'import');
-    coreSignalImport.setAttribute('href', '../bower_components/core-signals/core-signals.html');
+    coreSignalImport.setAttribute('href', 'bower_components/core-signals/core-signals.html');
     document.body.appendChild(coreSignalImport);
   };
 
