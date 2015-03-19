@@ -59,11 +59,6 @@ var cast = window.cast || {};
     this.session = {};
 
     /**
-     * Content queue
-     */
-    this.mediaQueue;
-
-    /**
      * Tracks whether cast is connected
      * @type {boolean}
      */

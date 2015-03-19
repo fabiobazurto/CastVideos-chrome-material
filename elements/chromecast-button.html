@@ -162,6 +162,7 @@ svg.connected {
         mediaInfo.contentType = 'video/mp4';
 
         mediaInfo.metadata.title = media.title;
+        mediaInfo.metadata.subtitle = media.creator;
         mediaInfo.metadata.images = [{'url': media.thumbnailImageUrl}];
 
         var request = new chrome.cast.media.LoadRequest(mediaInfo);

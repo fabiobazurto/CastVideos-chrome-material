@@ -1,0 +1,75 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link href='http://fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
+      type='text/css'>
+
+<polymer-element name="controller-bar-media-element">
+  <template>
+    <style>
+      :host {
+        height:100px;
+        width:100%;
+        display:flex;
+        flex-direction: row;
+        justify-content: space-around;
+        align-content: center;
+        cursor: pointer;
+        background-color: #ffffff;
+      }
+
+      #thumbnail {
+        display:flex;
+        order: 1;
+        height:100px;
+        width:100px;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: 50% 50%;
+        padding: 0;
+        margin: 0;
+      }
+
+      #details {
+        display: flex;
+        order: 2;
+        flex-grow: 10;
+        flex-direction: column;
+        align-content: space-around;
+      }
+
+      label {
+        display: block;
+        font-family: 'Roboto', sans-serif;
+      }
+
+      #sub_title {
+        font-weight:100;
+        font-size:1em;
+      }
+
+      .title {
+        font-weight:400;
+        font-size:1.2em;
+      }
+
+    </style>
+
+    <div id="thumbnail"></div>
+    <div id="details">
+      <label id="title">{{ media.metadata.title }}</label>
+      <label id="sub_title">{{ media.metadata.subtitle }}</label>
+    </div>
+    <!--<label id="duration"></label>-->
+
+  </template>
+  <script>
+    Polymer("controller-bar-media-element", {
+      publish:  {
+        media: null
+      },
+      ready: function() {
+        this.$.thumbnail.style.backgroundImage =  "url('" + this.media.metadata.images[0].url +
+        "')";
+      }
+    });
+  </script>
+</polymer-element>

@@ -3,6 +3,8 @@
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/core-icons/av-icons.html">
 <link rel="import" href="../bower_components/core-signals/core-signals.html">
+<link rel="import" href="controller-bar-media-element.html">
+
 <link href='http://fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
 
 <polymer-element name="chromecast-controller-bar">
@@ -18,7 +20,6 @@
         background-color: #555555;
         z-index: 10000;
         transition: .3s ease-in-out;
-        opacity:.8;
       }
 
       #controller_bar {
@@ -86,6 +87,18 @@
         background-color: #4F7DC9;
       }
 
+      #content_bar {
+        display: flex;
+        flex-direction: column;
+        align-content: space-around;
+        justify-content: center;
+      }
+
+      #content_window {
+        max-height:500px;
+        overflow:scroll;
+      }
+
     </style>
     <div id="controller_bar">
       <label class="title">Cast</label>
@@ -98,8 +111,12 @@
         {{ castTimeRemaining }}
       </label>
     </div>
-    <div id="content_bar">
-
+    <div id="content_window">
+      <div id="content_bar">
+        <template repeat="{{ item in queueItems }}">
+          <controller-bar-media-element media="{{ item.media }}"></controller-bar-media-element>
+        </template>
+      </div>
     </div>
     </template>
     <script>
@@ -112,11 +129,13 @@
         intervalId: null,
         currTime: null,
         prevTime: null,
+        queueItems: [],
         observe: {
           'mediaStatus.castMedia.media.contentId': 'mediaMatchObserver',
           'mediaStatus.localMedia.url': 'mediaMatchObserver',
           'mediaStatus.castMedia.playerState': 'playerStateObserver',
-          'mediaStatus.castMedia.currentTime': 'currentTimeObserver'
+          'mediaStatus.castMedia.currentTime': 'currentTimeObserver',
+          'mediaStatus.castMedia.items': 'queueItemObserver'
         },
         ready: function() {
           this.$.button_play_pause.addEventListener('click', function (event) {
@@ -173,11 +192,21 @@
           }
         },
         mediaMatchObserver: function(oldVal, newVal) {
-          if (!this.mediaStatus.isMediaMatch()) {
-            this.style.transform = 'translateY(-50px)';
+          if (!this.mediaStatus.isMediaMatch()
+              || (this.mediaStatus.castMedia.items != null
+              && this.mediaStatus.castMedia.items.length > 1)) {
+            this.style.transform = 'translateY(' + (-50 - 100 * Math.min(5,this.queueItems.length))
+            + 'px)';
           } else {
             this.style.transform = '';
           }
+        },
+        queueItemObserver: function(oldVal, newVal) {
+          if (this.mediaStatus.castMedia.items != null
+              && this.queueItems !== this.mediaStatus.castMedia.items) {
+            this.queueItems = this.mediaStatus.castMedia.items;
+          }
+          this.mediaMatchObserver();
         }
       });
     </script>
