@@ -24,20 +24,20 @@
         align-items: center;
       }
 
-      .play-pause {
+      .button {
         height: 39px;
         fill: #ffffff;
+        display: flex;
+        min-width: 0;
+        flex-grow: 1;
+        justify-content: center;
       }
 
       #button_play_pause {
-        height: 39px;
-        display: flex;
-        min-width: 0;
         order: 1;
-        flex-grow: 1;
       }
 
-      #button_play_pause::shadow #ripple {
+      .button::shadow #ripple {
         color: #eaeaea;
       }
 
@@ -45,7 +45,6 @@
         order: 3;
         display: flex;
         flex-grow: 20;
-
       }
 
       #slider_progress::shadow #sliderKnobInner,
@@ -69,6 +68,7 @@
         flex-grow: 1;
         flex-shrink: 10;
         overflow: hidden;
+        justify-content: center;
         min-width: 0px;
       }
 
@@ -92,18 +92,40 @@
         color: #4F7DC9;
       }
 
+      #button_queue {
+        order:4;
+      }
+
+      core-icon[icon="add"] {
+        height: 39px;
+        width: 39px;
+        color: #ffffff;
+      }
+
+      core-icon[icon="add"]:hover {
+        color: #4F7DC9;
+      }
+
+      .hidden {
+        display:none;
+      }
 
     </style>
-    <div class="play-pause">
-      <paper-button id="button_play_pause">
-        <core-icon id="icon_play_pause"
-                   icon="av:play-arrow"></core-icon>
-      </paper-button>
-    </div>
+
+    <!-- TODO(pying): Add tooltips -->
+    <paper-button id="button_play_pause" class="button">
+      <core-icon id="icon_play_pause"
+                 icon="av:play-arrow"></core-icon>
+    </paper-button>
     <paper-slider id="slider_progress" immediateValue="{{ sliderValue }}"></paper-slider>
     <label id="label_time">
       {{ mediaStatus.localMedia.timeRemainingString }}
     </label>
+
+    <paper-button id="button_queue" class="button {{mediaStatus.isCasting ? '': 'hidden'}}">
+      <core-icon id="icon_queue"
+                 icon="add"></core-icon>
+    </paper-button>
 
     <div id="button_flex">
       <chromecast-button id="button_cast" appId="{{ appId }}" mediaStatus="{{ mediaStatus }}"
@@ -132,6 +154,9 @@
         }.bind(this));
         //Add event listener for slider interaction
         this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
+        this.$.button_queue.addEventListener('click', function(){
+          this.mediaStatus.addToQueue(this.mediaStatus.localMedia);
+        }.bind(this));
         this.addEventListener('click', function(event) {
           event.stopPropagation();
         });

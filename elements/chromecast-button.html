@@ -293,6 +293,11 @@ svg.connected {
                 break;
             }
         }
+        switch (data.action) {
+          case 'queue':
+            this.queue(data.queueItem);
+            break;
+        }
       },
       /**
        * Stores the session data in local Media status and starts observing changes to
@@ -333,6 +338,11 @@ svg.connected {
        */
       pause: function() {
         this.mediaStatus.castMedia.pause(null, this.onSuccess.bind(this), this.onFailure.bind(this));
+      },
+      queue: function(queueItem) {
+        var request = new chrome.cast.media.QueueInsertRequest([queueItem]);
+        this.mediaStatus.castMedia.queueInsert(request, this.onSuccess.bind(this),
+            this.onFailure.bind(this));
       }
     });
   </script>

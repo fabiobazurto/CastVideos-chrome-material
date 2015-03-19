@@ -65,3 +65,7 @@ video-details {
   background: -ms-linear-gradient(top, #1b1b1b 0%,#3f3f3f 100%); /* IE10+ */
   background: linear-gradient(to bottom, #1b1b1b 0%,#3f3f3f 100%); /* W3C */
 }
+
+.translate-hack {
+  transform: translateZ(0);
+}

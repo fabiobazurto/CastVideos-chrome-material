@@ -69,7 +69,11 @@ var cast = window.cast || {};
      */
     this.isCasting = false;
 
-
+    /**
+     * Whether to update the URL or not when media changes
+     *
+     * @type {boolean}
+     */
     this.setUrl = false;
   }
 
@@ -115,6 +119,32 @@ var cast = window.cast || {};
           });
       document.dispatchEvent(seekEvent);
     },
+    addToQueue: function(media) {
+      var mediaInfo = new chrome.cast.media.MediaInfo(media.url);
+
+      mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+      mediaInfo.metadata.metadataType = chrome.cast.media.MetadataType.GENERIC;
+      mediaInfo.contentType = 'video/mp4';
+
+      mediaInfo.metadata.title = media.title;
+      mediaInfo.metadata.images = [{'url': media.thumbnailImageUrl}];
+
+      var queueItem = new chrome.cast.media.QueueItem(mediaInfo);
+
+      var queueEvent = new CustomEvent('core-signal',
+          {
+            'detail': {
+              'name': 'media-action',
+              'data': {
+                'action': 'queue',
+                'queueItem': queueItem
+              }
+            }
+          }
+      );
+
+      document.dispatchEvent(queueEvent);
+    },
     setCastMedia: function(media) {
       this.castMedia = media;
       //If the media doesn't match and nothing is playing, load casting media into local media
@@ -153,6 +183,5 @@ var cast = window.cast || {};
       || this.localMedia.url == this.castMedia.media.contentId);
     }
   };
-
   cast.MediaStatus = MediaStatus;
 })();
