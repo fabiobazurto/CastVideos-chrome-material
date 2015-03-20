@@ -241,7 +241,7 @@
 
           var mouseY = event.clientY + document.body.scrollTop
           var currElement = sender.getBoundingClientRect();
-          var index = sender.media.itemId;
+          var index = this.queueItems.indexOf(sender.media);
           if (mouseY >= currElement.top + currElement.height/2) {
             index++;
           }

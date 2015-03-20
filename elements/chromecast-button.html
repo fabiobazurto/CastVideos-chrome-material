@@ -309,6 +309,9 @@ svg.connected {
           case 'queueMoveItem':
             this.queueMoveItem(data.itemId, data.newIndex);
             break;
+          case 'queuePlayItem':
+            this.queuePlayItem(data.itemId);
+            break;
         }
       },
       /**
@@ -364,6 +367,7 @@ svg.connected {
         mediaInfo.contentType = 'video/mp4';
 
         mediaInfo.metadata.title = media.title;
+        mediaInfo.metadata.subtitle = media.creator;
         mediaInfo.metadata.images = [{'url': media.thumbnailImageUrl}];
 
         var queueItem = new chrome.cast.media.QueueItem(mediaInfo);
@@ -379,6 +383,9 @@ svg.connected {
       },
       queueMoveItem: function(itemId, newIndex) {
         this.mediaStatus.castMedia.queueMoveItemToNewIndex(itemId, newIndex, this.onSuccess.bind(this), this.onFailure.bind(this));
+      },
+      queuePlayItem: function(itemId) {
+        this.mediaStatus.castMedia.queueJumpToItem(itemId, this.onSuccess.bind(this), this.onFailure.bind(this));
       }
     });
   </script>

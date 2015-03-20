@@ -153,6 +153,18 @@ var cast = window.cast || {};
       });
       document.dispatchEvent(queueMoveEvent);
     },
+    playItemInQueue: function(itemId) {
+      var queuePlayEvent = new CustomEvent('core-signal', {
+        'detail': {
+          'name': 'media-action',
+          'data': {
+            'action': 'queuePlayItem',
+            'itemId': itemId,
+          }
+        }
+      });
+      document.dispatchEvent(queuePlayEvent);
+    },
     setCastMedia: function(media) {
       this.castMedia = media;
       //If the media doesn't match and nothing is playing, load casting media into local media

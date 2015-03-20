@@ -1,6 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../bower_components/core-icons/core-icons.html">
+<link rel="import" href="../bower_components/core-icons/av-icons.html">
 <link href='http://fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
       type='text/css'>
 
@@ -28,6 +28,8 @@
         background-position: 50% 50%;
         padding: 0;
         margin-left: 10px;
+        justify-content: center;
+        align-items: center;
       }
 
       #details {
@@ -36,12 +38,13 @@
         order: 2;
         flex-grow: 10;
         flex-direction: column;
-
-        justify-content: center;;
+        cursor:pointer;
+        justify-content: center;
       }
 
       label {
         display: block;
+        cursor:pointer;
         font-family: 'Roboto', sans-serif;
       }
 
@@ -64,9 +67,22 @@
       }
 
 
+      .hidden {
+        display:none;
+      }
+
+      #play {
+        opacity: .8;
+        width: 50px;
+        height: 50px;
+        fill:#ffffff;
+      }
+
     </style>
 
-    <div id="thumbnail"></div>
+    <div id="thumbnail">
+      <core-icon id="play" icon="av:play-arrow" class="hidden"></core-icon>
+    </div>
     <div id="details">
       <label id="title">{{ media.media.metadata.title }}</label>
       <label id="sub_title">{{ media.media.metadata.subtitle }}</label>
@@ -97,6 +113,15 @@
         this.$.button_clear.addEventListener('click', function() {
           this.mediaStatus.removeFromQueue(this.media.itemId);
         }.bind(this));
+        this.addEventListener('mouseover', function(){
+          this.$.play.classList.remove('hidden');
+        });
+        this.addEventListener('mouseout', function() {
+          this.$.play.classList.add('hidden');
+        });
+        this.addEventListener('click', function() {
+          this.mediaStatus.playItemInQueue(this.media.itemId);
+        })
       },
       currentlyPlayingObserver: function(oldVal, newVal) {
         if(this.media.itemId === newVal) {
