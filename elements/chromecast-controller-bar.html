@@ -246,7 +246,7 @@
             index++;
           }
 
-          this.mediaStatus.queueMoveItemToNewIndex(event.dataTransfer.getData("text/plain"),
+          this.mediaStatus.queueMoveItemToNewIndex(parseInt(event.dataTransfer.getData("text/plain")),
             index);
         },
         dragleaveHandler: function(event, detail, sender) {
