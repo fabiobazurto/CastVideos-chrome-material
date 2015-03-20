@@ -100,6 +100,13 @@
         width:100%;
         overflow-y:scroll;
       }
+      .top-border {
+        border-top: 2px solid #000000;
+      }
+
+      .bottom-border {
+        border-bottom: 2px solid #000000;
+      }
 
     </style>
     <div id="controller_bar">
@@ -116,7 +123,7 @@
     <div id="content_window">
       <div id="content_bar">
         <template repeat="{{ item in queueItems }}">
-          <controller-bar-media-element media="{{ item }}" mediaStatus="{{ mediaStatus }}"></controller-bar-media-element>
+          <controller-bar-media-element media="{{ item }}" mediaStatus="{{ mediaStatus }}" on-dragover="{{ dragoverHandler }}" on-drop="{{ dropHandler }}" on-dragstart="{{ dragstartHandler }}" on-dragleave="{{ dragleaveHandler }}" draggable="true"></controller-bar-media-element>
         </template>
       </div>
     </div>
@@ -210,6 +217,44 @@
             this.queueItems = this.mediaStatus.castMedia.items;
           }
           this.mediaMatchObserver();
+        },
+        dragoverHandler: function(event, detail, sender) {
+          event.preventDefault();
+
+          var mouseY = event.clientY + document.body.scrollTop
+              + document.documentElement.scrollTop;
+
+          var currElement = sender.getBoundingClientRect();
+
+          if (mouseY < currElement.top + currElement.height/2) {
+            sender.classList.add('top-border');
+            sender.classList.remove('bottom-border');
+          } else {
+            sender.classList.add('bottom-border');
+            sender.classList.remove('top-border');
+          }
+        },
+        dropHandler: function(event, detail, sender) {
+          console.log('dropped: ' + event.dataTransfer.getData("text/plain") + 'on ' + sender.media.itemId);
+          sender.classList.remove('bottom-border');
+          sender.classList.remove('top-border');
+
+          var mouseY = event.clientY + document.body.scrollTop
+          var currElement = sender.getBoundingClientRect();
+          var index = sender.media.itemId;
+          if (mouseY >= currElement.top + currElement.height/2) {
+            index++;
+          }
+
+          this.mediaStatus.queueMoveItemToNewIndex(event.dataTransfer.getData("text/plain"),
+            index);
+        },
+        dragleaveHandler: function(event, detail, sender) {
+          sender.classList.remove('bottom-border');
+          sender.classList.remove('top-border');
+        },
+        dragstartHandler: function(event, detail, sender) {
+          event.dataTransfer.setData('text/plain', sender.media.itemId);
         }
       });
     </script>

@@ -297,10 +297,17 @@ svg.connected {
         }
         switch (data.action) {
           case 'addToQueue':
-            this.addToQueue(data.media);
+            if (this.mediaStatus.hasCastMedia()) {
+              this.addToQueue(data.media);
+            } else {
+              this.loadMedia(data.media);
+            }
             break;
           case 'removeFromQueue':
             this.removeFromQueue(data.itemId);
+            break;
+          case 'queueMoveItem':
+            this.queueMoveItem(data.itemId, data.newIndex);
             break;
         }
       },
@@ -369,6 +376,9 @@ svg.connected {
       removeFromQueue: function(itemId) {
         var removeRequest = new chrome.cast.media.QueueRemoveRequest([itemId]);
         this.mediaStatus.castMedia.queueRemove(removeRequest, this.onSuccess.bind(this), this.onFailure.bind(this));
+      },
+      queueMoveItem: function(itemId, newIndex) {
+        this.mediaStatus.castMedia.queueMoveItemToNewIndex(itemId, newIndex, this.onSuccess.bind(this), this.onFailure.bind(this));
       }
     });
   </script>
