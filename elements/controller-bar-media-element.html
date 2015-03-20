@@ -1,4 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/core-icons/core-icons.html">
 <link href='http://fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
       type='text/css'>
 
@@ -6,12 +8,12 @@
   <template>
     <style>
       :host {
-        height:100px;
+        height:60px;
         width:100%;
         display:flex;
         flex-direction: row;
         justify-content: space-around;
-        align-content: center;
+        align-items: center;
         cursor: pointer;
         background-color: #ffffff;
       }
@@ -19,21 +21,23 @@
       #thumbnail {
         display:flex;
         order: 1;
-        height:100px;
-        width:100px;
+        height:50px;
+        width:50px;
         background-size: cover;
         background-repeat: no-repeat;
         background-position: 50% 50%;
         padding: 0;
-        margin: 0;
+        margin-left: 10px;
       }
 
       #details {
+        margin-left:10px;
         display: flex;
         order: 2;
         flex-grow: 10;
         flex-direction: column;
-        align-content: space-around;
+
+        justify-content: center;;
       }
 
       label {
@@ -51,6 +55,13 @@
         font-size:1.2em;
       }
 
+      #button_clear {
+        display: flex;
+        order: 4;
+        justify-content: center;
+        flex-grow: 1;
+        min-width: 1em;
+      }
     </style>
 
     <div id="thumbnail"></div>
@@ -58,13 +69,20 @@
       <label id="title">{{ media.metadata.title }}</label>
       <label id="sub_title">{{ media.metadata.subtitle }}</label>
     </div>
+
+    <paper-button id="button_clear">
+      <core-icon id="icon_clear"
+                 icon="clear"></core-icon>
+    </paper-button>
+
     <!--<label id="duration"></label>-->
 
   </template>
   <script>
     Polymer("controller-bar-media-element", {
       publish:  {
-        media: null
+        media: null,
+        mediaStatus: null
       },
       ready: function() {
         this.$.thumbnail.style.backgroundImage =  "url('" + this.media.metadata.images[0].url +

@@ -11,8 +11,7 @@
   <template>
     <style>
       :host {
-        padding: 0px 10px;
-        width:370px;
+        width:390px;
         height:50px;
         position:fixed;
         bottom: -50px;
@@ -23,12 +22,12 @@
       }
 
       #controller_bar {
+        padding: 0px 10px;
         display: flex;
         flex-direction:row;
         justify-content:space-around;
         align-items:center;
-        height:100%;
-        width:100%;
+        height:50px;
       }
 
       label.title {
@@ -65,12 +64,13 @@
         min-width: 0px;
         display: flex;
         flex-grow: 1;
+        justify-content: center;
       }
 
       #label_time {
         order: 4;
         display: flex;
-        flex-grow: 3;
+        flex-grow: 2;
         color: #ffffff;
         font-family: 'Roboto', sans-serif;
         font-weight: 100;
@@ -79,7 +79,8 @@
 
       #slider_progress {
         display:flex;
-        flex-grow:4;
+        flex-grow:7;
+        width:100px;
       }
 
       #slider_progress::shadow #sliderKnobInner,
@@ -95,13 +96,14 @@
       }
 
       #content_window {
-        max-height:500px;
-        overflow:scroll;
+        max-height:300px;
+        width:100%;
+        overflow-y:scroll;
       }
 
     </style>
     <div id="controller_bar">
-      <label class="title">Cast</label>
+      <label class="title">Queue</label>
       <paper-button id="button_play_pause">
         <core-icon id="icon_play_pause"
                    icon="av:play-arrow"></core-icon>
@@ -114,7 +116,7 @@
     <div id="content_window">
       <div id="content_bar">
         <template repeat="{{ item in queueItems }}">
-          <controller-bar-media-element media="{{ item.media }}"></controller-bar-media-element>
+          <controller-bar-media-element media="{{ item.media }}" mediaStatus="{{ mediaStatus }}"></controller-bar-media-element>
         </template>
       </div>
     </div>
@@ -125,6 +127,7 @@
           mediaStatus: null
         },
         castTimeRemaining: '00:00:00',
+        itemHeight: 60,
         sliderValue: 0,
         intervalId: null,
         currTime: null,
@@ -195,7 +198,7 @@
           if (!this.mediaStatus.isMediaMatch()
               || (this.mediaStatus.castMedia.items != null
               && this.mediaStatus.castMedia.items.length > 1)) {
-            this.style.transform = 'translateY(' + (-50 - 100 * Math.min(5,this.queueItems.length))
+            this.style.transform = 'translateY(' + (-50 - this.itemHeight * Math.min(5,this.queueItems.length))
             + 'px)';
           } else {
             this.style.transform = '';
