@@ -115,30 +115,30 @@ var cast = window.cast || {};
       document.dispatchEvent(seekEvent);
     },
     addToQueue: function(media) {
-      var mediaInfo = new chrome.cast.media.MediaInfo(media.url);
-
-      mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-      mediaInfo.metadata.metadataType = chrome.cast.media.MetadataType.GENERIC;
-      mediaInfo.contentType = 'video/mp4';
-
-      mediaInfo.metadata.title = media.title;
-      mediaInfo.metadata.images = [{'url': media.thumbnailImageUrl}];
-
-      var queueItem = new chrome.cast.media.QueueItem(mediaInfo);
-
-      var queueEvent = new CustomEvent('core-signal',
+      var queueAddEvent = new CustomEvent('core-signal',
           {
             'detail': {
               'name': 'media-action',
               'data': {
-                'action': 'queue',
-                'queueItem': queueItem
+                'action': 'addToQueue',
+                'media': media
               }
             }
           }
       );
-
-      document.dispatchEvent(queueEvent);
+      document.dispatchEvent(queueAddEvent);
+    },
+    removeFromQueue: function(itemId) {
+      var queueRemoveEvent = new CustomEvent('core-signal', {
+        'detail': {
+          'name': 'media-action',
+          'data': {
+            'action': 'removeFromQueue',
+            'itemId': itemId
+          }
+        }
+      });
+      document.dispatchEvent(queueRemoveEvent);
     },
     setCastMedia: function(media) {
       this.castMedia = media;

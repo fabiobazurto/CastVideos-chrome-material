@@ -276,7 +276,8 @@ svg.connected {
        *
        */
       mediaActionHandler: function (e, data, sender) {
-        //If media is loaded on cast and the aciton sender isn't chromecast
+        //If media is loaded on cast and the action sender isn't chromecast
+        //TODO(pying): disregard content from local sender when queue displays
         if (this.mediaStatus.hasCastMedia()
             && ((this.mediaStatus.isMediaMatch()
               && data.sender != cast.MediaStatus.SENDER.CHROMECAST)
@@ -295,8 +296,11 @@ svg.connected {
             }
         }
         switch (data.action) {
-          case 'queue':
-            this.queue(data.queueItem);
+          case 'addToQueue':
+            this.addToQueue(data.media);
+            break;
+          case 'removeFromQueue':
+            this.removeFromQueue(data.itemId);
             break;
         }
       },
@@ -340,10 +344,31 @@ svg.connected {
       pause: function() {
         this.mediaStatus.castMedia.pause(null, this.onSuccess.bind(this), this.onFailure.bind(this));
       },
-      queue: function(queueItem) {
+      /**
+       * Helper function to add a media item to queue
+       *
+       * @param media
+       */
+      addToQueue: function(media) {
+        var mediaInfo = new chrome.cast.media.MediaInfo(media.url);
+
+        mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+        mediaInfo.metadata.metadataType = chrome.cast.media.MetadataType.GENERIC;
+        mediaInfo.contentType = 'video/mp4';
+
+        mediaInfo.metadata.title = media.title;
+        mediaInfo.metadata.images = [{'url': media.thumbnailImageUrl}];
+
+        var queueItem = new chrome.cast.media.QueueItem(mediaInfo);
+
         var request = new chrome.cast.media.QueueInsertRequest([queueItem]);
+
         this.mediaStatus.castMedia.queueInsert(request, this.onSuccess.bind(this),
             this.onFailure.bind(this));
+      },
+      removeFromQueue: function(itemId) {
+        var removeRequest = new chrome.cast.media.QueueRemoveRequest([itemId]);
+        this.mediaStatus.castMedia.queueRemove(removeRequest, this.onSuccess.bind(this), this.onFailure.bind(this));
       }
     });
   </script>
