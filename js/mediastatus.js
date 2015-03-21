@@ -159,7 +159,7 @@ var cast = window.cast || {};
           'name': 'media-action',
           'data': {
             'action': 'queuePlayItem',
-            'itemId': itemId,
+            'itemId': itemId
           }
         }
       });

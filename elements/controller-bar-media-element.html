@@ -3,7 +3,27 @@
 <link rel="import" href="../bower_components/core-icons/av-icons.html">
 <link href='http://fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
       type='text/css'>
+<!--
+Represents each media element in the queue.
 
+Uses the following chrome.cast.media.Media.media.items.metadata fields:
+
+"title": "Big Buck Bunny",
+"subtitle": "Blender Foundation",
+"images": [
+  {
+    "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg"
+  }
+]
+
+Clicking on the item jumps the chromecast receiver to the current item.
+
+Clicking on the X remove the item from queue
+
+If the currently playing cast item id matches this item, the now playing background color is
+used.
+
+-->
 <polymer-element name="controller-bar-media-element">
   <template>
     <style>
@@ -33,6 +53,7 @@
       }
 
       #details {
+        max-width:250px;
         margin-left:10px;
         display: flex;
         order: 2;
@@ -66,7 +87,6 @@
         min-width: 1em;
       }
 
-
       .hidden {
         display:none;
       }
@@ -77,7 +97,6 @@
         height: 50px;
         fill:#ffffff;
       }
-
     </style>
 
     <div id="thumbnail">
@@ -93,36 +112,58 @@
                  icon="clear"></core-icon>
     </paper-button>
 
-    <!--<label id="duration"></label>-->
-
   </template>
   <script>
     Polymer("controller-bar-media-element", {
       publish:  {
+        /**
+         * Media content to display.
+         */
         media: null,
+        /**
+         * Shared MediaStatus state.
+         */
         mediaStatus: null,
+        /**
+         * Background color when element is playing.
+         */
         playingBackgroundColor: '#eaeaea',
+        /**
+         * Background color when element is idle.
+         */
         idleBackgroundColor: '#ffffff'
       },
       observe: {
         'mediaStatus.castMedia.currentItemId': 'currentlyPlayingObserver'
       },
       ready: function() {
+        //Set the thumbnail background
         this.$.thumbnail.style.backgroundImage =  "url('" + this.media.media.metadata.images[0].url +
         "')";
+        //Handle queue removal clicks
         this.$.button_clear.addEventListener('click', function() {
           this.mediaStatus.removeFromQueue(this.media.itemId);
         }.bind(this));
+
+        //On mouse overs display the play notification
         this.addEventListener('mouseover', function(){
           this.$.play.classList.remove('hidden');
         });
         this.addEventListener('mouseout', function() {
           this.$.play.classList.add('hidden');
         });
+
+        //Handle clicks to play the selected content.
         this.addEventListener('click', function() {
           this.mediaStatus.playItemInQueue(this.media.itemId);
         })
       },
+      /**
+       * Observes the currently playing Cast item.  If the itemId matches this media.itemId
+       * update the background.
+       * @param oldVal
+       * @param newVal
+       */
       currentlyPlayingObserver: function(oldVal, newVal) {
         if(this.media.itemId === newVal) {
           this.style.backgroundColor = this.playingBackgroundColor;
