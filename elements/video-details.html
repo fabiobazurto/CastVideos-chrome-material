@@ -1,6 +1,10 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link href='http://fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
+<link href='//fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
       type='text/css'>
+<!--
+Represents the currently playing media details.  Displays mediaStatus.localMedia.title,studio and
+description.
+-->
 <polymer-element name="video-details">
   <template>
     <style>
@@ -30,7 +34,7 @@
     </style>
     <p>
       <span id="title">{{ mediaStatus.localMedia.title }}</span>
-      <span id="sub_title">{{ mediaStatus.localMedia.creator }}</span>
+      <span id="sub_title">{{ mediaStatus.localMedia.studio }}</span>
     </p>
     <p id="description"></p>
   </template>
@@ -43,6 +47,7 @@
         'mediaStatus.localMedia.description': 'descriptionObserver'
       },
       descriptionObserver: function(oldVal, newVal) {
+        //Using inner html since filling the text in the template doesn't html decode entities.
         this.$.description.innerHTML = newVal;
       }
     });

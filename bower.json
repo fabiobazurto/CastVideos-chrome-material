@@ -29,6 +29,8 @@
     "paper-slider": "Polymer/paper-slider#~0.5.3",
     "paper-ripple": "Polymer/paper-ripple#~0.5.3",
     "core-tooltip": "Polymer/core-tooltip#~0.5.5",
-    "core-signals": "Polymer/core-signals#~0.5.5"
+    "core-signals": "Polymer/core-signals#~0.5.5",
+    "jasmine-core": "~2.2.1",
+    "paper-menu-button": "Polymer/paper-menu-button#~0.5.5"
   }
 }

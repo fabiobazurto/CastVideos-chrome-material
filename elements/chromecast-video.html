@@ -3,6 +3,15 @@
 <link rel="import" href="chromecast-player-bar.html">
 <!--
 This element handles video functionality.
+
+localMedia.currentTime every second to match time in the video.
+
+To play/pause, thsi element listens for core signal events then determines the appropriate action
+based on the sender.
+
+Before a video starts playing an image overlay is displayed if it has one.
+
+The element includes chromecast-player-bar as the media controller.
 -->
 <polymer-element name="chromecast-video">
   <template>
@@ -50,7 +59,8 @@ This element handles video functionality.
 
     </style>
     <div id="image_overlay"
-         class="{{ mediaStatus.localMedia.state != 2 || mediaStatus.isCasting ? 'hidden': ''}}"></div>
+         class="{{ mediaStatus.localMedia.state != 2 || mediaStatus.isCasting ? 'hidden': ''}}">
+    </div>
     <video id="video_content">
     </video>
     <div class="player-bar-holder">
@@ -76,7 +86,6 @@ This element handles video functionality.
       observe: {
         'mediaStatus.localMedia': 'mediaObserver'
       },
-      //Todo(pying): if media is playing hide current media with overlay
       ready: function () {
         this.$.video_content.addEventListener('loadeddata', this.onMediaLoaded.bind(this));
         this.addEventListener('click', function () {
@@ -112,7 +121,8 @@ This element handles video functionality.
       mediaActionHandler: function (e, data, sender) {
         //If the local media matches chromecast or if the sender is controlling local content
         //take action
-        if (this.mediaStatus.isMediaMatch()
+        if ((this.mediaStatus.isMediaMatch()  && this.mediaStatus.hasCastMedia() &&
+            !this.mediaStatus.hasQueueItems())
             || data.sender === cast.MediaStatus.SENDER.LOCAL) {
           switch (data.action) {
             case 'seek':
@@ -139,7 +149,6 @@ This element handles video functionality.
           }
         }
       }
-
     });
   </script>
 </polymer-element>

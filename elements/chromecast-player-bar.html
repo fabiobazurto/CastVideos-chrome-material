@@ -3,8 +3,17 @@
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/core-icons/av-icons.html">
-<link href='http://fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
+<link href='//fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
+<!--
+This element represents the chromecast player bar.
 
+It uses mediaStatus to handle button state and fires core signal events to play/pause the video.
+
+It automatically updates the time remaining and slider bar through observing changes to local media
+current time.
+
+It includes the chromecast button for casting.
+-->
 <polymer-element name="chromecast-player-bar">
   <template>
     <style>
@@ -112,14 +121,13 @@
 
     </style>
 
-    <!-- TODO(pying): Add tooltips -->
     <paper-button id="button_play_pause" class="button">
       <core-icon id="icon_play_pause"
                  icon="av:play-arrow"></core-icon>
     </paper-button>
     <paper-slider id="slider_progress" immediateValue="{{ sliderValue }}"></paper-slider>
     <label id="label_time">
-      {{ mediaStatus.localMedia.timeRemainingString }}
+      {{ localTimeRemaining }}
     </label>
 
     <paper-button id="button_queue" class="button {{mediaStatus.isCasting ? '': 'hidden'}}">
@@ -135,12 +143,15 @@
   <script>
     Polymer("chromecast-player-bar", {
       sliderValue: 0,
+      localTimeRemaining: "00:00:00",
+      sliderAction: false,
       publish: {
         appId: null, //Id of chromecast receiver
         mediaStatus: null //MediaStatus object
       },
       observe: {
         'mediaStatus.localMedia.currentTime': 'currentTimeUpdate',
+        'mediaStatus.localMedia.duration': 'currentTimeUpdate',
         'mediaStatus.localMedia.state': 'mediaStateUpdate'
       },
       ready: function () {
@@ -154,12 +165,33 @@
         }.bind(this));
         //Add event listener for slider interaction
         this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
+        this.$.slider_progress.addEventListener('immediate-value-change',
+            this.timeUpdate.bind(this));
+        this.$.slider_progress.addEventListener('mousedown', function(){
+          this.sliderAction = true;
+        }.bind(this));
+        this.$.slider_progress.addEventListener('mouseup', function(){
+          this.sliderAction = false;
+        }.bind(this));
         this.$.button_queue.addEventListener('click', function(){
           this.mediaStatus.addToQueue(this.mediaStatus.localMedia);
         }.bind(this));
         this.addEventListener('click', function(event) {
           event.stopPropagation();
         });
+      },
+      /**
+       * Updates time remaining based on current slider position
+       *
+       * @param newVal {number}  value 0-100 of percentage completion
+       */
+      timeUpdate: function (newVal) {
+        if(this.mediaStatus != null) {
+          var time =
+            this.mediaStatus.localMedia.floatToTime(this.sliderValue / 100);
+          this.localTimeRemaining =
+            cast.Media.secondsToHHMMSS(this.mediaStatus.localMedia.duration - time);
+        }
       },
       /**
        * Updates user interaction with the slider to seek
@@ -187,8 +219,16 @@
        * @param newVal {number}
        */
       currentTimeUpdate: function (oldVal, newVal) {
-        this.sliderValue = Math.round(this.mediaStatus.localMedia.getCurrentPercentageComplete() * 100);
+        if (!this.sliderAction) {
+          this.localTimeRemaining = this.mediaStatus.localMedia.timeRemainingString;
+          this.sliderValue = Math.round(this.mediaStatus.localMedia.getCurrentPercentageComplete() * 100);
+        }
       },
+      /**
+       * Observe media state and update the play pause button accordingly
+       * @param oldVal
+       * @param newVal
+       */
       mediaStateUpdate: function (oldVal, newVal) {
         if(newVal == cast.Media.STATE.PLAY) {
           this.$.icon_play_pause.setAttribute('icon', 'av:pause');

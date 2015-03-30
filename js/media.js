@@ -1,5 +1,5 @@
 /**
- * Manages media content
+ * Object to represent local castable media content
  */
 var cast = window.cast || {};
 
@@ -17,7 +17,7 @@ var cast = window.cast || {};
     this.title = media.title;
     this.url = media.url;
     this.thumbnailImageUrl = media.thumbnailImageUrl;
-    this.creator = media.creator;
+    this.studio = media.studio;
     this.description = media.description;
 
     /**
