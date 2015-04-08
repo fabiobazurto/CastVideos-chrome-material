@@ -55,14 +55,14 @@
         return;
       }
       // Response handlers.
-      xhr.onload = function() {
+      xhr.onload = function () {
         var content = JSON.parse(xhr.responseText);
         mediaList = processMediaList(content);
         media = new cast.Media(mediaList[Object.keys(mediaList)[0]]);
 
         mediaStatus = new cast.MediaStatus(media);
 
-        if (isPolymerReady){
+        if (isPolymerReady) {
           loadDataIntoPolymer(mediaStatus);
         } else {
           window.addEventListener('polymer-ready', function () {
@@ -71,7 +71,7 @@
         }
 
       };
-      xhr.onerror = function() {
+      xhr.onerror = function () {
         alert('Woops, there was an error making the request.');
       };
       xhr.send();
@@ -95,7 +95,7 @@
       for (var i = 0; i < contentArray.length; i++) {
         var title = contentArray[i].title.replace(/\s+/g, '-').toLowerCase();
         mediaList[title] = {
-          'title' : contentArray[i].title,
+          'title': contentArray[i].title,
           'description': contentArray[i].subtitle,
           'url': contentArray[i].sources[0],
           'studio': contentArray[i].studio,
@@ -116,7 +116,7 @@
   </div>
   <div class="center-box-shadow width bgcolor translate-hack min-height">
     <div class="content">
-      <div  class="video-width video-height shadow">
+      <div class="video-width video-height shadow">
         <chromecast-video appId="4F8B3483"></chromecast-video>
       </div>
 

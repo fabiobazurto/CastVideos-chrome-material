@@ -29,13 +29,14 @@ description.
 
       #sub_title {
         font-weight: 100;
-        font-size:27px;
+        font-size: 27px;
       }
     </style>
     <p>
       <span id="title">{{ mediaStatus.localMedia.title }}</span>
       <span id="sub_title">{{ mediaStatus.localMedia.studio }}</span>
     </p>
+
     <p id="description"></p>
   </template>
   <script>
@@ -46,7 +47,7 @@ description.
       observe: {
         'mediaStatus.localMedia.description': 'descriptionObserver'
       },
-      descriptionObserver: function(oldVal, newVal) {
+      descriptionObserver: function (oldVal, newVal) {
         //Using inner html since filling the text in the template doesn't html decode entities.
         this.$.description.innerHTML = newVal;
       }

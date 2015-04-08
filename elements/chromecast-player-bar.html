@@ -129,15 +129,15 @@ It includes the chromecast button for casting.
 
       #slider_volume {
         display: flex;
-        width:100%;
+        width: 100%;
       }
 
       #volume_controller {
         order: 6;
         flex-grow: 1;
-        display:flex;
+        display: flex;
         justify-content: center;
-        width:100px;
+        width: 100px;
       }
 
       #slider_volume::shadow #sliderKnobInner,
@@ -149,15 +149,15 @@ It includes the chromecast button for casting.
         height: 39px;
         min-width: 0px;
         flex-grow: 1;
-        display:flex;
+        display: flex;
         justify-content: center;
         color: #ffffff;
         padding: 0;
       }
 
       .icon-button::shadow #icon {
-        height:39px;
-        width:39px;
+        height: 39px;
+        width: 39px;
       }
 
       .icon-button::shadow #riipple {
@@ -169,7 +169,7 @@ It includes the chromecast button for casting.
       }
 
       #button_full_screen.hidden {
-        display:none;
+        display: none;
       }
 
     </style>
@@ -193,7 +193,7 @@ It includes the chromecast button for casting.
 
     <paper-icon-button class="icon-button {{mediaStatus.isCasting ? 'hidden': ''}}"
                        id="button_full_screen"
-    icon="fullscreen"></paper-icon-button>
+                       icon="fullscreen"></paper-icon-button>
   </template>
   <script>
     Polymer("chromecast-player-bar", {
@@ -222,13 +222,13 @@ It includes the chromecast button for casting.
         this.$.button_play_pause.addEventListener('click', function (event) {
           var stateVar;
           var stateEnum;
-          if (this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch()){
+          if (this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch()) {
             //Control castmedia
             stateVar = this.mediaStatus.castMedia.playerState;
             stateEnum = chrome.cast.media.PlayerState.PLAYING;
           } else {
-           stateVar = this.mediaStatus.localMedia.state;
-           stateEnum = cast.Media.STATE.PLAY
+            stateVar = this.mediaStatus.localMedia.state;
+            stateEnum = cast.Media.STATE.PLAY
           }
           if (stateVar === stateEnum) {
             this.mediaStatus.pause(cast.MediaStatus.SENDER.LOCAL);
@@ -248,8 +248,8 @@ It includes the chromecast button for casting.
           this.sliderAction = false;
         }.bind(this));
 
-        this.$.button_full_screen.addEventListener('click', function() {
-          if(this.mediaStatus.isFullScreen) {
+        this.$.button_full_screen.addEventListener('click', function () {
+          if (this.mediaStatus.isFullScreen) {
             this.mediaStatus.exitFullScreen();
           } else {
             this.mediaStatus.fullScreen();
@@ -303,10 +303,10 @@ It includes the chromecast button for casting.
         if (!this.sliderAction) {
           var duration;
           var currentTime;
-          if(this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch() &&
+          if (this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch() &&
               this.mediaStatus.hasCastMedia()) {
-              duration = this.mediaStatus.castMedia.media.duration;
-              currentTime = this.mediaStatus.castMedia.currentTime;
+            duration = this.mediaStatus.castMedia.media.duration;
+            currentTime = this.mediaStatus.castMedia.currentTime;
           } else {
             duration = this.mediaStatus.localMedia.duration;
             currentTime = this.mediaStatus.localMedia.currentTime;
@@ -322,7 +322,7 @@ It includes the chromecast button for casting.
        * @param newVal
        */
       localPlayerStateObserver: function (oldVal, newVal) {
-        if(!this.mediaStatus.isCasting || !this.mediaStatus.isMediaMatch()) {
+        if (!this.mediaStatus.isCasting || !this.mediaStatus.isMediaMatch()) {
           if (newVal == cast.Media.STATE.PLAY) {
             this.$.icon_play_pause.setAttribute('icon', 'av:pause');
           } else {
@@ -330,8 +330,8 @@ It includes the chromecast button for casting.
           }
         }
       },
-      castPlayerStateObserver: function(oldVal,newVal) {
-        if(this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch()) {
+      castPlayerStateObserver: function (oldVal, newVal) {
+        if (this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch()) {
           if (newVal === chrome.cast.media.PlayerState.PLAYING) {
             this.sliderAction = false;
             this.$.icon_play_pause.setAttribute('icon', 'av:pause');
@@ -347,22 +347,22 @@ It includes the chromecast button for casting.
        * @param oldVal
        * @param newVal
        */
-      mediaMatchObserver: function(oldVal, newVal) {
+      mediaMatchObserver: function (oldVal, newVal) {
         if (!this.mediaStatus.isMediaMatch() && this.mediaStatus.isCasting) {
           this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
         } else if (this.mediaStatus.isMediaMatch() && this.mediaStatus.isCasting) {
           this.castPlayerStateObserver(null, this.mediaStatus.castMedia.playerState);
         }
       },
-      fullScreenObserver: function(oldVal, newVal) {
-        if(this.mediaStatus.isFullScreen) {
+      fullScreenObserver: function (oldVal, newVal) {
+        if (this.mediaStatus.isFullScreen) {
           this.$.button_full_screen.setAttribute('icon', 'fullscreen-exit');
         } else {
           this.$.button_full_screen.setAttribute('icon', 'fullscreen');
         }
       },
-      castingObserver: function(oldVal, newVal) {
-        if(newVal === false && this.mediaStatus.castMedia != null
+      castingObserver: function (oldVal, newVal) {
+        if (newVal === false && this.mediaStatus.castMedia != null
             && this.mediaStatus.isMediaMatch()) {
           this.localPlayerStateObserver(null, cast.Media.STATE.PAUSE);
         }

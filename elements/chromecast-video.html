@@ -64,16 +64,16 @@ The element includes chromecast-player-bar as the media controller.
       }
 
       #spinner_overlay {
-        z-index:100;
+        z-index: 100;
       }
 
       paper-spinner {
-        height:100px;
-        width:100px;
-        position:relative;
+        height: 100px;
+        width: 100px;
+        position: relative;
         margin: auto;
-        z-index:100;
-        display:block;
+        z-index: 100;
+        display: block;
         top: 50%;
         transform: translateY(-50%);
       }
@@ -82,7 +82,6 @@ The element includes chromecast-player-bar as the media controller.
         border-width: 8px;
       }
 
-
       #cast_label {
         position: absolute;
         bottom: 20%;
@@ -90,28 +89,28 @@ The element includes chromecast-player-bar as the media controller.
         z-index: 1000;
         font-family: 'Roboto', sans-serif;
         font-weight: 100;
-        font-size:1.3em;
+        font-size: 1.3em;
         text-align: center;
         color: #ffffff;
       }
 
       #text_overlay {
         transition: opacity .5s ease-in-out;
-        z-index:1000;
+        z-index: 1000;
       }
 
       .hidden {
-        opacity:0;
+        opacity: 0;
       }
 
       .gradient {
-        background: -moz-linear-gradient(top,  rgba(0,0,0,0.01) 0%, rgba(0,0,0,0.16) 70%, rgba(0,0,0,1) 100%); /* FF3.6+ */
-        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,0.01)), color-stop(70%,rgba(0,0,0,0.16)), color-stop(100%,rgba(0,0,0,1))); /* Chrome,Safari4+ */
-        background: -webkit-linear-gradient(top,  rgba(0,0,0,0.01) 0%,rgba(0,0,0,0.16) 70%,rgba(0,0,0,1) 100%); /* Chrome10+,Safari5.1+ */
-        background: -o-linear-gradient(top,  rgba(0,0,0,0.01) 0%,rgba(0,0,0,0.16) 70%,rgba(0,0,0,1) 100%); /* Opera 11.10+ */
-        background: -ms-linear-gradient(top,  rgba(0,0,0,0.01) 0%,rgba(0,0,0,0.16) 70%,rgba(0,0,0,1) 100%); /* IE10+ */
-        background: linear-gradient(to bottom,  rgba(0,0,0,0.01) 0%,rgba(0,0,0,0.16) 70%,rgba(0,0,0,1) 100%); /* W3C */
-        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#03000000', endColorstr='#000000',GradientType=0 ); /* IE6-9 */
+        background: -moz-linear-gradient(top, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* FF3.6+ */
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(0, 0, 0, 0.01)), color-stop(70%, rgba(0, 0, 0, 0.16)), color-stop(100%, rgba(0, 0, 0, 1))); /* Chrome,Safari4+ */
+        background: -webkit-linear-gradient(top, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* Chrome10+,Safari5.1+ */
+        background: -o-linear-gradient(top, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* Opera 11.10+ */
+        background: -ms-linear-gradient(top, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* IE10+ */
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* W3C */
+        filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#03000000', endColorstr='#000000', GradientType=0); /* IE6-9 */
       }
 
       .player-bar-holder.hidden {
@@ -129,7 +128,8 @@ The element includes chromecast-player-bar as the media controller.
           active="{{ mediaStatus.showSpinner }}"></paper-spinner>
     </div>
 
-    <div id="image_overlay" class="overlay-content {{ (mediaStatus.localMedia.state != 2 && !mediaStatus.isCasting) ? 'hidden': ''}}">
+    <div id="image_overlay"
+         class="overlay-content {{ (mediaStatus.localMedia.state != 2 && !mediaStatus.isCasting) ? 'hidden': ''}}">
     </div>
     <video id="video_content" class="overlay-content">
     </video>
@@ -192,14 +192,14 @@ The element includes chromecast-player-bar as the media controller.
         /**
          * Start hiding the bar
          */
-        this.addEventListener('mouseout', function(){
+        this.addEventListener('mouseout', function () {
           this.setHideTimeout();
         }.bind(this));
 
         /**
          * Show the bar
          */
-        this.addEventListener('mousemove', function() {
+        this.addEventListener('mousemove', function () {
           if (this.hideTimeoutId != null) {
             window.clearTimeout(this.hideTimeoutId);
           }
@@ -229,7 +229,7 @@ The element includes chromecast-player-bar as the media controller.
           this.$.video_content.pause();
           this.$.cast_label.innerHTML =
               "Casting to " + this.mediaStatus.session.receiver.friendlyName;
-        } else if(newVal === false
+        } else if (newVal === false
             && Object.keys(this.mediaStatus.castMedia).length > 0
             && this.mediaStatus.isMediaMatch()) {
           //If we stop casting and the content matches, sync the local media with cast.
@@ -271,8 +271,8 @@ The element includes chromecast-player-bar as the media controller.
               this.mediaStatus.localMedia.state = cast.Media.STATE.PAUSE;
               break;
             case 'volume':
-                this.$.video_content.volume = data.volume;
-                this.mediaStatus.localMedia.volume = data.volume;
+              this.$.video_content.volume = data.volume;
+              this.mediaStatus.localMedia.volume = data.volume;
               break;
             case 'fullscreen':
               var elem = this;
@@ -302,7 +302,7 @@ The element includes chromecast-player-bar as the media controller.
           }
         }
       },
-      fullscreenObserver: function(event) {
+      fullscreenObserver: function (event) {
         var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement;
         if (fullscreenElement == null) {
           this.mediaStatus.isFullScreen = false;
@@ -311,9 +311,9 @@ The element includes chromecast-player-bar as the media controller.
       /**
        * Sets a hide timer to minimize the controller bar
        */
-      setHideTimeout: function() {
-        if(this.hideTimeoutId == null) {
-          this.hideTimeoutId = window.setTimeout(function(){
+      setHideTimeout: function () {
+        if (this.hideTimeoutId == null) {
+          this.hideTimeoutId = window.setTimeout(function () {
             this.hidePlayerBar();
           }.bind(this), this.visibleDuration);
         } else {
@@ -322,11 +322,11 @@ The element includes chromecast-player-bar as the media controller.
           this.setHideTimeout();
         }
       },
-      showPlayerBar: function() {
+      showPlayerBar: function () {
         this.$.player_bar.classList.remove('hidden');
         this.style.cursor = 'auto';
       },
-      hidePlayerBar: function() {
+      hidePlayerBar: function () {
         this.$.player_bar.classList.add('hidden');
         this.style.cursor = 'none';
 

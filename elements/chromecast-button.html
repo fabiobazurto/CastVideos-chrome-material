@@ -59,8 +59,8 @@ This element will also sync local state with the chromecast state via mediastatu
 
       core-tooltip.fancy::shadow .core-tooltip {
         opacity: 0;
-        -webkit-transition: all 300ms cubic-bezier(0,1.07,.99,1.92);
-        transition: all 300ms cubic-bezier(0,1.07,.99,1.92);
+        -webkit-transition: all 300ms cubic-bezier(0, 1.07, .99, 1.92);
+        transition: all 300ms cubic-bezier(0, 1.07, .99, 1.92);
         -webkit-transform: translate3d(0, 10px, 0);
         transform: translate3d(0, 10px, 0);
         font-size: 1.3em;
@@ -74,8 +74,9 @@ This element will also sync local state with the chromecast state via mediastatu
         -webkit-transform: translate3d(0, 0, 0);
         transform: translate3d(0, 0, 0);
       }
+
       core-tooltip.fancy::shadow .top {
-        margin-bottom:20px;
+        margin-bottom: 20px;
       }
 
       core-tooltip.fancy::shadow .core-tooltip.show {
@@ -86,8 +87,8 @@ This element will also sync local state with the chromecast state via mediastatu
 
     </style>
     <core-tooltip id="tooltip" class="fancy" label="Click to cast videos to your TV" large
-    position="top" noarrow>
-    <svg version="1.1" id="button_cast" xmlns="http://www.w3.org/2000/svg"
+                  position="top" noarrow>
+      <svg version="1.1" id="button_cast" xmlns="http://www.w3.org/2000/svg"
          xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
          class="{{color == 'white' ? 'button-white' : 'button-black'}} {{mediaStatus.isCasting ? 'connected' : ''}} {{display ? '': 'hidden'}}"
 	 viewBox="0 0 51 39" enable-background="new 0 0 51 39" xml:space="preserve">
@@ -142,7 +143,7 @@ This element will also sync local state with the chromecast state via mediastatu
               //Add an event listener to try and connect when clicked
               this.$.button_cast.addEventListener("click", function () {
                 if (this.mediaStatus.session == chrome.cast.SessionStatus.CONNECTED) {
-                  this.stopCasting.bind(this)();
+                  this.stopCasting();
                 } else {
                   if (this.intervalId == null) {
                     this.intervalId = window.setInterval(function () {
@@ -150,7 +151,7 @@ This element will also sync local state with the chromecast state via mediastatu
                     }.bind(this), this.animationInterval);
                   }
                   this.mediaStatus.exitFullScreen();
-                  this.startCasting.bind(this)();
+                  this.startCasting();
                 }
               }.bind(this));
             }
@@ -167,7 +168,8 @@ This element will also sync local state with the chromecast state via mediastatu
         console.log("Session listener");
         this.setMediaSession(session);
         //Check if the session has existing media
-        if (session.media.length > 0 && session.media[0].playerState != chrome.cast.media.PlayerState.IDLE) {
+        if (session.media.length > 0
+            && session.media[0].playerState != chrome.cast.media.PlayerState.IDLE) {
           //If the session has existing media update local info with media details
           this.onMediaDiscovered(session.media[0]);
         }
@@ -181,7 +183,7 @@ This element will also sync local state with the chromecast state via mediastatu
           //If a receiver is available display the button
           this.display = true;
           this.$.tooltip.show = true;
-          window.setTimeout(function() {
+          window.setTimeout(function () {
             this.$.tooltip.show = false;
           }.bind(this), 2000);
         } else {
@@ -330,7 +332,7 @@ This element will also sync local state with the chromecast state via mediastatu
         //If media is loaded on cast and the action sender isn't chromecast
         switch (data.action) {
           case 'seek':
-            if (this.isCastActionable(data)){
+            if (this.isCastActionable(data)) {
               this.mediaStatus.showSpinner = true;
               this.seek(data.currentTime);
               //Clear the timer so it doesn't update during buffering.
@@ -338,7 +340,7 @@ This element will also sync local state with the chromecast state via mediastatu
             }
             break;
           case 'play':
-            if (this.isCastActionable(data)){
+            if (this.isCastActionable(data)) {
               this.showSpinner = true;
               this.play();
             } else if (this.mediaStatus.isCasting && data.sender
@@ -348,12 +350,12 @@ This element will also sync local state with the chromecast state via mediastatu
             }
             break;
           case 'pause':
-            if (this.isCastActionable(data)){
+            if (this.isCastActionable(data)) {
               this.pause();
             }
             break;
           case 'volume':
-            if (this.isCastActionable(data)){
+            if (this.isCastActionable(data)) {
               this.volume(data.volume);
             }
         }
@@ -361,7 +363,7 @@ This element will also sync local state with the chromecast state via mediastatu
       /**
        * Helper function from mediaActionHandler
        */
-      isCastActionable: function(data) {
+      isCastActionable: function (data) {
         return !!(!this.mediaStatus.hasCastSession()
         && this.mediaStatus.hasCastMedia()
         && (this.mediaStatus.isMediaMatch()
@@ -407,27 +409,27 @@ This element will also sync local state with the chromecast state via mediastatu
       pause: function () {
         this.mediaStatus.castMedia.pause(null, this.onSuccess.bind(this), this.onFailure.bind(this));
       },
-      volume: function(volume) {
+      volume: function (volume) {
         var vol = new chrome.cast.Volume(volume, false);
         var request = new chrome.cast.media.VolumeRequest(vol);
         this.mediaStatus.castMedia.setVolume(request, this.onSuccess.bind(this),
             this.onFailure.bind(this));
       },
-      castPlayerStateObserver: function(oldVal,newVal) {
-        if(this.mediaStatus.isCasting) {
+      castPlayerStateObserver: function (oldVal, newVal) {
+        if (this.mediaStatus.isCasting) {
           if (newVal === chrome.cast.media.PlayerState.PLAYING) {
             this.mediaStatus.showSpinner = false;
             //If the media is playing, set an interval to calculate elapsed time
-            if(this.timerId == null) {
-              this.timerId = window.setInterval(function(){
+            if (this.timerId == null) {
+              this.timerId = window.setInterval(function () {
                 var currTime = new Date();
-                if(this.prevTime == null) {
+                if (this.prevTime == null) {
                   this.prevTime = new Date();
                 }
-                var deltaS = (currTime - this.prevTime)/1000;
+                var deltaS = (currTime - this.prevTime) / 1000;
                 this.mediaStatus.castMedia.currentTime += deltaS;
                 this.prevTime = currTime;
-              }.bind(this),1000);
+              }.bind(this), 1000);
             }
           } else {
             //Otherwise clear the interval and reset previous time

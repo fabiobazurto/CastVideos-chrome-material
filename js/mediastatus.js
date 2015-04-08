@@ -132,7 +132,7 @@ var cast = window.cast || {};
           });
       document.dispatchEvent(seekEvent);
     },
-    volume: function(sender, volume) {
+    volume: function (sender, volume) {
       var volumeEvent = new CustomEvent('core-signal',
           {
             'detail': {
@@ -146,7 +146,7 @@ var cast = window.cast || {};
           });
       document.dispatchEvent(volumeEvent);
     },
-    fullScreen: function() {
+    fullScreen: function () {
       var fullscreenEvent = new CustomEvent('core-signal',
           {
             'detail': {
@@ -158,7 +158,7 @@ var cast = window.cast || {};
           });
       document.dispatchEvent(fullscreenEvent);
     },
-    exitFullScreen: function() {
+    exitFullScreen: function () {
       var fullscreenEvent = new CustomEvent('core-signal',
           {
             'detail': {
@@ -175,7 +175,7 @@ var cast = window.cast || {};
      *
      * @param media
      */
-    setCastMedia: function(media) {
+    setCastMedia: function (media) {
       this.castMedia = media;
     },
     /**
@@ -183,7 +183,7 @@ var cast = window.cast || {};
      *
      * @param media
      */
-    setLocalMedia: function(media) {
+    setLocalMedia: function (media) {
       this.localMedia = media;
       this.localMedia.state = cast.Media.STATE.PAUSE;
       //if the current local media and cast media match and no other items are queued
@@ -191,7 +191,7 @@ var cast = window.cast || {};
       if (this.isMediaMatch()
           && this.hasCastMedia()) {
         //set a time out to let the video load through observers before seeking and playing.
-        window.setTimeout(function(){
+        window.setTimeout(function () {
           if (this.castMedia.currentTime != 0) {
             this.seek(this.castMedia.currentTime, MediaStatus.SENDER.CHROMECAST);
           }
@@ -206,20 +206,20 @@ var cast = window.cast || {};
      *
      * @returns {boolean}
      */
-    hasCastMedia: function() {
+    hasCastMedia: function () {
       return (Object.keys(this.castMedia).length > 0
-        && this.castMedia.playerState !== chrome.cast.media.PlayerState.IDLE);
+      && this.castMedia.playerState !== chrome.cast.media.PlayerState.IDLE);
     },
     /**
      * Returns true if the current local media matches cast media or if the cast media isn't loaded
      *
      * @returns {boolean}
      */
-    isMediaMatch: function() {
+    isMediaMatch: function () {
       return (this.castMedia.media == null
       || this.localMedia.url == this.castMedia.media.contentId);
     },
-    hasCastSession:function() {
+    hasCastSession: function () {
       return (Object.keys(this.session).length > 0
       && this.session.state == chrome.cast.SessionStatus.CONNECTED);
     }
