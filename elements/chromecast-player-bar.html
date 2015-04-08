@@ -1,8 +1,11 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="chromecast-button.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="../bower_components/core-icons/av-icons.html">
+<link rel="import" href="volume-controller.html">
+
 <link href='//fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
 <!--
 This element represents the chromecast player bar.
@@ -18,7 +21,7 @@ It includes the chromecast button for casting.
   <template>
     <style>
       :host {
-        margin: 0 10%;
+        margin: 0 5%;
         height: 39px;
         background-color: #000000;
         opacity: 0.6;
@@ -31,6 +34,7 @@ It includes the chromecast button for casting.
         flex-wrap: nowrap;
         justify-content: space-around;
         align-items: center;
+        overflow: visible;
       }
 
       .button {
@@ -73,10 +77,10 @@ It includes the chromecast button for casting.
 
       #button_flex {
         display: flex;
-        order: 5;
+        order: 10;
         flex-grow: 1;
         flex-shrink: 10;
-        overflow: hidden;
+        overflow: visible;
         justify-content: center;
         min-width: 0px;
       }
@@ -101,10 +105,6 @@ It includes the chromecast button for casting.
         color: #4F7DC9;
       }
 
-      #button_queue {
-        order:4;
-      }
-
       core-icon[icon="add"] {
         height: 39px;
         width: 39px;
@@ -116,6 +116,59 @@ It includes the chromecast button for casting.
       }
 
       .hidden {
+        display: none;
+      }
+
+      #button_full_screen {
+        order: 7;
+      }
+
+      #button_volume {
+        order: 5;
+      }
+
+      #slider_volume {
+        display: flex;
+        width:100%;
+      }
+
+      #volume_controller {
+        order: 6;
+        flex-grow: 1;
+        display:flex;
+        justify-content: center;
+        width:100px;
+      }
+
+      #slider_volume::shadow #sliderKnobInner,
+      #slider_volume::shadow #sliderBar::shadow #activeProgress {
+        background-color: #4F7DC9;
+      }
+
+      .icon-button {
+        height: 39px;
+        min-width: 0px;
+        flex-grow: 1;
+        display:flex;
+        justify-content: center;
+        color: #ffffff;
+        padding: 0;
+      }
+
+      .icon-button::shadow #icon {
+        height:39px;
+        width:39px;
+      }
+
+      .icon-button::shadow #riipple {
+        color: #eaeaea;
+      }
+
+      .icon-button:hover {
+        color: #4F7DC9;
+      }
+
+      #button_full_screen.hidden {
         display:none;
       }
 
@@ -130,15 +183,17 @@ It includes the chromecast button for casting.
       {{ localTimeRemaining }}
     </label>
 
-    <paper-button id="button_queue" class="button {{mediaStatus.isCasting ? '': 'hidden'}}">
-      <core-icon id="icon_queue"
-                 icon="add"></core-icon>
-    </paper-button>
+    <volume-controller id="volume_controller"
+                       mediaStatus="{{ mediaStatus }}"></volume-controller>
 
     <div id="button_flex">
       <chromecast-button id="button_cast" appId="{{ appId }}" mediaStatus="{{ mediaStatus }}"
                          color="white"></chromecast-button>
     </div>
+
+    <paper-icon-button class="icon-button {{mediaStatus.isCasting ? 'hidden': ''}}"
+                       id="button_full_screen"
+    icon="fullscreen"></paper-icon-button>
   </template>
   <script>
     Polymer("chromecast-player-bar", {
@@ -152,31 +207,55 @@ It includes the chromecast button for casting.
       observe: {
         'mediaStatus.localMedia.currentTime': 'currentTimeUpdate',
         'mediaStatus.localMedia.duration': 'currentTimeUpdate',
-        'mediaStatus.localMedia.state': 'mediaStateUpdate'
+        'mediaStatus.localMedia.state': 'localPlayerStateObserver',
+        'mediaStatus.castMedia.currentTime': 'currentTimeUpdate',
+        'mediaStatus.castMedia.playerState': 'castPlayerStateObserver',
+        /**
+         * Observe the local media to see if it matches casting media
+         */
+        'mediaStatus.localMedia.url': 'mediaMatchObserver',
+        'mediaStatus.isFullScreen': 'fullScreenObserver',
+        'mediaStatus.isCasting': 'castingObserver'
       },
       ready: function () {
         //Add event listener for button clicks
         this.$.button_play_pause.addEventListener('click', function (event) {
-          if (this.mediaStatus.localMedia.state != cast.Media.STATE.PLAY) {
-            this.mediaStatus.play(cast.MediaStatus.SENDER.LOCAL);
+          var stateVar;
+          var stateEnum;
+          if (this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch()){
+            //Control castmedia
+            stateVar = this.mediaStatus.castMedia.playerState;
+            stateEnum = chrome.cast.media.PlayerState.PLAYING;
           } else {
+           stateVar = this.mediaStatus.localMedia.state;
+           stateEnum = cast.Media.STATE.PLAY
+          }
+          if (stateVar === stateEnum) {
             this.mediaStatus.pause(cast.MediaStatus.SENDER.LOCAL);
+          } else {
+            this.mediaStatus.play(cast.MediaStatus.SENDER.LOCAL);
           }
         }.bind(this));
+
         //Add event listener for slider interaction
         this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
         this.$.slider_progress.addEventListener('immediate-value-change',
             this.timeUpdate.bind(this));
-        this.$.slider_progress.addEventListener('mousedown', function(){
+        this.$.slider_progress.addEventListener('mousedown', function () {
           this.sliderAction = true;
         }.bind(this));
-        this.$.slider_progress.addEventListener('mouseup', function(){
+        this.$.slider_progress.addEventListener('mouseup', function () {
           this.sliderAction = false;
         }.bind(this));
-        this.$.button_queue.addEventListener('click', function(){
-          this.mediaStatus.addToQueue(this.mediaStatus.localMedia);
+
+        this.$.button_full_screen.addEventListener('click', function() {
+          if(this.mediaStatus.isFullScreen) {
+            this.mediaStatus.exitFullScreen();
+          } else {
+            this.mediaStatus.fullScreen();
+          }
         }.bind(this));
-        this.addEventListener('click', function(event) {
+        this.addEventListener('click', function (event) {
           event.stopPropagation();
         });
       },
@@ -186,11 +265,11 @@ It includes the chromecast button for casting.
        * @param newVal {number}  value 0-100 of percentage completion
        */
       timeUpdate: function (newVal) {
-        if(this.mediaStatus != null) {
+        if (this.mediaStatus != null && this.sliderAction) {
           var time =
-            this.mediaStatus.localMedia.floatToTime(this.sliderValue / 100);
+              this.mediaStatus.localMedia.floatToTime(this.sliderValue / 100);
           this.localTimeRemaining =
-            cast.Media.secondsToHHMMSS(this.mediaStatus.localMedia.duration - time);
+              cast.Media.secondsToHHMMSS(this.mediaStatus.localMedia.duration - time);
         }
       },
       /**
@@ -207,6 +286,8 @@ It includes the chromecast button for casting.
           this.mediaStatus.localMedia.state = cast.Media.STATE.PAUSE;
         }
         //Seek to the corresponding time in the video
+        this.sliderAction = true;
+        console.log('Seek start');
         this.mediaStatus.seek(time, cast.MediaStatus.SENDER.LOCAL);
       },
       /**
@@ -220,20 +301,70 @@ It includes the chromecast button for casting.
        */
       currentTimeUpdate: function (oldVal, newVal) {
         if (!this.sliderAction) {
-          this.localTimeRemaining = this.mediaStatus.localMedia.timeRemainingString;
-          this.sliderValue = Math.round(this.mediaStatus.localMedia.getCurrentPercentageComplete() * 100);
+          var duration;
+          var currentTime;
+          if(this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch() &&
+              this.mediaStatus.hasCastMedia()) {
+              duration = this.mediaStatus.castMedia.media.duration;
+              currentTime = this.mediaStatus.castMedia.currentTime;
+          } else {
+            duration = this.mediaStatus.localMedia.duration;
+            currentTime = this.mediaStatus.localMedia.currentTime;
+          }
+          this.localTimeRemaining = cast.Media.secondsToHHMMSS(duration - currentTime);
+          this.sliderValue = Math.round(currentTime / duration * 100);
         }
       },
       /**
        * Observe media state and update the play pause button accordingly
+       *
        * @param oldVal
        * @param newVal
        */
-      mediaStateUpdate: function (oldVal, newVal) {
-        if(newVal == cast.Media.STATE.PLAY) {
-          this.$.icon_play_pause.setAttribute('icon', 'av:pause');
-        } else {
+      localPlayerStateObserver: function (oldVal, newVal) {
+        if(!this.mediaStatus.isCasting || !this.mediaStatus.isMediaMatch()) {
+          if (newVal == cast.Media.STATE.PLAY) {
+            this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+          } else {
+            this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+          }
+        }
+      },
+      castPlayerStateObserver: function(oldVal,newVal) {
+        if(this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch()) {
+          if (newVal === chrome.cast.media.PlayerState.PLAYING) {
+            this.sliderAction = false;
+            this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+          } else {
+            this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+          }
+        }
+      },
+      /**
+       * If the local media no longer matches the remote media change the play pause icon
+       * back to play
+       *
+       * @param oldVal
+       * @param newVal
+       */
+      mediaMatchObserver: function(oldVal, newVal) {
+        if (!this.mediaStatus.isMediaMatch() && this.mediaStatus.isCasting) {
           this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+        } else if (this.mediaStatus.isMediaMatch() && this.mediaStatus.isCasting) {
+          this.castPlayerStateObserver(null, this.mediaStatus.castMedia.playerState);
+        }
+      },
+      fullScreenObserver: function(oldVal, newVal) {
+        if(this.mediaStatus.isFullScreen) {
+          this.$.button_full_screen.setAttribute('icon', 'fullscreen-exit');
+        } else {
+          this.$.button_full_screen.setAttribute('icon', 'fullscreen');
+        }
+      },
+      castingObserver: function(oldVal, newVal) {
+        if(newVal === false && this.mediaStatus.castMedia != null
+            && this.mediaStatus.isMediaMatch()) {
+          this.localPlayerStateObserver(null, cast.Media.STATE.PAUSE);
         }
       }
     });

@@ -69,3 +69,7 @@ video-details {
 .translate-hack {
   transform: translateZ(0);
 }
+
+.min-height {
+  min-height: 1500px;
+}

@@ -50,15 +50,6 @@ media.thumbnail
         font-size:1.2em;
       }
 
-      paper-menu-button#menu_button.right-menu {
-        position:absolute;
-        bottom: 0px;
-        right: 0px;
-        margin-right:5px;
-        margin-bottom:5px;
-        color: black;
-        font-size:10px;
-      }
 
       .hidden {
         display:none;
@@ -67,14 +58,6 @@ media.thumbnail
       <div id="thumbnail"></div>
       <p class="title">{{ media.title }}</p>
       <p class="studio">{{ media.studio }}</p>
-    <paper-menu-button id="menu_button" class="right-menu {{mediaStatus.isCasting ? '': 'hidden'}}"">
-      <paper-icon-button icon="more-vert" noink></paper-icon-button>
-      <paper-dropdown class="dropdown" valign="bottom" halign="right">
-        <paper-item id="cast_now">Cast now</paper-item>
-        <paper-item id="cast_next">Cast next</paper-item>
-        <paper-item id="add_to_queue">Add to queue</paper-item>
-      </paper-dropdown>
-    </paper-menu-button>
   </template>
   <script>
     Polymer("video-carousel-element", {
@@ -89,18 +72,6 @@ media.thumbnail
         if (this.media === null){
           this.style.visibility = 'hidden';
         }
-        this.$.menu_button.addEventListener('click', function(event){
-          event.stopPropagation();
-        });
-        this.$.add_to_queue.addEventListener('click', function() {
-          this.mediaStatus.addToQueue(this.media);
-        }.bind(this));
-        this.$.cast_now.addEventListener('click', function() {
-          this.mediaStatus.castNow(this.media);
-        }.bind(this));
-        this.$.cast_next.addEventListener('click', function() {
-          this.mediaStatus.castNext(this.media);
-        }.bind(this));
       },
       thumbnailUpdater: function(oldVal, newVal) {
         this.$.thumbnail.style.backgroundImage = "url('" + newVal + "')";

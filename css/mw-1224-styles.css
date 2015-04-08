@@ -10,3 +10,7 @@
 .width {
   width:100%;
 }
+
+.content {
+  min-height: 600px;
+}

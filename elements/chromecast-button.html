@@ -1,5 +1,8 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/core-signals/core-signals.html">
+<link rel="import" href="../bower_components/core-tooltip/core-tooltip.html">
+
+<link href='//fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
 
 <script type="text/javascript"
         src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
@@ -21,7 +24,9 @@ This element will also sync local state with the chromecast state via mediastatu
   <template>
     <style>
       :host {
+        margin-top: 5px;
         display: block;
+        overflow: visible;
       }
 
       .hidden {
@@ -29,8 +34,8 @@ This element will also sync local state with the chromecast state via mediastatu
       }
 
       svg {
-        width: 39px;
-        height: 30px;
+        width: 34px;
+        height: 25px;
         outline: 0;
         border: 0;
       }
@@ -51,7 +56,37 @@ This element will also sync local state with the chromecast state via mediastatu
       svg.connected {
         fill: #00B9E7;
       }
+
+      core-tooltip.fancy::shadow .core-tooltip {
+        opacity: 0;
+        -webkit-transition: all 300ms cubic-bezier(0,1.07,.99,1.92);
+        transition: all 300ms cubic-bezier(0,1.07,.99,1.92);
+        -webkit-transform: translate3d(0, 10px, 0);
+        transform: translate3d(0, 10px, 0);
+        font-size: 1.3em;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 100;
+      }
+
+      core-tooltip.fancy:hover::shadow .core-tooltip,
+      core-tooltip.fancy:focus::shadow .core-tooltip {
+        opacity: 1;
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+      }
+      core-tooltip.fancy::shadow .top {
+        margin-bottom:20px;
+      }
+
+      core-tooltip.fancy::shadow .core-tooltip.show {
+        opacity: 1;
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+      }
+
     </style>
+    <core-tooltip id="tooltip" class="fancy" label="Click to cast videos to your TV" large
+    position="top" noarrow>
     <svg version="1.1" id="button_cast" xmlns="http://www.w3.org/2000/svg"
          xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
          class="{{color == 'white' ? 'button-white' : 'button-black'}} {{mediaStatus.isCasting ? 'connected' : ''}} {{display ? '': 'hidden'}}"
@@ -70,6 +105,7 @@ This element will also sync local state with the chromecast state via mediastatu
       d="M0,19.1v4C8.3,24,15,30.7,15.9,39h4C19,28.4,10.6,20,0,19.1z"/>
     </g>
     </svg>
+    </core-tooltip>
     <core-signals on-core-signal-media-action="{{ mediaActionHandler }}"></core-signals>
   </template>
   <script>
@@ -79,11 +115,16 @@ This element will also sync local state with the chromecast state via mediastatu
       autoplay: false,
       connectingCounter: -1,
       intervalId: null,
+      timerId: null,
+      prevTime: null,
       publish: {
         appId: null,
         mediaStatus: null,
         color: 'black',
         animationInterval: 400
+      },
+      observe: {
+        'mediaStatus.castMedia.playerState': 'castPlayerStateObserver'
       },
       ready: function () {
         if (this.appId != null) {
@@ -108,6 +149,7 @@ This element will also sync local state with the chromecast state via mediastatu
                       this.connectingCounter = (this.connectingCounter + 1) % 3;
                     }.bind(this), this.animationInterval);
                   }
+                  this.mediaStatus.exitFullScreen();
                   this.startCasting.bind(this)();
                 }
               }.bind(this));
@@ -138,6 +180,10 @@ This element will also sync local state with the chromecast state via mediastatu
         if (e === chrome.cast.ReceiverAvailability.AVAILABLE) {
           //If a receiver is available display the button
           this.display = true;
+          this.$.tooltip.show = true;
+          window.setTimeout(function() {
+            this.$.tooltip.show = false;
+          }.bind(this), 2000);
         } else {
           //If no receiver is available, hide the button
           this.display = false;
@@ -160,6 +206,8 @@ This element will also sync local state with the chromecast state via mediastatu
        * @param media {cast.Media}
        */
       loadMedia: function (media, autoplay) {
+        this.mediaStatus.showSpinner = true;
+
         var mediaInfo = new chrome.cast.media.MediaInfo(media.url);
         mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
         mediaInfo.metadata.metadataType = chrome.cast.media.MetadataType.GENERIC;
@@ -196,6 +244,7 @@ This element will also sync local state with the chromecast state via mediastatu
        */
       onMediaDiscovered: function (media) {
         console.log('Media loaded');
+        this.mediaStatus.showSpinner = false;
 
         //Adds an listener for any changes to media
         media.addUpdateListener(this.onMediaStatusUpdate.bind(this));
@@ -208,14 +257,9 @@ This element will also sync local state with the chromecast state via mediastatu
             //If the local media time is not at the beginning and the media matches
             if (this.mediaStatus.localMedia.currentTime != 0
                 && this.mediaStatus.isMediaMatch()
-                && this.mediaStatus.hasCastMedia()
-                && !this.mediaStatus.hasQueueItems()) {
+                && this.mediaStatus.hasCastMedia()) {
               //Match time in local media
               this.seek(this.mediaStatus.localMedia.currentTime);
-            } else {
-              //If the localMedia time hasn't started yet, auto play both cast and local
-              this.mediaStatus.play(cast.MediaStatus.SENDER.CHROMECAST);
-              this.play();
             }
             //If the current local state is play and the user starts casting
             //auto play the content
@@ -271,10 +315,12 @@ This element will also sync local state with the chromecast state via mediastatu
             && this.mediaStatus.session.status == chrome.cast.SessionStatus.CONNECTED) {
           //If it is set casting to true and stop the connecting animation
           this.mediaStatus.isCasting = true;
+          this.$.tooltip.label = "Click to disconnect";
           this.stopAnimation();
         } else {
           //Otherwise casting remains false;
           this.mediaStatus.isCasting = false;
+          this.$.tooltip.label = "Click to cast videos to your TV";
         }
       },
       /**
@@ -282,81 +328,45 @@ This element will also sync local state with the chromecast state via mediastatu
        */
       mediaActionHandler: function (e, data, sender) {
         //If media is loaded on cast and the action sender isn't chromecast
-        if (this.mediaStatus.hasCastMedia()
-            && ((this.mediaStatus.isMediaMatch()
-            && data.sender != cast.MediaStatus.SENDER.CHROMECAST
-            && !this.mediaStatus.hasQueueItems())
-            || data.sender === cast.MediaStatus.SENDER.CASTCONTROLLER)) {
-          switch (data.action) {
-            case 'seek':
-              this.seek(data.currentTime);
-              break;
-            case 'play':
-              this.play();
-              break;
-            case 'pause':
-              this.pause();
-              break;
-          }
-        }
-        //handle queueing events
         switch (data.action) {
-          case 'addToQueue':
-            if (this.mediaStatus.hasCastMedia()) {
-              this.addToQueue(data.media, null, null);
-            } else {
-              //Load media and auto play it
-              this.loadMedia(data.media, true);
+          case 'seek':
+            if (this.isCastActionable(data)){
+              this.mediaStatus.showSpinner = true;
+              this.seek(data.currentTime);
+              //Clear the timer so it doesn't update during buffering.
+              window.clearInterval(this.timerId);
             }
             break;
-          case 'removeFromQueue':
-            this.removeFromQueue(data.itemId);
-            break;
-          case 'queueMoveItem':
-            this.queueMoveItem(data.itemId, data.newIndex);
-            break;
-          case 'queuePlayItem':
-            this.queuePlayItem(data.itemId);
-            break;
-          case 'castNext':
-            if (this.mediaStatus.hasCastMedia()) {
-              var index;
-              for (var i = 0; i < this.mediaStatus.castMedia.items.length; i++) {
-                if (this.mediaStatus.castMedia.currentItemId == this.mediaStatus.castMedia.items[i].itemId) {
-                  index = i + 1;
-                }
-              }
-              var element = this.mediaStatus.castMedia.items[index];
-              if (element != null) {
-                this.addToQueue(data.media
-                    , element.itemId
-                    , null);
-              } else {
-                this.addToQueue(data.media, null, null);
-              }
-            } else {
-              this.loadMedia(data.media, true);
+          case 'play':
+            if (this.isCastActionable(data)){
+              this.showSpinner = true;
+              this.play();
+            } else if (this.mediaStatus.isCasting && data.sender
+                != cast.MediaStatus.SENDER.CHROMECAST) {
+              this.showSpinner = true;
+              this.loadMedia(this.mediaStatus.localMedia, true);
             }
             break;
-          case 'castNow':
-            if (this.mediaStatus.hasCastMedia()) {
-              this.addToQueue(data.media
-                  , this.mediaStatus.castMedia.currentItemId
-                  , function () {
-                    var index;
-                    for (var i in this.mediaStatus.castMedia.items) {
-                      if (this.mediaStatus.castMedia.currentItemId == this.mediaStatus.castMedia.items[i].itemId) {
-                        index = i - 1;
-                      }
-                    }
-                    this.queuePlayItem(this.mediaStatus.castMedia.items[index].itemId);
-                  }.bind(this));
-            } else {
-              //Load media and auto play it
-              this.loadMedia(data.media, true);
+          case 'pause':
+            if (this.isCastActionable(data)){
+              this.pause();
             }
             break;
+          case 'volume':
+            if (this.isCastActionable(data)){
+              this.volume(data.volume);
+            }
         }
+      },
+      /**
+       * Helper function from mediaActionHandler
+       */
+      isCastActionable: function(data) {
+        return !!(!this.mediaStatus.hasCastSession()
+        && this.mediaStatus.hasCastMedia()
+        && (this.mediaStatus.isMediaMatch()
+        && data.sender != cast.MediaStatus.SENDER.CHROMECAST)
+        || data.sender === cast.MediaStatus.SENDER.CASTCONTROLLER);
       },
       /**
        * Stores the session data in local Media status and starts observing changes to
@@ -397,69 +407,34 @@ This element will also sync local state with the chromecast state via mediastatu
       pause: function () {
         this.mediaStatus.castMedia.pause(null, this.onSuccess.bind(this), this.onFailure.bind(this));
       },
-      /**
-       * Helper function to add a media item to queue
-       *
-       * @param media
-       */
-      addToQueue: function (media, insertBefore, successCallback) {
-        var mediaInfo = new chrome.cast.media.MediaInfo(media.url);
-
-        mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-        mediaInfo.metadata.metadataType = chrome.cast.media.MetadataType.GENERIC;
-        mediaInfo.contentType = 'video/mp4';
-
-        mediaInfo.metadata.title = media.title;
-        mediaInfo.metadata.subtitle = media.studio;
-        mediaInfo.metadata.images = [{'url': media.thumbnailImageUrl}];
-
-        var queueItem = new chrome.cast.media.QueueItem(mediaInfo);
-
-        var request = new chrome.cast.media.QueueInsertRequest([queueItem]);
-        request.insertBefore = insertBefore;
-        if (successCallback === null) {
-          successCallback = this.onSuccess.bind(this);
-        }
-        this.mediaStatus.castMedia.queueInsert(request, successCallback,
+      volume: function(volume) {
+        var vol = new chrome.cast.Volume(volume, false);
+        var request = new chrome.cast.media.VolumeRequest(vol);
+        this.mediaStatus.castMedia.setVolume(request, this.onSuccess.bind(this),
             this.onFailure.bind(this));
       },
-      /**
-       * Removes an item from the queue
-       *
-       * @param itemId {number} itemId of element
-       */
-      removeFromQueue: function (itemId) {
-        if (this.mediaStatus.hasCastMedia()) {
-          var removeRequest = new chrome.cast.media.QueueRemoveRequest([itemId]);
-          this.mediaStatus.castMedia.queueRemove(removeRequest
-              , this.onSuccess.bind(this)
-              , this.onFailure.bind(this));
-        }
-      },
-      /**
-       * Moves an item in the queue
-       *
-       * @param itemId {number} itemId to move
-       * @param newIndex {number} index in the item array to move item to
-       */
-      queueMoveItem: function (itemId, newIndex) {
-        if (this.mediaStatus.hasCastMedia()) {
-          this.mediaStatus.castMedia.queueMoveItemToNewIndex(itemId
-              , newIndex
-              , this.onSuccess.bind(this)
-              , this.onFailure.bind(this));
-        }
-      },
-      /**
-       * Jump and play a specific item in the queue
-       *
-       * @param itemId {number} id of item to play
-       */
-      queuePlayItem: function (itemId) {
-        if (this.mediaStatus.hasCastMedia()) {
-          this.mediaStatus.castMedia.queueJumpToItem(itemId
-              , this.onSuccess.bind(this)
-              , this.onFailure.bind(this));
+      castPlayerStateObserver: function(oldVal,newVal) {
+        if(this.mediaStatus.isCasting) {
+          if (newVal === chrome.cast.media.PlayerState.PLAYING) {
+            this.mediaStatus.showSpinner = false;
+            //If the media is playing, set an interval to calculate elapsed time
+            if(this.timerId == null) {
+              this.timerId = window.setInterval(function(){
+                var currTime = new Date();
+                if(this.prevTime == null) {
+                  this.prevTime = new Date();
+                }
+                var deltaS = (currTime - this.prevTime)/1000;
+                this.mediaStatus.castMedia.currentTime += deltaS;
+                this.prevTime = currTime;
+              }.bind(this),1000);
+            }
+          } else {
+            //Otherwise clear the interval and reset previous time
+            window.clearInterval(this.timerId);
+            this.timerId = null;
+            this.prevTime = null;
+          }
         }
       }
     });

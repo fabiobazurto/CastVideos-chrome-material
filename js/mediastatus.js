@@ -70,6 +70,8 @@ var cast = window.cast || {};
      * @type {boolean}
      */
     this.isCasting = false;
+
+    this.showSpinner = false;
   }
 
   MediaStatus.prototype = {
@@ -130,105 +132,43 @@ var cast = window.cast || {};
           });
       document.dispatchEvent(seekEvent);
     },
-    /**
-     * Fire a add to queue core signals event
-     *
-     * @param media {cast.media} media to queue
-     */
-    addToQueue: function(media) {
-      var queueAddEvent = new CustomEvent('core-signal',
+    volume: function(sender, volume) {
+      var volumeEvent = new CustomEvent('core-signal',
           {
             'detail': {
               'name': 'media-action',
               'data': {
-                'action': 'addToQueue',
-                'media': media
+                'action': 'volume',
+                'volume': volume,
+                'sender': sender
               }
             }
-          }
-      );
-      document.dispatchEvent(queueAddEvent);
+          });
+      document.dispatchEvent(volumeEvent);
     },
-    castNow: function(media) {
-      var queueEvent = new CustomEvent('core-signal',
+    fullScreen: function() {
+      var fullscreenEvent = new CustomEvent('core-signal',
           {
             'detail': {
               'name': 'media-action',
               'data': {
-                'action': 'castNow',
-                'media': media
+                'action': 'fullscreen'
               }
             }
-          }
-      );
-      document.dispatchEvent(queueEvent);
+          });
+      document.dispatchEvent(fullscreenEvent);
     },
-    castNext: function(media) {
-      var queueEvent = new CustomEvent('core-signal',
+    exitFullScreen: function() {
+      var fullscreenEvent = new CustomEvent('core-signal',
           {
             'detail': {
               'name': 'media-action',
               'data': {
-                'action': 'castNext',
-                'media': media
+                'action': 'exitFullscreen'
               }
             }
-          }
-      );
-      document.dispatchEvent(queueEvent);
-    },
-    /**
-     * Remove an item from queue
-     *
-     * @param itemId {number} itemId of item to remove
-     */
-    removeFromQueue: function(itemId) {
-      var queueRemoveEvent = new CustomEvent('core-signal', {
-        'detail': {
-          'name': 'media-action',
-          'data': {
-            'action': 'removeFromQueue',
-            'itemId': itemId
-          }
-        }
-      });
-      document.dispatchEvent(queueRemoveEvent);
-    },
-    /**
-     * Creates a core signals event to move an item in the queue to a new index
-     *
-     * @param itemId {number} itemId
-     * @param newIndex {number} queued items array index to move item to
-     */
-    queueMoveItemToNewIndex: function(itemId, newIndex) {
-      var queueMoveEvent = new CustomEvent('core-signal', {
-        'detail': {
-          'name': 'media-action',
-          'data': {
-            'action': 'queueMoveItem',
-            'itemId': itemId,
-            'newIndex': newIndex
-          }
-        }
-      });
-      document.dispatchEvent(queueMoveEvent);
-    },
-    /**
-     * Creates a core signals event to play a specific item in the queue.
-     *
-     * @param itemId {number} queue itemId
-     */
-    playItemInQueue: function(itemId) {
-      var queuePlayEvent = new CustomEvent('core-signal', {
-        'detail': {
-          'name': 'media-action',
-          'data': {
-            'action': 'queuePlayItem',
-            'itemId': itemId
-          }
-        }
-      });
-      document.dispatchEvent(queuePlayEvent);
+          });
+      document.dispatchEvent(fullscreenEvent);
     },
     /**
      * Stores a reference to the cast media element
@@ -249,8 +189,7 @@ var cast = window.cast || {};
       //if the current local media and cast media match and no other items are queued
       //let the main player bar control everything
       if (this.isMediaMatch()
-          && this.hasCastMedia()
-          && !this.hasQueueItems()) {
+          && this.hasCastMedia()) {
         //set a time out to let the video load through observers before seeking and playing.
         window.setTimeout(function(){
           if (this.castMedia.currentTime != 0) {
@@ -268,7 +207,8 @@ var cast = window.cast || {};
      * @returns {boolean}
      */
     hasCastMedia: function() {
-      return (Object.keys(this.castMedia).length > 0 && this.castMedia.currentItemId != null);
+      return (Object.keys(this.castMedia).length > 0
+        && this.castMedia.playerState !== chrome.cast.media.PlayerState.IDLE);
     },
     /**
      * Returns true if the current local media matches cast media or if the cast media isn't loaded
@@ -279,14 +219,9 @@ var cast = window.cast || {};
       return (this.castMedia.media == null
       || this.localMedia.url == this.castMedia.media.contentId);
     },
-    /**
-     * Returns true if the number of items in the queue is > 1
-     *
-     * @returns {boolean}
-     */
-    hasQueueItems: function() {
-      return !!(this.castMedia.items != null
-      && this.castMedia.items.length > 1);
+    hasCastSession:function() {
+      return (Object.keys(this.session).length > 0
+      && this.session.state == chrome.cast.SessionStatus.CONNECTED);
     }
   };
   cast.MediaStatus = MediaStatus;

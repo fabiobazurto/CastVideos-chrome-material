@@ -11,3 +11,6 @@
   width: 1600px;
 }
 
+.content {
+  min-height: 900px;
+}

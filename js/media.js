@@ -43,13 +43,15 @@ var cast = window.cast || {};
      * Video duration in seconds
      * @type {number}
      */
-    this.duration = 10000;
+    this.duration = 0;
 
     /**
      * String to display for time remaining
      * @type {string}
      */
     this.timeRemainingString = "0:00:00";
+
+    this.volume = .5;
   }
 
   /**

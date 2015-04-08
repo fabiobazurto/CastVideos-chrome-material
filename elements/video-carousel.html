@@ -137,27 +137,29 @@ The genre is displayed above the carousel.
        * When the mediaList changes, regenerate the list of lists
        */
       mediaListChanged: function() {
-        this.splitMedia = [];
-        var mediaLength = Object.keys(this.mediaList).length;
-        var keys = Object.keys(this.mediaList);
-        var counter = 0;
-        var splitCounter = 0;
-        var currentSplit = [];
-        while (counter < mediaLength) {
-          currentSplit.push(this.mediaList[keys[counter]]);
-          splitCounter++;
-          counter++;
-            if (splitCounter == this.elementsPerPage) {
-              this.splitMedia.push(currentSplit);
-              currentSplit = [];
-              splitCounter = 0;
-            }
-        }
-        if (currentSplit.length != 0) {
-          for (var i = currentSplit.length; i < this.elementsPerPage; i++){
-            currentSplit.push(null);
+        if(this.mediaList != null) {
+          this.splitMedia = [];
+          var mediaLength = Object.keys(this.mediaList).length;
+          var keys = Object.keys(this.mediaList);
+          var counter = 0;
+          var splitCounter = 0;
+          var currentSplit = [];
+          while (counter < mediaLength) {
+            currentSplit.push(this.mediaList[keys[counter]]);
+            splitCounter++;
+            counter++;
+              if (splitCounter == this.elementsPerPage) {
+                this.splitMedia.push(currentSplit);
+                currentSplit = [];
+                splitCounter = 0;
+              }
           }
-          this.splitMedia.push(currentSplit);
+          if (currentSplit.length != 0) {
+            for (var i = currentSplit.length; i < this.elementsPerPage; i++){
+              currentSplit.push(null);
+            }
+            this.splitMedia.push(currentSplit);
+          }
         }
       },
       /**
