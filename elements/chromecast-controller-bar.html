@@ -1,3 +1,19 @@
+<!--
+Copyright 2014 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
@@ -8,7 +24,7 @@
 <link href='//fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
 
 <!--
-Element renders and controls cast content.  The required parameter is the mediaStatus
+This element renders and controls cast content.  The required parameter is the castManager
 shared object.
 
 The controller bar appears if the current local video
@@ -138,8 +154,8 @@ The play/pause buttons are automatically updated from observing the cast media s
       </div>
 
       <div id="details">
-        <label id="title">{{ mediaStatus.castMedia.media.metadata.title | shorten }}</label>
-        <label id="sub_title">{{ mediaStatus.castMedia.media.metadata.subtitle |shorten }}</label>
+        <label id="title">{{ castManager.castMedia.media.metadata.title | shorten }}</label>
+        <label id="sub_title">{{ castManager.castMedia.media.metadata.subtitle |shorten }}</label>
       </div>
 
       <paper-button id="button_play_pause">
@@ -151,7 +167,7 @@ The play/pause buttons are automatically updated from observing the cast media s
         {{ castTimeRemaining }}
       </label>
       <volume-controller id="volume_controller"
-                         cast="true" mediaStatus="{{ mediaStatus }}"></volume-controller>
+                         cast="true" castManager="{{ castManager }}"></volume-controller>
     </div>
   </template>
   <script>
@@ -160,9 +176,9 @@ The play/pause buttons are automatically updated from observing the cast media s
       minimized: 1
     };
 
-    Polymer("chromecast-controller-bar", {
+    Polymer('chromecast-controller-bar', {
       publish: {
-        mediaStatus: null
+        castManager: null
       },
       /**
        * Time remaining String
@@ -184,41 +200,41 @@ The play/pause buttons are automatically updated from observing the cast media s
         /**
          * Observe the contentId to see if it matches the locally playing media
          */
-        'mediaStatus.castMedia.media.contentId': 'mediaMatchObserver',
+        'castManager.castMedia.media.contentId': 'mediaMatchObserver',
         /**
          * Observe the local media to see if it matches casting media
          */
-        'mediaStatus.localMedia.url': 'mediaMatchObserver',
+        'castManager.localMedia.url': 'mediaMatchObserver',
         /**
          * Observe the cast player state to update our play pause buttons
          */
-        'mediaStatus.castMedia.playerState': 'playerStateObserver',
+        "castManager.castMedia.playerState": 'playerStateObserver',
         /**
          * Observe any cast media current time changes and update our time remaining
          */
-        'mediaStatus.castMedia.currentTime': 'currentTimeObserver',
+        'castManager.castMedia.currentTime': 'currentTimeObserver',
         /**
          * Observe when cast disconnects
          */
-        'mediaStatus.isCasting': 'castingObserver'
+        'castManager.isCasting': 'castingObserver'
 
       },
       ready: function () {
-        //Handle play pause clicks and fire respective actions
+        // Handle play/pause clicks and fire respective actions
         this.$.button_play_pause.addEventListener('click', function (event) {
-          if (this.mediaStatus.castMedia.playerState != chrome.cast.media.PlayerState.PLAYING) {
-            this.mediaStatus.play(cast.MediaStatus.SENDER.CASTCONTROLLER);
+          if (this.castManager.castMedia.playerState !== chrome.cast.media.PlayerState.PLAYING) {
+            this.castManager.play(cast.CastManager.SENDER.CASTCONTROLLER);
           } else {
-            this.mediaStatus.pause(cast.MediaStatus.SENDER.CASTCONTROLLER);
+            this.castManager.pause(cast.CastManager.SENDER.CASTCONTROLLER);
           }
         }.bind(this));
 
-        //Handle seek requests
+        // Handle seek requests
         this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
         this.$.slider_progress.addEventListener('immediate-value-change',
             this.timeUpdate.bind(this));
 
-        //Handle slider update and update time
+        // Handle slider update and update time
         this.$.slider_progress.addEventListener('mousedown', function () {
           this.sliderAction = true;
         }.bind(this));
@@ -226,13 +242,13 @@ The play/pause buttons are automatically updated from observing the cast media s
           this.sliderAction = false;
         }.bind(this));
 
-        //Prevent clicks on this element from propagating to the rest of the dom
+        // Prevent clicks on this element from propagating to the rest of the dom
         this.addEventListener('click', function (event) {
           event.stopPropagation();
         });
       },
       /**
-       * Observe the chromecast player state and update the play pause button/time remaining
+       * Observe the chromecast player state and update the play/pause button remaining
        *
        * @param oldVal {chrome.cast.media.PlayerState}
        * @param newVal {chrome.cast.media.PlayerState}
@@ -243,7 +259,6 @@ The play/pause buttons are automatically updated from observing the cast media s
         } else if (newVal === chrome.cast.media.PlayerState.IDLE) {
           this.visible = VISIBILITY.hidden;
         } else {
-          //Otherwise clear the interval and reset previous time
           this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
         }
       },
@@ -253,56 +268,45 @@ The play/pause buttons are automatically updated from observing the cast media s
        * @param newVal {number}  value 0-100 of percentage completion
        */
       timeUpdate: function (newVal) {
-        if (this.mediaStatus != null && this.sliderAction) {
-          var duration = this.mediaStatus.castMedia.media.duration;
-          var time =
-              duration * (this.sliderValue / 100);
-          this.castTimeRemaining =
-              cast.Media.secondsToHHMMSS(duration - time);
+        if (this.castManager !== null && this.sliderAction) {
+          var duration = this.castManager.castMedia.media.duration;
+          var time = duration * (this.sliderValue / 100);
+          this.castTimeRemaining = cast.Media.secondsToHHMMSS(duration - time);
         }
       },
       /**
        * Sends seek requests on events from the slider.
-       *
-       * @param newVal {number} slider value 0-100
        */
       sliderUpdate: function (newVal) {
-        if (this.mediaStatus.hasCastMedia()) {
-          var duration = this.mediaStatus.castMedia.media.duration;
-          //covert slider % to duration
+        if (this.castManager.hasCastMedia()) {
+          var duration = this.castManager.castMedia.media.duration;
+          // convert slider % to duration
           var time = (this.sliderValue / 100) * duration;
-          this.mediaStatus.seek(time, cast.MediaStatus.SENDER.CASTCONTROLLER);
+          this.castManager.seek(time, cast.CastManager.SENDER.CASTCONTROLLER);
         }
       },
       /**
        * Observer to display the time remaining
-       *
-       * @param oldVal {number}
-       * @param newVal {number}
        */
       currentTimeObserver: function (oldVal, newVal) {
-        if (this.mediaStatus.hasCastMedia() && !this.sliderAction) {
-          var duration = this.mediaStatus.castMedia.media.duration;
-          var currentTime = this.mediaStatus.castMedia.currentTime;
+        if (this.castManager.hasCastMedia() && !this.sliderAction) {
+          var duration = this.castManager.castMedia.media.duration;
+          var currentTime = this.castManager.castMedia.currentTime;
           this.castTimeRemaining = cast.Media.secondsToHHMMSS(duration - currentTime);
           this.sliderValue = Math.round(currentTime / duration * 100);
         }
       },
       /**
-       * Checks if the local media and chrome remote media matches.  Also observes for queue
-       * status if the media doesn't match or if the queue length > 1 display the cast
-       * controller.  Otherwise hide the cast controller.
-       *
-       * @param oldVal
-       * @param newVal
+       * Checks if the local media and chrome remote media match.  If the media doesn't match,
+       * it hides the controller bar.
        */
       mediaMatchObserver: function (oldVal, newVal) {
-        if (this.mediaStatus.isCasting
-            && !this.mediaStatus.isMediaMatch()
-            && this.mediaStatus.hasCastMedia()) {
-          if (this.visible == VISIBILITY.hidden) {
+        if (this.castManager.isCasting
+            && !this.castManager.isMediaMatch()
+            && this.castManager.hasCastMedia()) {
+          if (this.visible === VISIBILITY.hidden) {
             this.$.thumbnail.style.backgroundImage = "url('"
-            + this.mediaStatus.castMedia.media.metadata.images[0].url
+            + this.castManager.castMedia.media.metadata.images[0].url
             + "')";
             this.visible = VISIBILITY.minimized;
           }
@@ -313,10 +317,12 @@ The play/pause buttons are automatically updated from observing the cast media s
       /**
        * Observes for changes in the chromecast connection.  When disconnected it hides the
        * cast controller bar
+       *
+       * @param newVal {boolean} matches castManager.isCasting
        */
       castingObserver: function (oldVal, newVal) {
-        if (newVal == false) {
-          //hide bar
+        if (newVal === false) {
+          // hide bar
           this.visible = VISIBILITY.hidden;
         }
       },
@@ -334,7 +340,7 @@ The play/pause buttons are automatically updated from observing the cast media s
         }
       },
       /**
-       * Shows the queue elements
+       * Shows the minimzed controller bar
        */
       minimizeControllerBar: function () {
         this.style.transform = 'translateY(-50px)';
@@ -344,12 +350,15 @@ The play/pause buttons are automatically updated from observing the cast media s
        */
       hideControllerBar: function () {
         this.style.transform = '';
-        if (this.hideTimeoutId != null) {
-          window.clearTimeout(this.hideTimeoutId);
-        }
       },
+      /**
+       * Filter function to shorten strings > 20 characthers long.
+       *
+       * @param stringToShorten string to shorten
+       * @returns {*} shortened string if necessary with ellipses
+       */
       shorten: function (stringToShorten) {
-        if (stringToShorten != null) {
+        if (stringToShorten !== null && stringToShorten !== undefined) {
           return stringToShorten.length > 20 ?
           stringToShorten.substr(0, 18) + "..." : stringToShorten;
         }

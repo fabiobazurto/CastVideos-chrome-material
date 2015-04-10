@@ -1,16 +1,32 @@
 /**
- * Object to represent local castable media content
+ Copyright 2014 Google Inc. All Rights Reserved.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
  */
+
 var cast = window.cast || {};
 
-(function(){
+/**
+ * Object to represent a local castable media content
+ */
+(function() {
   'use strict';
 
   Media.STATE = {
     'PAUSE': 0, //has started playing but is currently paused
     'PLAY': 1, //currently playing
     'STOP': 2, //has never started playing
-    'BUFFERING':3 //buffering
+    'BUFFERING': 3 //buffering
   };
 
   function Media(media) {
@@ -60,7 +76,7 @@ var cast = window.cast || {};
    * @param seconds {number}
    * @returns {string}
    */
-  Media.secondsToHHMMSS = function (seconds) {
+  Media.secondsToHHMMSS = function(seconds) {
     var hours = Math.floor(seconds / 3600);
     var minutes = Math.floor((seconds % 3600) / 60);
     var seconds = Math.floor(seconds % 60);
@@ -80,7 +96,7 @@ var cast = window.cast || {};
      *
      * @param duration {number}
      */
-    setDuration: function (duration) {
+    setDuration: function(duration) {
       this.duration = duration;
     },
     /**
@@ -88,7 +104,7 @@ var cast = window.cast || {};
      *
      * @param time {number}
      */
-    setCurrentTime: function (time) {
+    setCurrentTime: function(time) {
       this.currentTime = time;
       this.timeRemainingString = Media.secondsToHHMMSS(this.duration - time);
     },
@@ -97,7 +113,7 @@ var cast = window.cast || {};
      *
      * @returns {number}
      */
-    getCurrentPercentageComplete: function () {
+    getCurrentPercentageComplete: function() {
       return this.currentTime / this.duration;
     },
     /**
@@ -106,7 +122,7 @@ var cast = window.cast || {};
      * @param floatVal {number}
      * @returns {number}
      */
-    floatToTime: function (floatVal) {
+    floatToTime: function(floatVal) {
       return floatVal * this.duration;
     }
   };

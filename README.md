@@ -18,11 +18,11 @@ This sample showcases the Chromecast polymer elements.  The main elements are:
 chromecast-video - Handles displaying and controlling the video
 video-carousel - Carousel displaying video options
 video-details - Displays the details of current local video
-chromecast-controller-bar - Controls the Chromecast when the local media and chromecast media 
+chromecast-controller-bar - Controls the Chromecast when the local media and chromecast media
 don't match.
 
-All of the elements are tied together using cast.MediaStatus and core-signals.  cast.mediaStatus
-represents the current state of the app.  Each element then observes the changes in mediaStatus to
+All of the elements are tied together using cast.CastManager and core-signals.  cast.CastManager
+represents the current state of the app.  Each element then observes the changes in castManager to
 determine how it should act.  core-signals enables pubsub functionality for events such as play,
 pause, seek etc.
 
@@ -30,7 +30,7 @@ Since all of the rendering is databound, this sample also supports multiple clie
 the same time.  Multiple clients can cast and control media.
 
 Each of the elements can be used independently, the only requirement is the chromecast-button.
-The Polymer elements are meant to be a simple wrapper for Chromecast API.  Instead of  they handle 
+The Polymer elements are meant to be a simple wrapper for Chromecast API.  Instead of  they handle
 the rendering
 and most of the complexity.
 
@@ -51,7 +51,7 @@ Python or a webserver
 ##Cast Browser Support
 * Chrome
 
-But elements will still work without Cast in the following browsers
+The elements will still work in browsers that support [Polymer](https://www.polymer-project.org/0.5/resources/compatibility.html) with out cast functionality.
 * Firefox
 * IE 10+
 * Safari 8+

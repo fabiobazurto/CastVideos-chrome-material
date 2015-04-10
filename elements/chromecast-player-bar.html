@@ -1,3 +1,19 @@
+<!--
+Copyright 2014 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="chromecast-button.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
@@ -10,7 +26,7 @@
 <!--
 This element represents the chromecast player bar.
 
-It uses mediaStatus to handle button state and fires core signal events to play/pause the video.
+It uses castManager to handle button state and fires core signal events to play/pause the video.
 
 It automatically updates the time remaining and slider bar through observing changes to local media
 current time.
@@ -30,6 +46,8 @@ It includes the chromecast button for casting.
         box-shadow: 0px 6px 18px -1px rgba(0, 0, 0, 0.88);
         padding: 10px 25px 10px 10px;
         display: flex;
+        display: -webkit-flex;
+        display: -ms-flexbox;
         flex-direction: row;
         flex-wrap: nowrap;
         justify-content: space-around;
@@ -184,14 +202,14 @@ It includes the chromecast button for casting.
     </label>
 
     <volume-controller id="volume_controller"
-                       mediaStatus="{{ mediaStatus }}"></volume-controller>
+                       castManager="{{ castManager }}"></volume-controller>
 
     <div id="button_flex">
-      <chromecast-button id="button_cast" appId="{{ appId }}" mediaStatus="{{ mediaStatus }}"
+      <chromecast-button id="button_cast" appId="{{ appId }}" castManager="{{ castManager }}"
                          color="white"></chromecast-button>
     </div>
 
-    <paper-icon-button class="icon-button {{mediaStatus.isCasting ? 'hidden': ''}}"
+    <paper-icon-button class="icon-button {{castManager.isCasting ? 'hidden': ''}}"
                        id="button_full_screen"
                        icon="fullscreen"></paper-icon-button>
   </template>
@@ -202,60 +220,61 @@ It includes the chromecast button for casting.
       sliderAction: false,
       publish: {
         appId: null, //Id of chromecast receiver
-        mediaStatus: null //MediaStatus object
+        castManager: null //CastManager object
       },
       observe: {
-        'mediaStatus.localMedia.currentTime': 'currentTimeUpdate',
-        'mediaStatus.localMedia.duration': 'currentTimeUpdate',
-        'mediaStatus.localMedia.state': 'localPlayerStateObserver',
-        'mediaStatus.castMedia.currentTime': 'currentTimeUpdate',
-        'mediaStatus.castMedia.playerState': 'castPlayerStateObserver',
-        /**
-         * Observe the local media to see if it matches casting media
-         */
-        'mediaStatus.localMedia.url': 'mediaMatchObserver',
-        'mediaStatus.isFullScreen': 'fullScreenObserver',
-        'mediaStatus.isCasting': 'castingObserver'
+        'castManager.localMedia.currentTime': 'currentTimeUpdate',
+        'castManager.localMedia.duration': 'currentTimeUpdate',
+        'castManager.localMedia.state': 'localPlayerStateObserver',
+        'castManager.castMedia.currentTime': 'currentTimeUpdate',
+        "castManager.castMedia.playerState": 'castPlayerStateObserver',
+        'castManager.localMedia.url': 'mediaMatchObserver',
+        'castManager.isFullScreen': 'fullScreenObserver',
+        'castManager.isCasting': 'castingObserver'
       },
-      ready: function () {
-        //Add event listener for button clicks
-        this.$.button_play_pause.addEventListener('click', function (event) {
+      ready: function() {
+        // Add event listener for button clicks
+        this.$.button_play_pause.addEventListener('click', function(event) {
           var stateVar;
           var stateEnum;
-          if (this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch()) {
-            //Control castmedia
-            stateVar = this.mediaStatus.castMedia.playerState;
+          // If we're casting use Cast media state to determine if button should play or pause
+          if (this.castManager.isCasting && this.castManager.isMediaMatch()) {
+            stateVar = this.castManager.castMedia.playerState;
             stateEnum = chrome.cast.media.PlayerState.PLAYING;
           } else {
-            stateVar = this.mediaStatus.localMedia.state;
+            // Otherwise use local media state
+            stateVar = this.castManager.localMedia.state;
             stateEnum = cast.Media.STATE.PLAY
           }
           if (stateVar === stateEnum) {
-            this.mediaStatus.pause(cast.MediaStatus.SENDER.LOCAL);
+            this.castManager.pause(cast.CastManager.SENDER.LOCAL);
           } else {
-            this.mediaStatus.play(cast.MediaStatus.SENDER.LOCAL);
+            this.castManager.play(cast.CastManager.SENDER.LOCAL);
           }
         }.bind(this));
 
-        //Add event listener for slider interaction
+        // Add event listener for slider interaction
         this.$.slider_progress.addEventListener('change', this.sliderUpdate.bind(this));
         this.$.slider_progress.addEventListener('immediate-value-change',
             this.timeUpdate.bind(this));
-        this.$.slider_progress.addEventListener('mousedown', function () {
+        this.$.slider_progress.addEventListener('mousedown', function() {
           this.sliderAction = true;
         }.bind(this));
-        this.$.slider_progress.addEventListener('mouseup', function () {
+        this.$.slider_progress.addEventListener('mouseup', function() {
           this.sliderAction = false;
         }.bind(this));
 
-        this.$.button_full_screen.addEventListener('click', function () {
-          if (this.mediaStatus.isFullScreen) {
-            this.mediaStatus.exitFullScreen();
+        // Add event listener to enable fullscreen
+        this.$.button_full_screen.addEventListener('click', function() {
+          if (this.castManager.isFullScreen) {
+            this.castManager.exitFullScreen();
           } else {
-            this.mediaStatus.fullScreen();
+            this.castManager.fullScreen();
           }
         }.bind(this));
-        this.addEventListener('click', function (event) {
+
+        // Prevent clicks in this element from cascading
+        this.addEventListener('click', function(event) {
           event.stopPropagation();
         });
       },
@@ -264,12 +283,12 @@ It includes the chromecast button for casting.
        *
        * @param newVal {number}  value 0-100 of percentage completion
        */
-      timeUpdate: function (newVal) {
-        if (this.mediaStatus != null && this.sliderAction) {
+      timeUpdate: function(newVal) {
+        if (this.castManager !== null && this.sliderAction) {
           var time =
-              this.mediaStatus.localMedia.floatToTime(this.sliderValue / 100);
+              this.castManager.localMedia.floatToTime(this.sliderValue / 100);
           this.localTimeRemaining =
-              cast.Media.secondsToHHMMSS(this.mediaStatus.localMedia.duration - time);
+              cast.Media.secondsToHHMMSS(this.castManager.localMedia.duration - time);
         }
       },
       /**
@@ -277,61 +296,62 @@ It includes the chromecast button for casting.
        *
        * @param newVal {number} value 0-100 of percentage completion
        */
-      sliderUpdate: function (newVal) {
-        //Convert percentage to seconds
-        var time = this.mediaStatus.localMedia.floatToTime(this.sliderValue / 100);
-        //If the current media is untouched change the state to paused if it's seeked
-        //This hides the thumbnail overlay
-        if (this.mediaStatus.localMedia.state == cast.Media.STATE.STOP) {
-          this.mediaStatus.localMedia.state = cast.Media.STATE.PAUSE;
+      sliderUpdate: function(newVal) {
+        // Convert percentage to seconds
+        var time = this.castManager.localMedia.floatToTime(this.sliderValue / 100);
+        // If the current media is untouched change the state to paused if it's seeked
+        // This hides the thumbnail overlay
+        if (this.castManager.localMedia.state === cast.Media.STATE.STOP) {
+          this.castManager.localMedia.state = cast.Media.STATE.PAUSE;
         }
-        //Seek to the corresponding time in the video
+        // Seek to the corresponding time in the video
         this.sliderAction = true;
         console.log('Seek start');
-        this.mediaStatus.seek(time, cast.MediaStatus.SENDER.LOCAL);
+        this.castManager.seek(time, cast.CastManager.SENDER.LOCAL);
       },
       /**
-       * Observes localMedia currentTime and updates the slider value.
+       * Observes localMedia and castMedia currentTime and state then updates the slider and time
+       * remaining string.
        *
-       * Since the slider is based on video currentTime the player bar doesn't need to handle
-       * seek events.
-       *
-       * @param oldVal {number}
-       * @param newVal {number}
+       * Since the slider is based on video's currentTime, the player bar doesn't need to handle
+       * seek chromecast events.
        */
-      currentTimeUpdate: function (oldVal, newVal) {
+      currentTimeUpdate: function(oldVal, newVal) {
+        // Prevent time from updating from observations when a user is interacting with the slider
+        // bar
         if (!this.sliderAction) {
-          var duration;
-          var currentTime;
-          if (this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch() &&
-              this.mediaStatus.hasCastMedia()) {
-            duration = this.mediaStatus.castMedia.media.duration;
-            currentTime = this.mediaStatus.castMedia.currentTime;
+          var duration, currentTime;
+          // If it's currently casting use cast currentTime
+          if (this.castManager.isCasting && this.castManager.isMediaMatch()
+              && this.castManager.hasCastMedia()) {
+            duration = this.castManager.castMedia.media.duration;
+            currentTime = this.castManager.castMedia.currentTime;
           } else {
-            duration = this.mediaStatus.localMedia.duration;
-            currentTime = this.mediaStatus.localMedia.currentTime;
+            // Use localMedia currentTime
+            duration = this.castManager.localMedia.duration;
+            currentTime = this.castManager.localMedia.currentTime;
           }
           this.localTimeRemaining = cast.Media.secondsToHHMMSS(duration - currentTime);
           this.sliderValue = Math.round(currentTime / duration * 100);
         }
       },
       /**
-       * Observe media state and update the play pause button accordingly
-       *
-       * @param oldVal
-       * @param newVal
+       * Observe local media state and update the play pause button accordingly.
        */
-      localPlayerStateObserver: function (oldVal, newVal) {
-        if (!this.mediaStatus.isCasting || !this.mediaStatus.isMediaMatch()) {
-          if (newVal == cast.Media.STATE.PLAY) {
+      localPlayerStateObserver: function(oldVal, newVal) {
+        if (!this.castManager.isCasting || !this.castManager.isMediaMatch()) {
+          if (newVal === cast.Media.STATE.PLAY) {
             this.$.icon_play_pause.setAttribute('icon', 'av:pause');
           } else {
             this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
           }
         }
       },
-      castPlayerStateObserver: function (oldVal, newVal) {
-        if (this.mediaStatus.isCasting && this.mediaStatus.isMediaMatch()) {
+      /**
+       * Observe Cast media state and update the play/pause button accordingly.
+       */
+      castPlayerStateObserver: function(oldVal, newVal) {
+        if (this.castManager.isCasting && this.castManager.isMediaMatch()) {
           if (newVal === chrome.cast.media.PlayerState.PLAYING) {
             this.sliderAction = false;
             this.$.icon_play_pause.setAttribute('icon', 'av:pause');
@@ -341,29 +361,35 @@ It includes the chromecast button for casting.
         }
       },
       /**
-       * If the local media no longer matches the remote media change the play pause icon
-       * back to play
-       *
-       * @param oldVal
-       * @param newVal
+       * If the local media no longer matches the remote media, change the play/pause icon
+       * back to play.
        */
-      mediaMatchObserver: function (oldVal, newVal) {
-        if (!this.mediaStatus.isMediaMatch() && this.mediaStatus.isCasting) {
+      mediaMatchObserver: function(oldVal, newVal) {
+        if (!this.castManager.isMediaMatch() && this.castManager.isCasting) {
           this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
-        } else if (this.mediaStatus.isMediaMatch() && this.mediaStatus.isCasting) {
-          this.castPlayerStateObserver(null, this.mediaStatus.castMedia.playerState);
+        } else if (this.castManager.isMediaMatch() && this.castManager.isCasting) {
+          this.castPlayerStateObserver(null, this.castManager.castMedia.playerState);
         }
       },
-      fullScreenObserver: function (oldVal, newVal) {
-        if (this.mediaStatus.isFullScreen) {
+      /**
+       * Observes the full screen state and updates the fullscreen icon based on the current
+       * state.
+       */
+      fullScreenObserver: function(oldVal, newVal) {
+        if (this.castManager.isFullScreen) {
           this.$.button_full_screen.setAttribute('icon', 'fullscreen-exit');
         } else {
           this.$.button_full_screen.setAttribute('icon', 'fullscreen');
         }
       },
-      castingObserver: function (oldVal, newVal) {
-        if (newVal === false && this.mediaStatus.castMedia != null
-            && this.mediaStatus.isMediaMatch()) {
+      /**
+       * If casting ends, update the play/pause button to match current local media state.
+       *
+       * @param oldVal {boolean}
+       * @param newVal {boolean}
+       */
+      castingObserver: function(oldVal, newVal) {
+        if (newVal === false && this.castManager.isMediaMatch()) {
           this.localPlayerStateObserver(null, cast.Media.STATE.PAUSE);
         }
       }
