@@ -41,40 +41,52 @@ It includes the chromecast button for casting.
         height: 39px;
         background-color: #000000;
         opacity: 0.6;
+        filter: alpha(opacity=60);
         z-index: 1000;
         border-radius: 10px;
         box-shadow: 0px 6px 18px -1px rgba(0, 0, 0, 0.88);
         padding: 10px 25px 10px 10px;
+        display: -webkit-box;
         display: flex;
         display: -webkit-flex;
         display: -ms-flexbox;
+        -webkit-box-orient: horizontal;
+        -webkit-box-direction: normal;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
         flex-direction: row;
+        -webkit-flex-wrap: nowrap;
+        -ms-flex-wrap: nowrap;
         flex-wrap: nowrap;
+        -webkit-justify-content: space-around;
+        -ms-flex-pack: distribute;
         justify-content: space-around;
+        -webkit-box-align: center;
+        -webkit-align-items: center;
+        -ms-flex-align: center;
         align-items: center;
         overflow: visible;
       }
 
-      .button {
-        height: 39px;
-        fill: #ffffff;
-        display: flex;
-        min-width: 0;
-        flex-grow: 1;
-        justify-content: center;
-      }
-
       #button_play_pause {
+        -webkit-box-ordinal-group: 2;
+        -webkit-order: 1;
+        -ms-flex-order: 1;
         order: 1;
       }
 
-      .button::shadow #ripple {
-        color: #eaeaea;
-      }
-
       #slider_progress {
+        -webkit-box-ordinal-group: 4;
+        -webkit-order: 3;
+        -ms-flex-order: 3;
         order: 3;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
         display: flex;
+        -webkit-box-flex: 20;
+        -webkit-flex-grow: 20;
+        -ms-flex-positive: 20;
         flex-grow: 20;
       }
 
@@ -84,8 +96,17 @@ It includes the chromecast button for casting.
       }
 
       #label_time {
+        -webkit-box-ordinal-group: 5;
+        -webkit-order: 4;
+        -ms-flex-order: 4;
         order: 4;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
         display: flex;
+        -webkit-box-flex: 1;
+        -webkit-flex-grow: 1;
+        -ms-flex-positive: 1;
         flex-grow: 1;
         color: #ffffff;
         font-family: 'Roboto', sans-serif;
@@ -94,43 +115,27 @@ It includes the chromecast button for casting.
       }
 
       #button_flex {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
         display: flex;
+        -webkit-box-ordinal-group: 11;
+        -webkit-order: 10;
+        -ms-flex-order: 10;
         order: 10;
+        -webkit-box-flex: 1;
+        -webkit-flex-grow: 1;
+        -ms-flex-positive: 1;
         flex-grow: 1;
+        -webkit-flex-shrink: 10;
+        -ms-flex-negative: 10;
         flex-shrink: 10;
         overflow: visible;
+        -webkit-box-pack: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
         justify-content: center;
         min-width: 0px;
-      }
-
-      core-icon[icon="av:play-arrow"] {
-        height: 39px;
-        width: 39px;
-        color: #ffffff;
-      }
-
-      core-icon[icon="av:play-arrow"]:hover {
-        color: #4F7DC9;
-      }
-
-      core-icon[icon="av:pause"] {
-        height: 39px;
-        width: 39px;
-        color: #ffffff;
-      }
-
-      core-icon[icon="av:pause"]:hover {
-        color: #4F7DC9;
-      }
-
-      core-icon[icon="add"] {
-        height: 39px;
-        width: 39px;
-        color: #ffffff;
-      }
-
-      core-icon[icon="add"]:hover {
-        color: #4F7DC9;
       }
 
       .hidden {
@@ -138,22 +143,43 @@ It includes the chromecast button for casting.
       }
 
       #button_full_screen {
+        -webkit-box-ordinal-group: 8;
+        -webkit-order: 7;
+        -ms-flex-order: 7;
         order: 7;
       }
 
       #button_volume {
+        -webkit-box-ordinal-group: 6;
+        -webkit-order: 5;
+        -ms-flex-order: 5;
         order: 5;
       }
 
       #slider_volume {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
         display: flex;
         width: 100%;
       }
 
       #volume_controller {
+        -webkit-box-ordinal-group: 7;
+        -webkit-order: 6;
+        -ms-flex-order: 6;
         order: 6;
+        -webkit-box-flex: 1;
+        -webkit-flex-grow: 1;
+        -ms-flex-positive: 1;
         flex-grow: 1;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
         display: flex;
+        -webkit-box-pack: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
         justify-content: center;
         width: 100px;
       }
@@ -166,8 +192,17 @@ It includes the chromecast button for casting.
       .icon-button {
         height: 39px;
         min-width: 0px;
+        -webkit-box-flex: 1;
+        -webkit-flex-grow: 1;
+        -ms-flex-positive: 1;
         flex-grow: 1;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
         display: flex;
+        -webkit-box-pack: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
         justify-content: center;
         color: #ffffff;
         padding: 0;
@@ -192,10 +227,8 @@ It includes the chromecast button for casting.
 
     </style>
 
-    <paper-button id="button_play_pause" class="button">
-      <core-icon id="icon_play_pause"
-                 icon="av:play-arrow"></core-icon>
-    </paper-button>
+    <paper-icon-button id="button_play_pause" icon="av:play-arrow" class="icon-button">
+    </paper-icon-button>
     <paper-slider id="slider_progress" immediateValue="{{ sliderValue }}"></paper-slider>
     <label id="label_time">
       {{ localTimeRemaining }}
@@ -341,9 +374,9 @@ It includes the chromecast button for casting.
       localPlayerStateObserver: function(oldVal, newVal) {
         if (!this.castManager.isCasting || !this.castManager.isMediaMatch()) {
           if (newVal === cast.Media.STATE.PLAY) {
-            this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+            this.$.button_play_pause.setAttribute('icon', 'av:pause');
           } else {
-            this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+            this.$.button_play_pause.setAttribute('icon', 'av:play-arrow');
           }
         }
       },
@@ -354,9 +387,9 @@ It includes the chromecast button for casting.
         if (this.castManager.isCasting && this.castManager.isMediaMatch()) {
           if (newVal === chrome.cast.media.PlayerState.PLAYING) {
             this.sliderAction = false;
-            this.$.icon_play_pause.setAttribute('icon', 'av:pause');
+            this.$.button_play_pause.setAttribute('icon', 'av:pause');
           } else {
-            this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+            this.$.button_play_pause.setAttribute('icon', 'av:play-arrow');
           }
         }
       },
@@ -366,7 +399,7 @@ It includes the chromecast button for casting.
        */
       mediaMatchObserver: function(oldVal, newVal) {
         if (!this.castManager.isMediaMatch() && this.castManager.isCasting) {
-          this.$.icon_play_pause.setAttribute('icon', 'av:play-arrow');
+          this.$.button_play_pause.setAttribute('icon', 'av:play-arrow');
         } else if (this.castManager.isMediaMatch() && this.castManager.isCasting) {
           this.castPlayerStateObserver(null, this.castManager.castMedia.playerState);
         }

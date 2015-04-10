@@ -68,6 +68,7 @@ The element includes chromecast-player-bar as the media controller.
         bottom: 8%;
         width: 100%;
         z-index: 2000;
+        -webkit-transition: opacity .5s ease-in-out;
         transition: opacity .5s ease-in-out;
       }
 
@@ -91,6 +92,8 @@ The element includes chromecast-player-bar as the media controller.
         z-index: 100;
         display: block;
         top: 50%;
+        -webkit-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
         transform: translateY(-50%);
       }
 
@@ -111,33 +114,33 @@ The element includes chromecast-player-bar as the media controller.
       }
 
       #text_overlay {
+        -webkit-transition: opacity .5s ease-in-out;
         transition: opacity .5s ease-in-out;
         z-index: 1000;
       }
 
       .hidden {
         opacity: 0;
+        filter: alpha(opacity=0);
       }
 
       .gradient {
-        background: -moz-linear-gradient(top,
-        rgba(0, 0, 0, 0.01) 0%,
-        rgba(0, 0, 0, 0.16) 70%,
-        rgba(0, 0, 0, 1) 100%); /* FF3.6+ */
+        /* FF3.6+ */
 
         background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(0, 0, 0, 0.01)), color-stop(70%, rgba(0, 0, 0, 0.16)), color-stop(100%, rgba(0, 0, 0, 1))); /* Chrome,Safari4+ */
         background: -webkit-linear-gradient(top, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* Chrome10+,Safari5.1+ */
-        background: -o-linear-gradient(top, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* Opera 11.10+ */
-        background: -ms-linear-gradient(top, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* IE10+ */
+        /* Opera 11.10+ */
+        /* IE10+ */
         background: linear-gradient(to bottom, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.16) 70%, rgba(0, 0, 0, 1) 100%); /* W3C */
-        filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#03000000', endColorstr='#000000', GradientType=0); /* IE6-9 */
+        filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='rgba(3, 0, 0, 0)', endColorstr='#000000', GradientType=0); /* IE6-9 */
       }
 
       .player-bar-holder.hidden {
         opacity: 0;
+        filter: alpha(opacity=0);
       }
-
     </style>
+
     <div id="text_overlay"
          class="overlay-content gradient {{castManager.isCasting ? '' : 'hidden'}}">
       <span id="cast_label"></span>

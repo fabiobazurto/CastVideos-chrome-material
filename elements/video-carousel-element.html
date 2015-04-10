@@ -15,13 +15,12 @@ limitations under the License.
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="../bower_components/core-icons/av-icons.html">
+
 <link href='//fonts.googleapis.com/css?family=Roboto:700,400,100' rel='stylesheet'
       type='text/css'>
-<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../bower_components/paper-dropdown/paper-dropdown.html">
-<link rel="import" href="../bower_components/paper-item/paper-item.html">
-<link rel="import" href="../bower_components/core-menu/core-menu.html">
+
 <!--
 Represents each element in the video carousel.  Rendered from media.title, media.studio and
 media.thumbnail
@@ -48,6 +47,18 @@ media.thumbnail
         background-size: cover;
         background-repeat: no-repeat;
         background-position: 50% 50%;
+        display:-webkit-box;
+        display:-webkit-flex;
+        display:-ms-flexbox;
+        display:flex;
+        -webkit-box-align:center;
+        -webkit-align-items:center;
+        -ms-flex-align:center;
+        align-items:center;
+        -webkit-box-pack: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
+        justify-content: center;
       }
 
       p {
@@ -66,14 +77,29 @@ media.thumbnail
         font-size: 1.2em;
       }
 
-      .hidden {
-        display: none;
+      #play.hidden {
+        opacity: 0;
+        filter: alpha(opacity=0);
+      }
+
+      #play {
+        opacity: .8;
+        filter: alpha(opacity=80);
+        width: 100px;
+        height: 100px;
+        fill:#ffffff;
+        display:block;
+        -webkit-transition: .3s ease-in-out;
+        transition: .3s ease-in-out;
       }
     </style>
-    <div id="thumbnail"></div>
-    <p class="title">{{ media.title }}</p>
+      <div id="thumbnail">
+        <core-icon id="play" icon="av:play-arrow" class="hidden"></core-icon>
+      </div>
+      <p class="title">{{ media.title }}</p>
 
-    <p class="studio">{{ media.studio }}</p>
+      <p class="studio">{{ media.studio }}</p>
+      <paper-ripple fit></paper-ripple>
   </template>
   <script>
     Polymer('video-carousel-element', {
@@ -88,6 +114,12 @@ media.thumbnail
         if (this.media === null) {
           this.style.visibility = 'hidden';
         }
+        this.addEventListener('mouseenter', function() {
+          this.$.play.classList.remove('hidden');
+        }.bind(this));
+        this.addEventListener('mouseout', function() {
+          this.$.play.classList.add('hidden');
+        }.bind(this));
       },
       thumbnailUpdater: function (oldVal, newVal) {
         this.$.thumbnail.style.backgroundImage = 'url(\'' + newVal + '\')';

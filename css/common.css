@@ -2,7 +2,7 @@ body {
   background-color: #aeaeae;
 }
 
-core-header-panel {
+core-scroll-header-panel {
   width: 100%;
 }
 
@@ -11,7 +11,7 @@ core-header-panel {
   height: 71px;
 }
 
-core-header-panel .content {
+.video-content {
   background: #1b1b1b; /* Old browsers */
   background: -moz-linear-gradient(top, #1b1b1b 0%, #3f3f3f 100%); /* FF3.6+ */
   background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #1b1b1b), color-stop(100%, #3f3f3f)); /* Chrome,Safari4+ */
@@ -25,7 +25,7 @@ core-header-panel .content {
   margin-left: 20px;
 }
 
-.content {
+.video-content {
   padding-top: 20px;
   padding-bottom: 20px;
   background-color: #ffffff;
