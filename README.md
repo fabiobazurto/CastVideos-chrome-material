@@ -51,7 +51,7 @@ Python or a webserver
 ##Cast Browser Support
 * Chrome
 
-The elements will still work in browsers that support [Polymer](https://www.polymer-project.org/0.5/resources/compatibility.html) with out cast functionality.
+The elements will still work in browsers that support [Polymer](https://www.polymer-project.org/0.5/resources/compatibility.html) without cast functionality.
 * Firefox
 * IE 10+
 * Safari 8+
