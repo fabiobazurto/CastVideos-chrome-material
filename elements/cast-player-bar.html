@@ -15,7 +15,7 @@ limitations under the License.
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="chromecast-button.html">
+<link rel="import" href="cast-button.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
@@ -33,7 +33,7 @@ current time.
 
 It includes the chromecast button for casting.
 -->
-<polymer-element name="chromecast-player-bar">
+<polymer-element name="cast-player-bar">
   <template>
     <style>
       :host {
@@ -238,8 +238,8 @@ It includes the chromecast button for casting.
                        castManager="{{ castManager }}"></volume-controller>
 
     <div id="button_flex">
-      <chromecast-button id="button_cast" appId="{{ appId }}" castManager="{{ castManager }}"
-                         color="white"></chromecast-button>
+      <cast-button id="button_cast" appId="{{ appId }}" castManager="{{ castManager }}"
+                         color="white"></cast-button>
     </div>
 
     <paper-icon-button class="icon-button {{castManager.isCasting ? 'hidden': ''}}"
@@ -247,7 +247,7 @@ It includes the chromecast button for casting.
                        icon="fullscreen"></paper-icon-button>
   </template>
   <script>
-    Polymer("chromecast-player-bar", {
+    Polymer("cast-player-bar", {
       sliderValue: 0,
       localTimeRemaining: "00:00:00",
       sliderAction: false,

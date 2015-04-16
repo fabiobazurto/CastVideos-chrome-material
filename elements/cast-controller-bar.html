@@ -34,7 +34,7 @@ Since cast only updates the currentMedia time on a change, we increment it with 
 
 The play/pause buttons are automatically updated from observing the cast media state.
 -->
-<polymer-element name="chromecast-controller-bar">
+<polymer-element name="cast-controller-bar">
   <template>
     <style>
       :host {
@@ -246,7 +246,7 @@ The play/pause buttons are automatically updated from observing the cast media s
       minimized: 1
     };
 
-    Polymer('chromecast-controller-bar', {
+    Polymer('cast-controller-bar', {
       publish: {
         castManager: null
       },

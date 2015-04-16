@@ -20,15 +20,14 @@ limitations under the License.
   <meta name="viewport" content="width=880, initial-scale=1">
 
   <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
-  <script src="js/media.js"></script>
-  <script src="js/castmanager.js"></script>
+
+  <link rel="import" href="elements/cast-video.html">
 
   <link rel="import"
         href="bower_components/core-scroll-header-panel/core-scroll-header-panel.html">
-  <link rel="import" href="elements/chromecast-video.html">
   <link rel="import" href="elements/video-details.html">
   <link rel="import" href="elements/video-carousel.html">
-  <link rel="import" href="elements/chromecast-controller-bar.html">
+  <link rel="import" href="elements/cast-controller-bar.html">
 
   <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" media="only screen and (max-width: 1109px)"
@@ -80,14 +79,11 @@ limitations under the License.
         var content = JSON.parse(xhr.responseText);
         mediaList = processMediaList(content);
         media = new cast.Media(mediaList[Object.keys(mediaList)[0]]);
-
-        castManager = new cast.CastManager(media);
-
         if (isPolymerReady) {
-          loadDataIntoPolymer(castManager);
+          loadDataIntoPolymer(media);
         } else {
           window.addEventListener('polymer-ready', function() {
-            loadDataIntoPolymer(castManager);
+            loadDataIntoPolymer(media);
           });
         }
       };
@@ -97,8 +93,9 @@ limitations under the License.
       xhr.send();
     }
 
-    function loadDataIntoPolymer(castManager) {
-      var videoPlayer = document.querySelector('chromecast-video');
+    function loadDataIntoPolymer(media) {
+      castManager = new cast.CastManager(media);
+      var videoPlayer = document.querySelector('cast-video');
       videoPlayer.castManager = castManager;
       var videoDetails = document.querySelector('video-details');
       videoDetails.castManager = castManager;
@@ -107,7 +104,7 @@ limitations under the License.
         videoCarousels[carousel].mediaList = mediaList;
         videoCarousels[carousel].castManager = castManager;
       }
-      var controllerBar = document.querySelector('chromecast-controller-bar');
+      var controllerBar = document.querySelector('cast-controller-bar');
       controllerBar.castManager = castManager;
     }
 
@@ -140,7 +137,7 @@ limitations under the License.
   <div class="center-box-shadow width bgcolor translate-hack min-height">
     <div class="video-content">
       <div class="video-width video-height shadow">
-        <chromecast-video appId="4F8B3483"></chromecast-video>
+        <cast-video appId="4F8B3483"></cast-video>
       </div>
 
       <video-details class="video-width"></video-details>
@@ -154,6 +151,6 @@ limitations under the License.
 </core-scroll-header-panel>
 
 
-<chromecast-controller-bar></chromecast-controller-bar>
+<cast-controller-bar></cast-controller-bar>
 </body>
 </html>

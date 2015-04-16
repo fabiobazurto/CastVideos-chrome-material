@@ -18,7 +18,7 @@ limitations under the License.
 <link rel="import" href="../bower_components/core-signals/core-signals.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 
-<link rel="import" href="chromecast-player-bar.html">
+<link rel="import" href="cast-player-bar.html">
 
 <link href='//fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
 
@@ -34,7 +34,7 @@ Before a video starts playing, an image overlay is displayed if it has one.
 
 The element includes chromecast-player-bar as the media controller.
 -->
-<polymer-element name="chromecast-video">
+<polymer-element name="cast-video">
   <template>
     <style>
       :host {
@@ -158,13 +158,13 @@ The element includes chromecast-player-bar as the media controller.
     <video id="video_content" class="overlay-content">
     </video>
     <div id='player_bar' class="player-bar-holder">
-      <chromecast-player-bar appId="{{ appId }}"
-                             castManager="{{ castManager }}"></chromecast-player-bar>
+      <cast-player-bar appId="{{ appId }}"
+                             castManager="{{ castManager }}"></cast-player-bar>
     </div>
     <core-signals on-core-signal-media-action="{{ mediaActionHandler }}"></core-signals>
   </template>
   <script>
-    Polymer('chromecast-video', {
+    Polymer('cast-video', {
       publish: {
         appId: null,
         castManager: null
