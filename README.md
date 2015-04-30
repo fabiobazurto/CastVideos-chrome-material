@@ -18,10 +18,10 @@ The demo can be found [here](http://googlecast.github.io/CastVideos-material/).
 
 This sample showcases the Chromecast polymer elements.  The main elements are:
 
-*cast-video - Handles displaying and controlling the video
-*video-carousel - Carousel displaying video options
-*video-details - Displays the details of current local video
-*cast-controller-bar - Controls the Chromecast when the local media and chromecast media
+* cast-video - Handles displaying and controlling the video
+* video-carousel - Carousel displaying video options
+* video-details - Displays the details of current local video
+* cast-controller-bar - Controls the Chromecast when the local media and chromecast media
 don't match.
 
 All of the elements are tied together using cast.CastManager and core-signals.  cast.CastManager
