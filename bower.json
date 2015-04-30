@@ -32,8 +32,6 @@
     "jasmine-core": "~2.2.1",
     "paper-menu-button": "Polymer/paper-menu-button#~0.5.5",
     "paper-spinner": "Polymer/paper-spinner#~0.5.5",
-    "bower": "*",
-    "install": "~1.0.4",
     "core-scroll-header-panel": "Polymer/core-scroll-header-panel#^0.5",
     "cast-button-polymer": "pengying/cast-button-polymer#~0.9.0"
   }
