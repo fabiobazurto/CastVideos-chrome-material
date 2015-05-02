@@ -1,12 +1,24 @@
+/**
+Copyright 2014 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 body {
   background-color: #aeaeae;
 }
 
-core-scroll-header-panel {
-  width: 100%;
-}
-
-.core-header {
+.paper-header {
   background: #4F7DC9;
   height: 71px;
 }
@@ -21,7 +33,7 @@ core-scroll-header-panel {
   background: linear-gradient(to bottom, #1b1b1b 0%, #3f3f3f 100%); /* W3C */
 }
 
-.core-header img {
+.paper-header img {
   margin-left: 20px;
 }
 
@@ -32,7 +44,7 @@ core-scroll-header-panel {
 }
 
 .shadow {
-  box-shadow: 0px 6px 18px -1px rgba(0, 0, 0, 0.88);
+  box-shadow: 0 6px 18px -1px rgba(0, 0, 0, 0.88);
 }
 
 video-details {
@@ -43,7 +55,7 @@ video-details {
   margin: 0 auto;
   position: relative;
   overflow: hidden;
-  box-shadow: 0px 6px 18px -1px rgba(0, 0, 0, 0.88);
+  box-shadow: 0 6px 18px -1px rgba(0, 0, 0, 0.88);
 }
 
 .bgcolor {
@@ -64,10 +76,6 @@ video-details {
   background: -o-linear-gradient(top, #1b1b1b 0%, #3f3f3f 100%); /* Opera 11.10+ */
   background: -ms-linear-gradient(top, #1b1b1b 0%, #3f3f3f 100%); /* IE10+ */
   background: linear-gradient(to bottom, #1b1b1b 0%, #3f3f3f 100%); /* W3C */
-}
-
-.translate-hack {
-  transform: translateZ(0);
 }
 
 .min-height {
