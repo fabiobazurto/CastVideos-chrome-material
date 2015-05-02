@@ -33,14 +33,12 @@ Since all of the rendering is databound, this sample also supports multiple clie
 the same time.  Multiple clients can cast and control media.
 
 Each of the elements can be used independently, the only requirement is the chromecast-button.
-The Polymer elements are meant to be a simple wrapper for Chromecast API.  Instead of  they handle
-the rendering
-and most of the complexity.
+The Polymer elements are meant to be a simple wrapper for Chromecast API.  Instead of integrating and rendering everything your self, you can leverage the elements to handle most of the complexity.
 
 ##Requirements
 
-[Bower](http://bower.io/)
-Python or a webserver
+* [Bower](http://bower.io/)
+* Python or a webserver
 
 ##Setup
 

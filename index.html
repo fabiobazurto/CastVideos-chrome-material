@@ -21,13 +21,13 @@ limitations under the License.
 
   <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
 
-  <link rel="import" href="elements/cast-video.html">
+  <link rel="import" href="bower_components/cast-video-polymer/cast-video-polymer.html">
 
   <link rel="import"
         href="bower_components/core-scroll-header-panel/core-scroll-header-panel.html">
   <link rel="import" href="elements/video-details.html">
   <link rel="import" href="elements/video-carousel.html">
-  <link rel="import" href="elements/cast-controller-bar.html">
+  <link rel="import" href="bower_components/cast-controller-bar-polymer/cast-controller-bar-polymer.html">
 
   <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" media="only screen and (max-width: 1109px)"
@@ -133,13 +133,11 @@ limitations under the License.
   <div class="core-header center-box-shadow width">
     <img src="images/logo.png">
   </div>
-
   <div class="center-box-shadow width bgcolor translate-hack min-height">
     <div class="video-content">
       <div class="video-width video-height shadow">
         <cast-video appId="4F8B3483"></cast-video>
       </div>
-
       <video-details class="video-width"></video-details>
     </div>
     <video-carousel genre="Movies" class="carousel-width"></video-carousel>
@@ -147,10 +145,7 @@ limitations under the License.
     <video-carousel genre="Related Content" class="carousel-width"></video-carousel>
     <div id="footer" class="width"></div>
   </div>
-
 </core-scroll-header-panel>
-
-
 <cast-controller-bar></cast-controller-bar>
 </body>
 </html>
