@@ -18,22 +18,22 @@ The demo can be found [here](http://googlecast.github.io/CastVideos-material/).
 
 This sample showcases the UX compliant Chromecast polymer elements.  The main elements are:
 
-* cast-video - Handles displaying and controlling the video
-* cast-controller-bar - Controls the Chromecast when the local media and chromecast media
-don't match.
+* [cast-video](https://github.com/googlecast/cast-video-polymer) - Handles displaying and 
+controlling the video
+* [cast-controller-bar](https://github.com/googlecast/cast-controller-bar-polymer) - Controls the Chromecast when the local media and chromecast media don't match.
 
 The sub elements are:
-* cast-button - Renders cast button and handles logic related to casting
-* cast-player-bar - Renders the local video player controls and encapsulates the cast button
-* cast-volume - Used to render the volume slider for local and cast controllers.
+* [cast-button](https://github.com/googlecast/cast-button-polymer) - Renders cast button and handles logic related to casting
+* [cast-player-bar](https://github.com/googlecast/cast-player-bar-polymer) - Renders the local video player controls and encapsulates the cast button
+* [cast-volume-controller](https://github.com/googlecast/cast-volume-controller-polymer) - Used to render the volume slider for local and cast controllers.
 
 All of the elements are tied together using `cast.CastManager` and `core-signals`.  `cast.CastManager`
 represents the current state of the app.  Each element then observes the changes in castManager to
 determine how it should act.  core-signals enables pubsub functionality for events such as play,
-pause, seek etc.
+pause, seek etc.  All of the rendering is databound so changes to castManager will be reflected 
+in the UI.
 
-Since all of the rendering is databound, this sample also supports multiple casting clients connected at
-the same time.  Multiple users can control the casting media and have it sync between players.
+This sample also supports multiple casting clients connected at the same time.  Multiple users can control the casting media and have it sync between players.
 
 Each of the elements can be used independently, the only requirement is the chromecast-button.
 
