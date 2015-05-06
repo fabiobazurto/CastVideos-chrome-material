@@ -12,9 +12,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-# CastVideos-material
+# CastVideos-chrome-material
 
-The demo can be found [here](http://googlecast.github.io/CastVideos-material/).
+The demo can be found [here](http://googlecast.github.io/CastVideos-chrome-material/).
 
 This sample showcases the UX compliant Chromecast polymer elements.  The main elements are:
 
