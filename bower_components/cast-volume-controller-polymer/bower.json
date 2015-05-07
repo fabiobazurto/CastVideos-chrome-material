@@ -1,0 +1,23 @@
+{
+  "name": "cast-volume-controller",
+  "description": "cast volume controller",
+  "keywords": [
+    "cast",
+    "volume",
+    "controller"
+  ],
+  "license": "Apache-2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.5.5",
+    "paper-slider": "Polymer/paper-slider#~0.5.5",
+    "paper-icon-button": "Polymer/paper-icon-button#~0.5.5",
+    "core-icons": "Polymer/core-icons#~0.5.5"
+  }
+}

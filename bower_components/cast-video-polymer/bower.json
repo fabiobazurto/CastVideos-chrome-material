@@ -1,0 +1,23 @@
+{
+  "name": "cast-video-polymer",
+  "description": "cast video polymer",
+  "keywords": [
+    "cast",
+    "video",
+    "polymer"
+  ],
+  "license": "Apache-2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.5.5",
+    "core-signals": "Polymer/core-signals#~0.5.5",
+    "paper-spinner": "Polymer/paper-spinner#~0.5.5",
+    "cast-player-bar-polymer": "googlecast/cast-player-bar-polymer#~1.0.0"
+  }
+}

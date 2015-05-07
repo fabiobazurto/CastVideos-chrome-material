@@ -27,11 +27,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 }
 
 #headerContainer {
-  position: fixed;
+  position: absolute;
   top: 0;
   right: 0;
   left: 0;
-  z-index: 20000;
 }
 
 .bg-container {

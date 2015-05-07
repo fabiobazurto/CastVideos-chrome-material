@@ -15,6 +15,5 @@
   },
   "_source": "git://github.com/Polymer/paper-spinner.git",
   "_target": "~0.5.5",
-  "_originalSource": "Polymer/paper-spinner",
-  "_direct": true
+  "_originalSource": "Polymer/paper-spinner"
 }

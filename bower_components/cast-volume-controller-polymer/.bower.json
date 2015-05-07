@@ -1,0 +1,34 @@
+{
+  "name": "cast-volume-controller",
+  "description": "cast volume controller",
+  "keywords": [
+    "cast",
+    "volume",
+    "controller"
+  ],
+  "license": "Apache-2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.5.5",
+    "paper-slider": "Polymer/paper-slider#~0.5.5",
+    "paper-icon-button": "Polymer/paper-icon-button#~0.5.5",
+    "core-icons": "Polymer/core-icons#~0.5.5"
+  },
+  "homepage": "https://github.com/googlecast/cast-volume-controller-polymer",
+  "version": "1.0.0",
+  "_release": "1.0.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v1.0.0",
+    "commit": "18736e1a8aa74fd09b868aa0207ce50c40973cc6"
+  },
+  "_source": "git://github.com/googlecast/cast-volume-controller-polymer.git",
+  "_target": "~1.0.0",
+  "_originalSource": "googlecast/cast-volume-controller-polymer"
+}

@@ -19,6 +19,5 @@
   },
   "_source": "git://github.com/Polymer/core-scroll-header-panel.git",
   "_target": "^0.5",
-  "_originalSource": "Polymer/core-scroll-header-panel",
-  "_direct": true
+  "_originalSource": "Polymer/core-scroll-header-panel"
 }

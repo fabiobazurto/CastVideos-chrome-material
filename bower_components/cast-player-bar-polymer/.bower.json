@@ -1,0 +1,36 @@
+{
+  "name": "cast-player-bar-polymer",
+  "description": "cast player bar polymer",
+  "keywords": [
+    "cast",
+    "player",
+    "bar",
+    "polymer"
+  ],
+  "license": "Apache-2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.5.5",
+    "paper-icon-button": "Polymer/paper-icon-button#~0.5.5",
+    "paper-slider": "Polymer/paper-slider#~0.5.5",
+    "cast-volume-controller-polymer": "googlecast/cast-volume-controller-polymer#~1.0.0",
+    "cast-button-polymer": "googlecast/cast-button-polymer#~1.0.0"
+  },
+  "homepage": "https://github.com/googlecast/cast-player-bar-polymer",
+  "version": "1.0.0",
+  "_release": "1.0.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v1.0.0",
+    "commit": "733b867cc8aa435b84e950cb2dd1855fdfd378ad"
+  },
+  "_source": "git://github.com/googlecast/cast-player-bar-polymer.git",
+  "_target": "~1.0.0",
+  "_originalSource": "googlecast/cast-player-bar-polymer"
+}

@@ -1,0 +1,26 @@
+{
+  "name": "cast-controller-bar-polymer",
+  "description": "cast controller bar",
+  "keywords": [
+    "cast",
+    "controller",
+    "bar",
+    "polymer"
+  ],
+  "license": "Apache-2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.5.5",
+    "paper-button": "Polymer/paper-button#~0.5.5",
+    "paper-slider": "Polymer/paper-slider#~0.5.5",
+    "core-icons": "Polymer/core-icons#~0.5.5",
+    "core-signals": "Polymer/core-signals#~0.5.5",
+    "cast-volume-controller-polymer": "googlecast/cast-volume-controller-polymer#~1.0.0"
+  }
+}

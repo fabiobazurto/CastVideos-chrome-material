@@ -17,6 +17,6 @@
     "commit": "17683dd379e1ea500f9fbaaf0db5485186994dc8"
   },
   "_source": "git://github.com/Polymer/core-selector.git",
-  "_target": "~0.5.3",
+  "_target": "^0.5",
   "_originalSource": "Polymer/core-selector"
 }
