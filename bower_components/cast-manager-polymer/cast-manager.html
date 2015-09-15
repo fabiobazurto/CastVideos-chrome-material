@@ -146,6 +146,7 @@ limitations under the License.
       _savedQueue: null,
       _loadSavedQueueOnDisconnect: true,
       _preloadTime: 20,
+      _retryHandler: null,
 
       listeners: {
         'toggleCastConnection': 'toggleCastConnection',
@@ -444,6 +445,11 @@ limitations under the License.
             }
           }
         });
+
+        this._retryHandler = this.async(function() {
+          console.log('retrying setting the local media');
+          this.setLocalMedia(media);
+        }, 1000);
       },
 
       loadMediaOntoCast: function (media, autoplay) {
@@ -855,6 +861,8 @@ limitations under the License.
 
       mediaLoaded: function () {
         console.log('Media finished loading locally');
+        this.cancelAsync(this._retryHandler);
+        this._retryHandler = null;
         this._resetState();
         this._fireIronEvent({
           'detail': {

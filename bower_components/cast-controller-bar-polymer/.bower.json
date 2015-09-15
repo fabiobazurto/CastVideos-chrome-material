@@ -29,11 +29,11 @@
     "paper-ripple": "polymerElements/paper-ripple#~1.0.2"
   },
   "homepage": "https://github.com/googlecast/cast-controller-bar-polymer",
-  "_release": "0d7e4f34e6",
+  "_release": "edcb19d138",
   "_resolution": {
     "type": "branch",
     "branch": "master",
-    "commit": "0d7e4f34e6f3244e8e72177b7b70f54554aa2720"
+    "commit": "edcb19d1384374fe32119f6d934b66fa80989c74"
   },
   "_source": "git://github.com/googlecast/cast-controller-bar-polymer.git",
   "_target": "*",

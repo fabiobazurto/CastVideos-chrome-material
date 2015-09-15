@@ -60,10 +60,13 @@ Example:
     }
 
     :host(.min) {
+      -webkit-transform: translateY(-50px);
+      -ms-transform: translateY(-50px);
       transform: translateY(-50px);
     }
 
     :host(.max) {
+      -webkit-transform: translate3d(0, -130px, 0);
       transform: translate3d(0, -130px, 0);
     }
 
@@ -300,6 +303,7 @@ Example:
        * @param sender
        */
       _dropHandler: function (event) {
+        event.preventDefault();
         //remove all borders
         event.currentTarget.classList.remove('border-left');
         event.currentTarget.classList.remove('border-right');
