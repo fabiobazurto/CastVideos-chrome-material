@@ -184,6 +184,7 @@ The following custom properties are available for styling:
         this.$.play.classList.add('hidden');
       });
 
+      //Handle click event
       this.addEventListener('click', function (event) {
         this._playNow(event);
       });
@@ -235,7 +236,7 @@ The following custom properties are available for styling:
     _mediaObserver: function (newVal) {
       if (newVal) {
         this.$.thumbnail.style.backgroundImage = "url('" + newVal.thumbnailImageUrl + "')";
-        this.style.visibility = 'vis4ible';
+        this.style.visibility = 'visible';
       } else {
         this.style.visibility = 'hidden';
       }

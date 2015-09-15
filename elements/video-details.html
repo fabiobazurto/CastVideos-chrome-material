@@ -3,8 +3,26 @@
 <link rel="import" href="../bower_components/cast-theme-polymer/cast-theme.html">
 
 <!--
-Represents the currently playing media details.  Displays mediaStatus.localMedia.title,studio and
-description.
+Represents the currently playing media details.  Displays `title`, `studio` and
+`description`.
+
+Example:
+    <cast-manager app-id="4F8B3483"
+                  local-media="{{localMedia}}">
+      ...
+      <video-details class="video-width"
+              local-media="[[localMedia]]"></video-details>
+    </cast-manager>
+
+### Styling
+
+The following custom properties are available for styling directly:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--video-details-text-color` | textcolor | `#FFFFFF`
+`--paper-font-base` | font | `roboto`
+
 -->
 <dom-module id="video-details">
   <style>
@@ -12,9 +30,8 @@ description.
       width: 100%;
       display: block;
       position: relative;
-      color: var(--video-details-text-color);
+      color: var(--video-details-text-color, #FFFFFF);
       @apply(--paper-font-base);
-      @apply(local)
     }
 
     p {
@@ -42,6 +59,9 @@ description.
     Polymer({
       is: 'video-details',
       properties: {
+        /**
+         * Locally playing media
+         */
         localMedia: {
           type: Object,
           observer: '_localMediaObserver'
