@@ -1,6 +1,6 @@
 {
   "name": "cast-button-polymer",
-  "description": "cast button built on polymer to simplify Chromecast integration",
+  "description": "Cast button built on polymer to simplify Chromecast integration",
   "keywords": [
     "cast",
     "polymer"
@@ -14,8 +14,8 @@
     "tests"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#~0.5.5",
-    "core-signals": "Polymer/core-signals#~0.5.5",
-    "core-tooltip": "Polymer/core-tooltip#~0.5.5"
+    "polymer": "Polymer/polymer#^1.0.0",
+    "paper-tooltip": "PolymerElements/paper-tooltip#~1.1.0",
+    "cast-manager-polymer": "pengying/cast-manager-polymer"
   }
 }

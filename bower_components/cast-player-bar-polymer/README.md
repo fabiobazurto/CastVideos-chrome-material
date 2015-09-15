@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 #cast-player-bar-polymer
-In the [castvideos-material](https://github.com/googlecast/CastVideos-material) sample, this 
+In the [CastVideos-chrome-material](https://github.com/googlecast/CastVideos-chrome-material) sample, this 
 element represents the local video player bar.  It controls local and cast media depending on state.  It does this by observing changes in `localMedia` and `castMedia`.
 
 This element also includes the `cast-button` to start casting.
@@ -37,7 +37,7 @@ In your html include the element
 
 Add the element to your HTML and pass in the `appId`.
 
-    <cast-player-bar appId="ABCDEF"></cast-player-bar>
+    <cast-player-bar appId="{{ appId }}"></cast-player-bar>
 
 In the polymer ready event pass in the castManager object.
 

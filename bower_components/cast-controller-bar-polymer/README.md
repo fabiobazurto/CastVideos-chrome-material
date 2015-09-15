@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 #cast-controller-bar
-In the [castvideos-material](https://github.com/googlecast/CastVideos-material) sample, this element represents the cast controller bar that appears when a user navigates away from the currently casting video.  It automatically displays when it detects that localMedia doesn't match castingMedia.
+In the [CastVideos-chrome-material](https://github.com/googlecast/CastVideos-chrome-material) sample, this element represents the cast controller bar that appears when a user navigates away from the currently casting video.  It automatically displays when it detects that localMedia doesn't match castingMedia.
 
 It publishes a single property the castManager object.
 

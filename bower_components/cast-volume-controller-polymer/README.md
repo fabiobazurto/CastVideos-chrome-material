@@ -13,8 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 #cast-volume-controller
-This element represents the volume bar.  It handles both the volume bar in the main player bar
-and in the cast controller element.  It publishes 2 properties:
+This element represents the volume bars in the [CastVideos-chrome-material](https://github.com/googlecast/CastVideos-chrome-material) sample.  
+
+It publishes 2 properties:
 
 castManager - the castManager object
 cast - boolean defining if it's purely for cast.
@@ -29,7 +30,8 @@ command will add the cast-volume-controller and it's dependencies to your projec
     
 #Integration
 The easiest way to integrate is to use one of the already provided elements which contain 
-cast-button.  The instructions below cover a custom integration.  You'll need to first include 
+cast-volume-controller.  The instructions below cover a custom integration.  You'll need to first 
+include 
 [Polymer](https://www.polymer-project.org/0.5/docs/start/getting-the-code.html).
 
 ##Including the element

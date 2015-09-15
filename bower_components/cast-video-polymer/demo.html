@@ -18,24 +18,10 @@ limitations under the License.
 <html>
 <head>
   <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+  <link rel="import" href="bower_components/cast-manager-polymer/cast-manager.html">
   <link rel="import"
-        href="bower_components/cast-video-polymer/cast-video-polymer.html">
-  <script>
-    var media = {
-      "title": "Big Buck Bunny",
-      "description": "Fusce id nisi turpis. Praesent viverra bibendum semper. Donec tristique, orci sed semper lacinia, quam erat rhoncus massa, non congue tellus est quis tellus. Sed mollis orci venenatis quam scelerisque accumsan. Curabitur a massa sit amet mi accumsan mollis sed et magna. Vivamus sed aliquam risus. Nulla eget dolor in elit facilisis mattis. Ut aliquet luctus lacus. Phasellus nec commodo erat. Praesent tempus id lectus ac scelerisque. Maecenas pretium cursus lectus id volutpat.",
-      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      "studio": "Blender Foundation",
-      "thumbnailImageUrl": "//commondatastorage.googleapis.com/gtv-videos-bucket/sample/images_480x270/BigBuckBunny.jpg",
-      "largeImageUrl": "//commondatastorage.googleapis.com/gtv-videos-bucket/sample/images_780x1200/BigBuckBunny-780x1200.jpg"
-    };
-
-    window.addEventListener('polymer-ready', function() {
-      var video = document.querySelector('cast-video');
-
-      video.castManager = new cast.CastManager(new cast.Media(media));
-    });
-  </script>
+        href="bower_components/cast-video-polymer/cast-video.html">
+ 
   <style>
     cast-video {
       display: block;
@@ -46,6 +32,43 @@ limitations under the License.
   </style>
 </head>
 <body>
-  <cast-video appId="4F8B3483"></cast-video>
+  <template id="t" is="dom-bind">
+    <cast-manager app-id="4F8B3483"
+                  local-media="{{localMedia}}"
+                  volume="{{volume}}"
+                  current-time="{{currentTime}}"
+                  is-fullscreen="{{isFullscreen}}"
+                  cast-available="{{castAvailable}}"
+                  connection-status="{{connectionStatus}}"
+                  show-spinner="{{showSpinner}}"
+                  cast-device-name="{{castDeviceName}}">
+      <cast-video id="video"
+                        local-media="{{localMedia}}"
+                        volume="{{volume}}"
+                        current-time="{{currentTime}}"
+                        is-fullscreen="{{isFullscreen}}"
+                        cast-available="[[castAvailable]]"
+                        connection-status="[[connectionStatus]]"
+                        show-spinner="[[showSpinner]]"
+                        cast-device-name="[[castDeviceName]]"></cast-video>
+    </cast-manager>
+  </template>
+  <script>
+    var media = {
+      "title": "Big Buck Bunny",
+      "description": "Fusce id nisi turpis. Praesent viverra bibendum semper. Donec tristique, orci sed semper lacinia, quam erat rhoncus massa, non congue tellus est quis tellus. Sed mollis orci venenatis quam scelerisque accumsan. Curabitur a massa sit amet mi accumsan mollis sed et magna. Vivamus sed aliquam risus. Nulla eget dolor in elit facilisis mattis. Ut aliquet luctus lacus. Phasellus nec commodo erat. Praesent tempus id lectus ac scelerisque. Maecenas pretium cursus lectus id volutpat.",
+      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "studio": "Blender Foundation",
+      "thumbnailImageUrl": "//commondatastorage.googleapis.com/gtv-videos-bucket/sample/images_480x270/BigBuckBunny.jpg",
+      "largeImageUrl": "//commondatastorage.googleapis.com/gtv-videos-bucket/sample/images_780x1200/BigBuckBunny-780x1200.jpg"
+    };
+
+    var castManager;
+    var t = document.querySelector('#t');
+    t.addEventListener('dom-change', function () {
+      castManager = document.querySelector('cast-manager');
+      castManager.setLocalMedia(media);
+    });
+  </script>
 </body>
 </html>

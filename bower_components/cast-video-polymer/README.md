@@ -13,9 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 #cast-video-polymer
-This element represents the video player in the [castvideos-material](https://github.com/googlecast/CastVideos-material) sample.
+This element represents the video player in the [CastVideos-chrome-material](https://github.com/googlecast/CastVideos-chrome-material) sample.
 
-It observes castManager `localMedia` and automatically loads any HTML5 video that's set as localMedia.
+[Demo](http://googlecast.github.io/cast-video-polymer/demo.html)
+
+It observes `castManager.localMedia` and automatically loads any HTML5 video that's set as 
+localMedia.
 
 It encapsulates the [cast-player-bar](https://github.com/googlecast/cast-player-bar-polymer) element to handle controlling local media and casting.
 
@@ -36,12 +39,7 @@ In your html include the element.
 Add the element to your HTML defining the `appId`.
 
     <cast-video appId="{{ appId }}"></cast-video>
-    
-In the polymer ready event pass in the castManager object.
 
-    var video = document.querySelector('cast-video');
-    video.castManager = castManager;
-    
 ##Loading media
 Currently the video player only supports HTML5 video content.
  
@@ -56,11 +54,20 @@ To load media, first create a media object.
       "largeImageUrl": "//commondatastorage.googleapis.com/gtv-videos-bucket/sample/images_780x1200/BigBuckBunny-780x1200.jpg"
     };
 
-Next set the local media.
+Create a `cast.Media` object.
+    
+    var castMedia = new cast.Media(media);
 
-    castManager.setLocalMedia(media);
+##Instiantiate a `CastMedia` object in the polymer ready event.
+In the polymer ready event, create the castManager object and pass it to the video element.
 
-CastManager also takes media as a constructor paramameter if you wish to load media during initialization.
+    window.addEventListener('polymer-ready', function() {
+      var video = document.querySelector('cast-video'); 
+      video.castManager = new cast.CastManager(castMedia);
+    }
 
-    var castManager = new cast.CastManager(media);
+##Loading new media
+To set the video, call the `setLocalMedia` method of castManager.  The video element will 
+automatically detect the change and update the video content.
 
+    castManager.setLocalMedia(new cast.Media(media));
