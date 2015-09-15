@@ -1,33 +1,18 @@
-<!--
-Copyright 2014 Google Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=880, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+  <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+  <link rel="import" href="bower_components/iron-flex-layout/classes/iron-flex-layout.html">
 
-  <link rel="import" href="bower_components/cast-video-polymer/cast-video-polymer.html">
+  <link rel="import" href="bower_components/cast-manager-polymer/cast-manager.html">
+  <link rel="import" href="bower_components/cast-controller-bar-polymer/cast-controller-bar.html">
+  <link rel="import" href="bower_components/cast-video-polymer/cast-video.html">
+  <link rel="import" href="bower_components/cast-dialog-polymer/cast-dialog.html">
 
-  <link rel="import"
-        href="bower_components/core-scroll-header-panel/core-scroll-header-panel.html">
-  <link rel="import" href="elements/video-details.html">
   <link rel="import" href="elements/video-carousel.html">
-  <link rel="import" href="bower_components/cast-controller-bar-polymer/cast-controller-bar-polymer.html">
+  <link rel="import" href="elements/video-details.html">
 
   <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" media="only screen and (max-width: 1109px)"
@@ -39,24 +24,30 @@ limitations under the License.
   <link rel="stylesheet" media="only screen and (min-width: 1600px)"
         href="css/mw-1600-styles.css">
 
+  <meta charset="UTF-8">
+  <title>Cast Videos</title>
+
   <script>
-    var mediaList;
-    var media;
-    var castManager;
     var ROOT = '//commondatastorage.googleapis.com/gtv-videos-bucket/sample/';
-    var isPolymerReady = false;
+    var mediaList;
+    var mediaArray;
+    var requestComplete = false;
+    var castManager;
+    var carousel;
+    var castQueue;
+    var castBar;
+    var castVideo;
+    var loadComplete = false;
 
-    window.addEventListener('polymer-ready', function() {
-      isPolymerReady = true;
-    });
-
-    // Create the XHR object.
-    function createCorsRequest(method, url) {
+    /**
+     *  Create the XHR object.
+     */
+    function createCORSRequest(method, url) {
       var xhr = new XMLHttpRequest();
-      if ('withCredentials' in xhr) {
+      if ("withCredentials" in xhr) {
         // XHR for Chrome/Firefox/Opera/Safari.
         xhr.open(method, url, true);
-      } else if (typeof XDomainRequest !== 'undefined') {
+      } else if (typeof XDomainRequest != "undefined") {
         // XDomainRequest for IE.
         xhr = new XDomainRequest();
         xhr.open(method, url);
@@ -67,85 +58,147 @@ limitations under the License.
       return xhr;
     }
 
+    /**
+     * Make the XHR request
+     */
     function makeCorsRequest() {
       var url = ROOT + 'd.json';
-      var xhr = createCorsRequest('GET', url);
+      var xhr = createCORSRequest('GET', url);
       if (!xhr) {
         alert('CORS not supported');
         return;
       }
       // Response handlers.
-      xhr.onload = function() {
+      xhr.onload = function () {
         var content = JSON.parse(xhr.responseText);
-        mediaList = processMediaList(content);
-        media = new cast.Media(mediaList[Object.keys(mediaList)[0]]);
-        if (isPolymerReady) {
-          loadDataIntoPolymer(media);
-        } else {
-          window.addEventListener('polymer-ready', function() {
-            loadDataIntoPolymer(media);
-          });
-        }
+        processMediaList(content);
+        asyncComplete();
       };
-      xhr.onerror = function() {
+
+      xhr.onerror = function () {
         alert('Woops, there was an error making the request.');
       };
       xhr.send();
     }
 
-    function loadDataIntoPolymer(media) {
-      castManager = new cast.CastManager(media);
-      var videoPlayer = document.querySelector('cast-video');
-      videoPlayer.castManager = castManager;
-      var videoDetails = document.querySelector('video-details');
-      videoDetails.castManager = castManager;
-      var videoCarousels = document.querySelectorAll('video-carousel');
-      for (var carousel in videoCarousels) {
-        videoCarousels[carousel].mediaList = mediaList;
-        videoCarousels[carousel].castManager = castManager;
-      }
-      var controllerBar = document.querySelector('cast-controller-bar');
-      controllerBar.castManager = castManager;
-    }
-
+    /**
+     * Convert JSON from feed to media item
+     *
+     * @param content
+     */
     function processMediaList(content) {
-      var mediaList = {};
+      mediaArray = [];
       var contentArray = content.categories[0].videos;
       for (var i = 0; i < contentArray.length; i++) {
         var title = contentArray[i].title.replace(/\s+/g, '-').toLowerCase();
-        mediaList[title] = {
+        mediaArray.push(new cast.MediaItem({
           'title': contentArray[i].title,
           'description': contentArray[i].subtitle,
           'url': contentArray[i].sources[0],
           'studio': contentArray[i].studio,
           'thumbnailImageUrl': ROOT + contentArray[i]['image-480x270'],
           'largeImageUrl': ROOT + contentArray[i]['image-780x1200']
-        };
+        }));
       }
-      return mediaList;
     }
-    makeCorsRequest();
 
+    /**
+     * Load items into queue once both async methods are complete
+     */
+    function asyncComplete() {
+      //If both the media array and dom have loaded, add items to the queue.
+      if(mediaArray && castManager && !loadComplete) {
+        castManager.addItemsToQueue(mediaArray);
+        var videoCarousels = document.querySelectorAll('video-carousel');
+        for (var i = 0; i < videoCarousels.length; i++) {
+          videoCarousels[i].set('mediaList', mediaArray);
+        }
+        loadComplete = true;
+      }
+    }
+
+    makeCorsRequest();
   </script>
 </head>
-<body fullbleed layout vertical>
-<core-scroll-header-panel flex>
-  <div class="core-header center-box-shadow width">
-    <img src="images/logo.png">
-  </div>
-  <div class="center-box-shadow width bgcolor translate-hack min-height">
-    <div class="video-content">
-      <div class="video-width video-height shadow">
-        <cast-video appId="4F8B3483"></cast-video>
+<body class="fullbleed layout vertical" id="body">
+
+<template id="t" is="dom-bind">
+  <cast-manager app-id="4F8B3483"
+                cast-available="{{castAvailable}}"
+                connection-status="{{connectionStatus}}"
+                local-media="{{localMedia}}"
+                queue="{{queue}}"
+                volume="{{volume}}"
+                has-cast-media="{{hasCastMedia}}"
+                show-queue="{{showQueue}}"
+                cast-device-name="{{castDeviceName}}"
+                current-time="{{currentTime}}"
+                is-fullscreen="{{isFullscreen}}"
+                show-spinner="{{showSpinner}}"
+                next-queue-media-item="{{nextQueueMediaItem}}"
+                countdown-to-next-media-item="{{countdownToNextMediaItem}}">
+    <paper-header-panel class="flex" mode="scroll">
+      <cast-dialog cast-available="[[castAvailable]]"
+                   countdown-to-next-media-item="[[countdownToNextMediaItem]]"
+                   next-queue-media-item="[[nextQueueMediaItem]]"></cast-dialog>
+      <div class="paper-header center-box-shadow width">
+        <img src="images/logo.png">
       </div>
-      <video-details class="video-width"></video-details>
-    </div>
-    <video-carousel genre="Movies" class="carousel-width"></video-carousel>
-    <video-carousel genre="Comedy" class="carousel-width"></video-carousel>
-    <video-carousel genre="Related Content" class="carousel-width"></video-carousel>
-    <div id="footer" class="width"></div>
-  </div>
-</core-scroll-header-panel>
-<cast-controller-bar></cast-controller-bar>
+      <div class="center-box-shadow width bgcolor">
+        <div class="video-content">
+          <div class="video-width video-height shadow">
+            <cast-video id="video"
+                        local-media="{{localMedia}}"
+                        volume="{{volume}}"
+                        current-time="{{currentTime}}"
+                        is-fullscreen="{{isFullscreen}}"
+                        queue="[[queue]]"
+                        cast-available="[[castAvailable]]"
+                        connection-status="[[connectionStatus]]"
+                        show-spinner="[[showSpinner]]"
+                        cast-device-name="[[castDeviceName]]"></cast-video>
+          </div>
+          <video-details class="video-width"
+              local-media="[[localMedia]]"></video-details>
+        </div>
+        <video-carousel genre="Comedy"
+                        local-media="[[localMedia]]">
+        </video-carousel>
+        <video-carousel genre="Action"
+                        local-media="[[localMedia]]">
+        </video-carousel>
+        <video-carousel genre="Drama"
+                        local-media="[[localMedia]]">
+        </video-carousel>
+
+        <cast-controller-bar volume="[[volume]]"
+                             local-media="[[localMedia]]"
+                             cast-available="[[castAvailable]]"
+                             connection-status="[[connectionStatus]]"
+                             has-cast-media="[[hasCastMedia]]"
+                             cast-device-name="[[castDeviceName]]"
+                             current-time="[[currentTime]]"
+                             queue="[[ queue ]]"
+                             video-element="video"
+                             scroll-element="body"></cast-controller-bar>
+
+        <div id="footer" class="width"></div>
+      </div>
+    </paper-header-panel>
+  </cast-manager>
+</template>
+
+</body>
+<script>
+  var t = document.querySelector('#t');
+  t.addEventListener('dom-change', function () {
+    castManager = document.querySelector('cast-manager');
+    carousel = document.querySelector('video-carousel');
+    castBar = document.querySelector('cast-controller-bar');
+    castVideo = document.querySelector('cast-video');
+    castQueue = document.querySelector('cast-queue');
+    asyncComplete();
+  });
+</script>
 </body>
 </html>

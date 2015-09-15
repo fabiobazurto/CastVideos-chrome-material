@@ -2,11 +2,7 @@ body {
   background-color: #aeaeae;
 }
 
-core-scroll-header-panel {
-  width: 100%;
-}
-
-.core-header {
+.paper-header {
   background: #4F7DC9;
   height: 71px;
 }
@@ -21,7 +17,7 @@ core-scroll-header-panel {
   background: linear-gradient(to bottom, #1b1b1b 0%, #3f3f3f 100%); /* W3C */
 }
 
-.core-header img {
+.paper-header img {
   margin-left: 20px;
 }
 
@@ -32,7 +28,7 @@ core-scroll-header-panel {
 }
 
 .shadow {
-  box-shadow: 0px 6px 18px -1px rgba(0, 0, 0, 0.88);
+  box-shadow: 0 6px 18px -1px rgba(0, 0, 0, 0.88);
 }
 
 video-details {
@@ -43,7 +39,7 @@ video-details {
   margin: 0 auto;
   position: relative;
   overflow: hidden;
-  box-shadow: 0px 6px 18px -1px rgba(0, 0, 0, 0.88);
+  box-shadow: 0 6px 18px -1px rgba(0, 0, 0, 0.88);
 }
 
 .bgcolor {
@@ -64,10 +60,6 @@ video-details {
   background: -o-linear-gradient(top, #1b1b1b 0%, #3f3f3f 100%); /* Opera 11.10+ */
   background: -ms-linear-gradient(top, #1b1b1b 0%, #3f3f3f 100%); /* IE10+ */
   background: linear-gradient(to bottom, #1b1b1b 0%, #3f3f3f 100%); /* W3C */
-}
-
-.translate-hack {
-  transform: translateZ(0);
 }
 
 .min-height {
