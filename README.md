@@ -1,43 +1,22 @@
-Copyright 2014 Google Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
 # CastVideos-material
 
-The demo can be found [here](http://googlecast.github.io/CastVideos-material/).
+This sample showcases the Chromecast Polymer elements used together to create a media web app.  The 
+cast Polymer elements showcased are:
 
-This sample showcases the UX compliant Chromecast polymer elements.  The main elements are:
+* cast-manager - The main controller of the application, manages events, state and syncing
+* cast-video - Video element
+* cast-controller-bar - Element that contains the cast controller bar and queue UI.  The cast 
+* controller bar allows users to control cast when the main video controls are off screen
+* cast-dialog - A dialog that notifies users that cast is enabled and of the next video in queue
 
-* cast-video - Handles displaying and controlling the video
-* cast-controller-bar - Controls the Chromecast when the local media and chromecast media
-don't match.
+Since all of the rendering is databound, this sample also supports multiple clients connected at
+the same time.  Multiple clients can queue and cast media.
 
-The sub elements are:
-* cast-button - Renders cast button and handles logic related to casting
-* cast-player-bar - Renders the local video player controls and encapsulates the cast button
-* cast-volume - Used to render the volume slider for local and cast controllers.
+Each of the elements can be used independently, the only requirement is the cast-manager.
+The polymer elements are meant to be a simple wrapper for Chromecast, they handle the rendering
+and most of the complexity.
 
-All of the elements are tied together using `cast.CastManager` and `core-signals`.  `cast.CastManager`
-represents the current state of the app.  Each element then observes the changes in castManager to
-determine how it should act.  core-signals enables pubsub functionality for events such as play,
-pause, seek etc.
-
-Since all of the rendering is databound, this sample also supports multiple casting clients connected at
-the same time.  Multiple users can control the casting media and have it sync between players.
-
-Each of the elements can be used independently, the only requirement is the chromecast-button.
-
-The Polymer elements are meant to be a simple wrapper for Chromecast API.  Instead of integrating and rendering everything your self, you can leverage the elements to handle most of the complexity.
+The demo can be found [here](http://pengying.github.io/CastVideos-material/).
 
 ##Requirements
 
@@ -47,7 +26,7 @@ The Polymer elements are meant to be a simple wrapper for Chromecast API.  Inste
 ##Setup
 
 1. Clone repo
-2. `bower update`
+2. `bower install`
 3. `python -m SimpleHTTPServer 8080`
 4. Open Chrome and navigate to localhost:8080
 
