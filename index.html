@@ -91,14 +91,14 @@
       var contentArray = content.categories[0].videos;
       for (var i = 0; i < contentArray.length; i++) {
         var title = contentArray[i].title.replace(/\s+/g, '-').toLowerCase();
-        mediaArray.push(new cast.MediaItem({
+        mediaArray.push({
           'title': contentArray[i].title,
           'description': contentArray[i].subtitle,
           'url': contentArray[i].sources[0],
           'studio': contentArray[i].studio,
           'thumbnailImageUrl': ROOT + contentArray[i]['image-480x270'],
           'largeImageUrl': ROOT + contentArray[i]['image-780x1200']
-        }));
+        });
       }
     }
 
