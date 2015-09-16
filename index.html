@@ -42,99 +42,6 @@ limitations under the License.
 
   <meta charset="UTF-8">
   <title>Cast Videos</title>
-
-  <script>
-    var ROOT = '//commondatastorage.googleapis.com/gtv-videos-bucket/sample/';
-    var mediaList;
-    var mediaArray;
-    var requestComplete = false;
-    var castManager;
-    var carousel;
-    var castQueue;
-    var castBar;
-    var castVideo;
-    var loadComplete = false;
-
-    /**
-     *  Create the XHR object.
-     */
-    function createCORSRequest(method, url) {
-      var xhr = new XMLHttpRequest();
-      if ("withCredentials" in xhr) {
-        // XHR for Chrome/Firefox/Opera/Safari.
-        xhr.open(method, url, true);
-      } else if (typeof XDomainRequest != "undefined") {
-        // XDomainRequest for IE.
-        xhr = new XDomainRequest();
-        xhr.open(method, url);
-      } else {
-        // CORS not supported.
-        xhr = null;
-      }
-      return xhr;
-    }
-
-    /**
-     * Make the XHR request.
-     */
-    function makeCorsRequest() {
-      var url = ROOT + 'd.json';
-      var xhr = createCORSRequest('GET', url);
-      if (!xhr) {
-        alert('CORS not supported');
-        return;
-      }
-      // Response handlers.
-      xhr.onload = function () {
-        var content = JSON.parse(xhr.responseText);
-        processMediaList(content);
-        asyncComplete();
-      };
-
-      xhr.onerror = function () {
-        alert('Woops, there was an error making the request.');
-      };
-      xhr.send();
-    }
-
-    /**
-     * Convert JSON from feed to media item
-     *
-     * @param content
-     */
-    function processMediaList(content) {
-      mediaArray = [];
-      var contentArray = content.categories[0].videos;
-      for (var i = 0; i < contentArray.length; i++) {
-        var title = contentArray[i].title.replace(/\s+/g, '-').toLowerCase();
-        mediaArray.push({
-          'title': contentArray[i].title,
-          'description': contentArray[i].subtitle,
-          'url': contentArray[i].sources[0],
-          'studio': contentArray[i].studio,
-          'thumbnailImageUrl': ROOT + contentArray[i]['image-480x270'],
-          'largeImageUrl': ROOT + contentArray[i]['image-780x1200']
-        });
-      }
-    }
-
-    /**
-     * Load items into queue once both async methods are complete
-     */
-    function asyncComplete() {
-      //If both the media array and dom have loaded, add items to the queue.
-      if (mediaArray && castManager && !loadComplete) {
-        castManager.addItemsToQueue(mediaArray);
-        var videoCarousels = document.querySelectorAll('video-carousel');
-        for (var i = 0; i < videoCarousels.length; i++) {
-          videoCarousels[i].set('mediaList', mediaArray);
-        }
-        loadComplete = true;
-      }
-    }
-
-    makeCorsRequest();
-  </script>
 </head>
 <body class="fullbleed layout vertical" id="body">
 
@@ -146,7 +53,7 @@ limitations under the License.
                 queue="{{queue}}"
                 volume="{{volume}}"
                 has-cast-media="{{hasCastMedia}}"
-                show-queue="{{showQueue}}"
+                is-queue-shown="{{isQueueShown}}"
                 cast-device-name="{{castDeviceName}}"
                 current-time="{{currentTime}}"
                 is-fullscreen="{{isFullscreen}}"
@@ -195,6 +102,7 @@ limitations under the License.
                              cast-device-name="[[castDeviceName]]"
                              current-time="[[currentTime]]"
                              queue="[[ queue ]]"
+                             is-queue-shown="{{getIsQueueShown}}"
                              video-element="video"
                              scroll-element="body"></cast-controller-bar>
 
@@ -206,6 +114,97 @@ limitations under the License.
 
 </body>
 <script>
+  var ROOT = '//commondatastorage.googleapis.com/gtv-videos-bucket/sample/';
+  var mediaList;
+  var mediaArray;
+  var requestComplete = false;
+  var castManager;
+  var carousel;
+  var castQueue;
+  var castBar;
+  var castVideo;
+  var loadComplete = false;
+
+  /**
+   *  Create the XHR object.
+   */
+  function createCORSRequest(method, url) {
+    var xhr = new XMLHttpRequest();
+    if ("withCredentials" in xhr) {
+      // XHR for Chrome/Firefox/Opera/Safari.
+      xhr.open(method, url, true);
+    } else if (typeof XDomainRequest != "undefined") {
+      // XDomainRequest for IE.
+      xhr = new XDomainRequest();
+      xhr.open(method, url);
+    } else {
+      // CORS not supported.
+      xhr = null;
+    }
+    return xhr;
+  }
+
+  /**
+   * Make the XHR request.
+   */
+  function makeCorsRequest() {
+    var url = ROOT + 'd.json';
+    var xhr = createCORSRequest('GET', url);
+    if (!xhr) {
+      alert('CORS not supported');
+      return;
+    }
+    // Response handlers.
+    xhr.onload = function () {
+      var content = JSON.parse(xhr.responseText);
+      processMediaList(content);
+      asyncComplete();
+    };
+
+    xhr.onerror = function () {
+      alert('Woops, there was an error making the request.');
+    };
+    xhr.send();
+  }
+
+  /**
+   * Convert JSON from feed to media item
+   *
+   * @param content
+   */
+  function processMediaList(content) {
+    mediaArray = [];
+    var contentArray = content.categories[0].videos;
+    for (var i = 0; i < contentArray.length; i++) {
+      var title = contentArray[i].title.replace(/\s+/g, '-').toLowerCase();
+      mediaArray.push({
+        'title': contentArray[i].title,
+        'description': contentArray[i].subtitle,
+        'url': contentArray[i].sources[0],
+        'studio': contentArray[i].studio,
+        'thumbnailImageUrl': ROOT + contentArray[i]['image-480x270'],
+        'largeImageUrl': ROOT + contentArray[i]['image-780x1200']
+      });
+    }
+  }
+
+  /**
+   * Load items into queue once both async methods are complete
+   */
+  function asyncComplete() {
+    //If both the media array and dom have loaded, add items to the queue.
+    if (mediaArray && castManager && !loadComplete) {
+      castManager.addItemsToQueue(mediaArray);
+      var videoCarousels = document.querySelectorAll('video-carousel');
+      for (var i = 0; i < videoCarousels.length; i++) {
+        videoCarousels[i].set('mediaList', mediaArray);
+      }
+      loadComplete = true;
+    }
+  }
+
+  makeCorsRequest();
+
   var t = document.querySelector('#t');
   t.addEventListener('dom-change', function () {
     castManager = document.querySelector('cast-manager');
