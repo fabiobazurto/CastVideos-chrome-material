@@ -18,19 +18,17 @@ The demo can be found [here](http://googlecast.github.io/CastVideos-chrome-mater
 
 This sample showcases the UX compliant Chromecast polymer elements.  The main elements are:
 
+* [cast-manager](https://github.com/googlecast/cast-manager-polymer) - Controller for Cast 
+Polymer element.  Exposes properties that manage state, handles events and rotes them to 
+subscribed elements.
 * [cast-video](https://github.com/googlecast/cast-video-polymer) - Handles displaying and 
 controlling the video
-* [cast-controller-bar](https://github.com/googlecast/cast-controller-bar-polymer) - Controls the Chromecast when the local media and chromecast media don't match.
-
-The sub elements are:
-* [cast-button](https://github.com/googlecast/cast-button-polymer) - Renders cast button and handles logic related to casting
-* [cast-player-bar](https://github.com/googlecast/cast-player-bar-polymer) - Renders the local video player controls and encapsulates the cast button
-* [cast-volume-controller](https://github.com/googlecast/cast-volume-controller-polymer) - Used to render the volume slider for local and cast controllers.
-
-All of the elements are tied together using `cast.CastManager` and `core-signals`.  `cast.CastManager`
-represents the current state of the app.  Each element then observes the changes in castManager to
-determine how it should act.  core-signals enables pubsub functionality for events such as play,
-pause, seek etc.  All of the rendering is databound so changes to castManager will be reflected 
+* [cast-controller-bar](https://github.com/googlecast/cast-controller-bar-polymer) - Controls the
+ Chromecast when the video controls aren't on screen.  Also displays the queue UI.
+* [cast-dialog](https://github.com/googlecast/cast-dialog-polymer) - Notifies users that the page
+ is cast enabled.  Also handles the upcoming video notification and count down.
+ 
+All of the rendering is databound so changes to castManager will be reflected 
 in the UI.
 
 This sample also supports multiple casting clients connected at the same time.  Multiple users can control the casting media and have it sync between players.
