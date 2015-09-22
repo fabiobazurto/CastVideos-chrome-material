@@ -1,0 +1,8 @@
+{
+  "suites": ["app/tests"],
+  "webserver": {
+    "pathMappings": [
+      {"/components/castvideos-material/app/bower_components": "bower_components"}
+    ]
+  }
+}

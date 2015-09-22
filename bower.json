@@ -29,6 +29,8 @@
     "paper-item": "polymerElements/paper-item#~1.0.2",
     "iron-icons": "polymerElements/iron-icons#~1.0.3",
     "cast-theme-polymer": "pengying/cast-theme-polymer",
-    "neon-animation": "polymerElements/neon-animation#~1.0.6"
+    "neon-animation": "polymerElements/neon-animation#~1.0.6",
+    "web-component-tester": "Polymer/web-component-tester#~3.3.22",
+    "should": "shouldjs/should.js#~7.1.0"
   }
 }

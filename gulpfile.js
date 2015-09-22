@@ -42,7 +42,7 @@ var styleTask = function (stylesPath, srcs) {
 
 // Clean output directory
 gulp.task('clean', function (cb) {
-  del(['.tmp', 'dist']).then(function() {
+  del(['.tmp', 'dist'], cb).then(function() {
     cb();
   });
 });
@@ -92,7 +92,8 @@ gulp.task('copy', function () {
 // Lint JavaScript
 gulp.task('jshint', function () {
   return gulp.src([
-    'app/**/*.html',
+    'app/*.html',
+    '!app/test/*.html',
     'app/elements/**/*.js',
     'app/elements/**/*.html',
     'gulpfile.js'
