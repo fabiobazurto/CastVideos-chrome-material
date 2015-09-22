@@ -42,7 +42,9 @@ var styleTask = function (stylesPath, srcs) {
 
 // Clean output directory
 gulp.task('clean', function (cb) {
-  del(['.tmp', 'dist'], cb);
+  del(['.tmp', 'dist']).then(function() {
+    cb();
+  });
 });
 
 // Compile and automatically prefix stylesheets
@@ -204,7 +206,7 @@ gulp.task('serve:dist', ['default'], function () {
 });
 
 // Build production files, the default task
-gulp.task('default', function (cb) {
+gulp.task('default',['clean'], function (cb) {
   runSequence(
       ['copy', 'css'],
       'elements',
