@@ -36,7 +36,7 @@ allows the user to select play now, play next, or add to queue.
 
 The element requires a media item to display and the currently loaded media to determine
 if the element matches.  If the currently loaded media and media item url are the same.  This
-element is filled with a highlight color to indicate that it's currently selected.
+element is filled with a highlight color to indicate that it&#39;s currently selected.
 
 Example
 
@@ -250,7 +250,7 @@ The following custom properties are available for styling:
      */
     _mediaObserver: function (newVal) {
       if (newVal) {
-        this.$.thumbnail.style.backgroundImage = "url('" + newVal.thumbnailImageUrl + "')";
+        this.$.thumbnail.style.backgroundImage = 'url(\'' + newVal.thumbnailImageUrl + '\')';
         this.style.visibility = 'vis4ible';
       } else {
         this.style.visibility = 'hidden';

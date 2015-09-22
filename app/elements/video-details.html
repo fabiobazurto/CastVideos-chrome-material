@@ -65,7 +65,7 @@ description.
         observer: '_localMediaObserver'
       }
     },
-    _localMediaObserver: function (newVal, oldVal) {
+    _localMediaObserver: function () {
       //Using inner html since filling the text in the template doesn't html decode entities.
       this.$.description.innerHTML = this.localMedia.description;
     }

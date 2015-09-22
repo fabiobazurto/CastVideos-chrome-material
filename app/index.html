@@ -115,9 +115,7 @@ limitations under the License.
 </body>
 <script>
   var ROOT = '//commondatastorage.googleapis.com/gtv-videos-bucket/sample/';
-  var mediaList;
   var mediaArray;
-  var requestComplete = false;
   var castManager;
   var carousel;
   var castQueue;
@@ -130,10 +128,10 @@ limitations under the License.
    */
   function createCORSRequest(method, url) {
     var xhr = new XMLHttpRequest();
-    if ("withCredentials" in xhr) {
+    if ('withCredentials' in xhr) {
       // XHR for Chrome/Firefox/Opera/Safari.
       xhr.open(method, url, true);
-    } else if (typeof XDomainRequest != "undefined") {
+    } else if (typeof XDomainRequest !== 'undefined') {
       // XDomainRequest for IE.
       xhr = new XDomainRequest();
       xhr.open(method, url);
@@ -145,29 +143,6 @@ limitations under the License.
   }
 
   /**
-   * Make the XHR request.
-   */
-  function makeCorsRequest() {
-    var url = ROOT + 'd.json';
-    var xhr = createCORSRequest('GET', url);
-    if (!xhr) {
-      alert('CORS not supported');
-      return;
-    }
-    // Response handlers.
-    xhr.onload = function () {
-      var content = JSON.parse(xhr.responseText);
-      processMediaList(content);
-      asyncComplete();
-    };
-
-    xhr.onerror = function () {
-      alert('Woops, there was an error making the request.');
-    };
-    xhr.send();
-  }
-
-  /**
    * Convert JSON from feed to media item
    *
    * @param content
@@ -176,7 +151,6 @@ limitations under the License.
     mediaArray = [];
     var contentArray = content.categories[0].videos;
     for (var i = 0; i < contentArray.length; i++) {
-      var title = contentArray[i].title.replace(/\s+/g, '-').toLowerCase();
       mediaArray.push({
         'title': contentArray[i].title,
         'description': contentArray[i].subtitle,
@@ -202,6 +176,30 @@ limitations under the License.
       loadComplete = true;
     }
   }
+
+  /**
+   * Make the XHR request.
+   */
+  function makeCorsRequest() {
+    var url = ROOT + 'd.json';
+    var xhr = createCORSRequest('GET', url);
+    if (!xhr) {
+      console.log('CORS not supported');
+      return;
+    }
+    // Response handlers.
+    xhr.onload = function () {
+      var content = JSON.parse(xhr.responseText);
+      processMediaList(content);
+      asyncComplete();
+    };
+
+    xhr.onerror = function () {
+      console.log('Woops, there was an error making the request.');
+    };
+    xhr.send();
+  }
+
 
   makeCorsRequest();
 

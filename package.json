@@ -1,0 +1,46 @@
+{
+  "name": "castvideos-material",
+  "version": "1.0.0",
+  "description": "cast videos material sample",
+  "main": "index.html",
+  "devDependencies": {
+    "browser-sync": "^2.9.4",
+    "connect-history-api-fallback": "^1.1.0",
+    "del": "^2.0.2",
+    "gulp": "^3.9.0",
+    "gulp-autoprefixer": "^3.0.1",
+    "gulp-cache": "^0.3.0",
+    "gulp-changed": "^1.3.0",
+    "gulp-cssmin": "^0.1.7",
+    "gulp-if": "^1.2.5",
+    "gulp-jshint": "^1.11.2",
+    "gulp-load-plugins": "^0.10.0",
+    "gulp-minify-html": "^1.0.4",
+    "gulp-rename": "^1.2.2",
+    "gulp-replace": "^0.5.4",
+    "gulp-size": "^2.0.0",
+    "gulp-uglify": "^1.4.1",
+    "gulp-useref": "^1.3.0",
+    "gulp-vulcanize": "^6.0.1",
+    "jshint-stylish": "^2.0.1",
+    "merge-stream": "^1.0.0",
+    "polybuild": "^1.0.5",
+    "require-dir": "^0.3.0",
+    "run-sequence": "^1.1.3",
+    "vulcanize": "^1.10.4"
+  },
+  "scripts": {
+    "test": "gulp test:local",
+    "start": "gulp serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/googlecast/CastVideos-chrome-material.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/googlecast/CastVideos-chrome-material/issues"
+  },
+  "homepage": "https://github.com/googlecast/CastVideos-chrome-material#readme"
+}
