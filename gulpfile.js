@@ -40,6 +40,11 @@ var styleTask = function (stylesPath, srcs) {
       .pipe($.size({title: stylesPath}));
 };
 
+// Clean output directory
+gulp.task('clean', function (cb) {
+  del(['.tmp', 'dist'], cb);
+});
+
 // Compile and automatically prefix stylesheets
 gulp.task('css', function () {
   return styleTask('css', ['**/*.css']);
@@ -49,9 +54,11 @@ gulp.task('elements', function () {
   return styleTask('elements', ['**/*.css']);
 });
 
-// Clean output directory
-gulp.task('clean', function (cb) {
-  del(['.tmp', 'dist'], cb);
+// Optimize images
+gulp.task('images', function () {
+  return gulp.src('app/images/**/*')
+      .pipe(gulp.dest('dist/images'))
+      .pipe($.size({title: 'images'}));
 });
 
 // Copy all files at the root level (app)
@@ -166,6 +173,7 @@ gulp.task('serve', ['css', 'elements'], function () {
   });
 
   gulp.watch(['app/**/*.html'], reload);
+  gulp.watch(['bower_components/**/*.html'], reload);
   gulp.watch(['app/styles/**/*.css'], ['styles', reload]);
   gulp.watch(['app/elements/**/*.css'], ['elements', reload]);
   gulp.watch(['app/{scripts,elements}/**/{*.js,*.html}'], ['jshint']);
@@ -200,7 +208,7 @@ gulp.task('default', function (cb) {
   runSequence(
       ['copy', 'css'],
       'elements',
-      ['jshint', 'html'],
+      ['jshint', 'images', 'html'],
       'vulcanize', 'rename-index',
       cb);
 });
