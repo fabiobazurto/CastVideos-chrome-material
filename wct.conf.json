@@ -1,5 +1,13 @@
 {
   "suites": ["app/tests"],
+  "verbose": true,
+  "browserOptions": {
+    "chromeOptions": {
+      "extensions": [
+        "/Users/pying/Google Drive/Projects/chromecast/castvideos-material/15.827.0.2_0.crx"
+      ]
+    }
+  },
   "webserver": {
     "pathMappings": [
       {"/components/castvideos-material/app/bower_components": "bower_components"}

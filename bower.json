@@ -32,5 +32,8 @@
     "neon-animation": "polymerElements/neon-animation#~1.0.6",
     "web-component-tester": "Polymer/web-component-tester#~3.3.22",
     "should": "shouldjs/should.js#~7.1.0"
+  },
+  "devDependencies": {
+    "test-fixture": "PolymerElements/test-fixture#~1.0.0"
   }
 }
