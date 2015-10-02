@@ -5,19 +5,35 @@
         content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <title>cast-manager-tests</title>
   <script src="../../bower_components/webcomponentsjs/webcomponents.min.js"></script>
+  <!--<script>-->
+    <!--WCT = {-->
+      <!--environmentScripts: [-->
+        <!--// Mocha and Stacky are required dependencies-->
+        <!--'stacky/lib/parsing.js',-->
+        <!--'stacky/lib/formatting.js',-->
+        <!--'stacky/lib/normalization.js',-->
+        <!--'mocha/mocha.js',-->
+        <!--'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js'-->
+        <!--// Include anything else that you like!-->
+      <!--];-->
+    <!--};-->
+
+  <!--</script>-->
   <script src="../../bower_components/web-component-tester/browser.js"></script>
   <script src="../../bower_components/should/should.js"></script>
 
   <script src="../../bower_components/test-fixture/test-fixture-mocha.js"></script>
+
   <link rel="import" href="../../bower_components/test-fixture/test-fixture.html">
 
   <link rel="import" href="../../bower_components/cast-manager-polymer/cast-manager.html">
   <link rel="import" href="../../bower_components/cast-video-polymer/cast-video.html">
 
+
 </head>
 <body>
-<test-fixture id="basic">
-  <template id="t" is="dom-template">
+<!--<test-fixture id="basic">-->
+  <template id="t" is="dom-bind">
     <cast-manager app-id="4F8B3483"
                   cast-available="{{castAvailable}}"
                   connection-status="{{connectionStatus}}"
@@ -46,7 +62,7 @@
       </div>
     </cast-manager>
   </template>
-<test-fixture id="basic">
+<!--</test-fixture>-->
 <script>
   var media = {
     "categories": [{
@@ -250,23 +266,28 @@
     return mediaArray;
   }
 
-  describe('castManager', function () {
-    var castManager;
+  var castManager, castVideo;
 
-    before(function (done) {
-      fixture('basic');
+  var t = document.querySelector('#t');
 
-      var t = document.querySelector('#t');
-      if(document.querySelector('cast-manager')) {
-        castManager = document.querySelector('cast-manager');
-        done();
-      } else {
-        t.addEventListener('dom-change', function () {
-          castManager = document.querySelector('cast-manager');
-          done();
-        });
-      }
+  if(document.querySelector('cast-manager')) {
+    castManager = document.querySelector('cast-manager');
+    castVideo = document.querySelector('cast-video');
+    done();
+  } else {
+    t.addEventListener('dom-change', function () {
+      castManager = document.querySelector('cast-manager');
+      castVideo = document.querySelector('cast-video');
     });
+  }
+
+  describe('castManager', function () {
+
+//    before(function (done) {
+//      //fixture('basic');
+//
+//
+//    });
 
     describe('queue', function () {
       it('should include 17 items after insert', function () {
@@ -300,13 +321,44 @@
         castManager.queue.getLength().should.equal(0);
         Should.not.exist(castManager.queue.getCurrentItem());
       });
+    });
 
+    describe('local video playback', function() {
+      it('should play', function(done) {
+        castManager.play();
+        setTimeout(function() {
+          castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PLAYING);
+          done();
+        }, 1000);
+      });
+
+      it('should seek', function(done) {
+        castManager.seek(50);
+        setTimeout(function() {
+          castManager.currentTime.should.be.above(50);
+          done();
+        }, 1000)
+      });
+
+      it('should pause', function(done) {
+        castManager.pause();
+        setTimeout(function() {
+          castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PAUSED);
+          done();
+        }, 1000);
+      });
     });
 
     describe('cast', function () {
+      this.timeout(60000);
       if (window.chrome !== null
           && window.chrome !== undefined
           && window.navigator.vendor === 'Google Inc.') {
+
+        it('queue should include 17 items again after second media insertion insert', function () {
+          castManager.addItemsToQueue(processedMediaArray);
+          castManager.queue.getLength().should.equal(17);
+        });
 
         it('connect', function (done) {
           console.log(chrome.cast);
@@ -315,7 +367,15 @@
             setTimeout(function () {
               castManager.connectionStatus.should.equal(cast.CastManager.CONNECTION_STATUS.CONNECTED);
               done();
-            }, 3000);
+            }, 20000);
+          }, 3000);
+        });
+
+        it('disconnect', function(done) {
+          castManager.stopCasting();
+          setTimeout(function() {
+            castManager.connectionStatus.should.equal(cast.CastManager.CONNECTION_STATUS.DISCONNECTED);
+            done();
           }, 5000);
         });
       }
