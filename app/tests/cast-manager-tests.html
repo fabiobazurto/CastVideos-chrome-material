@@ -5,18 +5,19 @@
         content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <title>cast-manager-tests</title>
   <script src="../../bower_components/webcomponentsjs/webcomponents.min.js"></script>
+
   <!--<script>-->
-    <!--WCT = {-->
-      <!--environmentScripts: [-->
-        <!--// Mocha and Stacky are required dependencies-->
-        <!--'stacky/lib/parsing.js',-->
-        <!--'stacky/lib/formatting.js',-->
-        <!--'stacky/lib/normalization.js',-->
-        <!--'mocha/mocha.js',-->
-        <!--'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js'-->
-        <!--// Include anything else that you like!-->
-      <!--];-->
-    <!--};-->
+  <!--WCT = {-->
+  <!--environmentScripts: [-->
+  <!--// Mocha and Stacky are required dependencies-->
+  <!--'stacky/lib/parsing.js',-->
+  <!--'stacky/lib/formatting.js',-->
+  <!--'stacky/lib/normalization.js',-->
+  <!--'mocha/mocha.js',-->
+  <!--'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js'-->
+  <!--// Include anything else that you like!-->
+  <!--]-->
+  <!--};-->
 
   <!--</script>-->
   <script src="../../bower_components/web-component-tester/browser.js"></script>
@@ -283,11 +284,17 @@
 
   describe('castManager', function () {
 
-//    before(function (done) {
-//      //fixture('basic');
-//
-//
-//    });
+    before(function (done) {
+      var checkIfCastIsLoaded = function() {
+        if (window.chrome && window.navigator.vendor === 'Google Inc.' && !chrome.cast)
+          setTimeout(checkIfCastIsLoaded, 1000);
+        else {
+          done();
+        }
+      };
+
+      checkIfCastIsLoaded();
+    });
 
     describe('queue', function () {
       it('should include 17 items after insert', function () {
@@ -324,28 +331,62 @@
     });
 
     describe('local video playback', function() {
-      it('should play', function(done) {
+      it('should play', function() {
         castManager.play();
-        setTimeout(function() {
-          castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PLAYING);
-          done();
-        }, 1000);
+        castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PLAYING);
       });
 
-      it('should seek', function(done) {
+      it('should seek', function() {
         castManager.seek(50);
-        setTimeout(function() {
-          castManager.currentTime.should.be.above(50);
-          done();
-        }, 1000)
+        castManager.currentTime.should.be.above(49);
       });
 
-      it('should pause', function(done) {
+      it('should pause', function() {
         castManager.pause();
-        setTimeout(function() {
-          castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PAUSED);
-          done();
-        }, 1000);
+        castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PAUSED);
+      });
+
+      it('should change volume', function() {
+        castManager.setVolume(0);
+        castManager.volume.should.equal(0);
+      });
+
+      it('should toggle the queue element', function() {
+        castManager.toggleQueueElement();
+        //TODO(pying): pending test fill this out
+      });
+    });
+
+    describe('media insertion and queue manipulation', function() {
+      before(function () {
+        //Preload items into queue
+        castManager.addItemsToQueue(processedMediaArray);
+      });
+
+      it('queuePlayItem should update currentIndex and play specific item', function() {
+        castManager.queuePlayItem(castManager.queue.items[5]);
+        castManager.queue.getCurrentItem().should.equal(castManager.queue.items[5]);
+        castManager.localMedia.url.should.equal(castManager.queue.items[5].url);
+      });
+
+      it('playNow should insert the item at the correct position in the queue', function() {
+        castManager.queue.getLength().should.equal(17);
+        castManager.queue.currentIndex.should.equal(5);
+        castManager.playNow(processedMediaArray[2]);
+        castManager.queue.currentIndex.should.equal(5);
+        castManager.queue.getLength().should.equal(18);
+        castManager.localMedia.url.should.equal(processedMediaArray[2].url);
+      });
+
+      it('playNext should insert the item at the correct position in the queue', function() {
+        castManager.queue.currentIndex.should.equal(5);
+        castManager.playNext(processedMediaArray[3]);
+        castManager.queue.peekNextItem().url.should.equal(processedMediaArray[3].url);
+      });
+
+      it('addItemToQueue inserts it at the end of the queue', function() {
+        castManager.addItemsToQueue([processedMediaArray[4]]);
+        castManager.queue.items[castManager.queue.getLength()-1].url.should.equal(processedMediaArray[4].url);
       });
     });
 
@@ -355,11 +396,6 @@
           && window.chrome !== undefined
           && window.navigator.vendor === 'Google Inc.') {
 
-        it('queue should include 17 items again after second media insertion insert', function () {
-          castManager.addItemsToQueue(processedMediaArray);
-          castManager.queue.getLength().should.equal(17);
-        });
-
         it('connect', function (done) {
           console.log(chrome.cast);
           setTimeout(function () {
@@ -367,8 +403,8 @@
             setTimeout(function () {
               castManager.connectionStatus.should.equal(cast.CastManager.CONNECTION_STATUS.CONNECTED);
               done();
-            }, 20000);
-          }, 3000);
+            }, 15000);
+          }, 5000);
         });
 
         it('disconnect', function(done) {
