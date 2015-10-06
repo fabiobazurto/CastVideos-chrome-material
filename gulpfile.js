@@ -42,9 +42,7 @@ var styleTask = function (stylesPath, srcs) {
 
 // Clean output directory
 gulp.task('clean', function (cb) {
-  del(['.tmp', 'dist'], cb).then(function() {
-    cb();
-  });
+  del(['.tmp', 'dist'], cb);
 });
 
 // Compile and automatically prefix stylesheets

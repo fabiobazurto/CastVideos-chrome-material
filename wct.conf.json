@@ -3,9 +3,7 @@
   "verbose": true,
   "browserOptions": {
     "chromeOptions": {
-      "extensions": [
-        "/Users/pying/Google Drive/Projects/chromecast/castvideos-material/15.827.0.2_0.crx"
-      ]
+      "args": ["user-data-dir=/Users/pying/ChromeTestProfile/"]
     }
   },
   "webserver": {

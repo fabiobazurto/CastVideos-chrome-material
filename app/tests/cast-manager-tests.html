@@ -267,7 +267,7 @@
     return mediaArray;
   }
 
-  var castManager, castVideo;
+  var castManager, castVideo, castPlayerBar;
 
   var t = document.querySelector('#t');
 
@@ -279,6 +279,7 @@
     t.addEventListener('dom-change', function () {
       castManager = document.querySelector('cast-manager');
       castVideo = document.querySelector('cast-video');
+      castPlayerBar = document.querySelector('cast-player-bar');
     });
   }
 
@@ -323,7 +324,7 @@
         var secondItem = castManager.queue.getNextItem();
       });
 
-      it('should include 0 items after empty and current item should be null', function () {
+      it('queue should include 0 items after empty and current item should be null', function () {
         castManager.queue.empty();
         castManager.queue.getLength().should.equal(0);
         Should.not.exist(castManager.queue.getCurrentItem());
@@ -331,29 +332,24 @@
     });
 
     describe('local video playback', function() {
-      it('should play', function() {
+      it('play should play the media', function() {
         castManager.play();
         castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PLAYING);
       });
 
-      it('should seek', function() {
+      it('seek 50 should seek to 50 seconds', function() {
         castManager.seek(50);
         castManager.currentTime.should.be.above(49);
       });
 
-      it('should pause', function() {
+      it('pause should set state pause', function() {
         castManager.pause();
         castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PAUSED);
       });
 
-      it('should change volume', function() {
+      it('setVolume 0 should change volume to 0', function() {
         castManager.setVolume(0);
         castManager.volume.should.equal(0);
-      });
-
-      it('should toggle the queue element', function() {
-        castManager.toggleQueueElement();
-        //TODO(pying): pending test fill this out
       });
     });
 
@@ -388,10 +384,57 @@
         castManager.addItemsToQueue([processedMediaArray[4]]);
         castManager.queue.items[castManager.queue.getLength()-1].url.should.equal(processedMediaArray[4].url);
       });
+
+      it('queueMoveItemToNewIndex moves an item to a new index', function() {
+        var currentItem = castManager.queue.getCurrentItem();
+        castManager.queueMoveItemToNewIndex(currentItem.queueId, 0);
+        castManager.queue.items[0].url.should.equal(currentItem.url);
+      });
+
+      it('queueLoadNextItem should load the next item in the queue', function() {
+        var nextItem = castManager.queue.peekNextItem();
+        castManager.queueLoadNextItem();
+        castManager.queue.getCurrentItem().should.equal(nextItem);
+      });
     });
 
-    describe('cast', function () {
-      this.timeout(60000);
+    describe('player bar functions as expected', function() {
+      var playbutton, currentTime;
+      before(function() {
+        playButton = castPlayerBar.$.button_play_pause;
+        currentTime = castPlayerBar.$.label_time.children[0];
+      });
+
+      it('play/pause button click should play video', function() {
+        playButton.click();
+        castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PLAYING);
+      });
+
+      it('play/pause button second click should pause video', function() {
+        playButton.click();
+        castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PAUSED);
+      });
+
+      it('time integer to string renders correctly', function() {
+        castManager.set('currentTime', 61);
+        currentTime.innerText.should.equal('0:01:01');
+      });
+
+    });
+
+    describe('cast to local converters', function() {
+
+    });
+
+    describe('local to cast converts', function() {
+
+    });
+
+    describe('cast connection and load', function () {
+      this.timeout(180000);
+      var castTimeout = 6500;
+      var castLongTimeout = 15000;
+
       if (window.chrome !== null
           && window.chrome !== undefined
           && window.navigator.vendor === 'Google Inc.') {
@@ -404,7 +447,18 @@
               castManager.connectionStatus.should.equal(cast.CastManager.CONNECTION_STATUS.CONNECTED);
               done();
             }, 15000);
-          }, 5000);
+          }, castTimeout);
+        });
+
+        it('isCasting returns true when casting', function() {
+          castManager.isCasting().should.equal(true);
+        });
+
+        it('content should be playing or buffering', function(done) {
+          setTimeout(function(){
+            [chrome.cast.media.PlayerState.PLAYING, chrome.cast.media.PlayerState.BUFFERING].should.containEql(castManager.castMedia.playerState);
+            done();
+          }, castTimeout);
         });
 
         it('disconnect', function(done) {
@@ -412,7 +466,153 @@
           setTimeout(function() {
             castManager.connectionStatus.should.equal(cast.CastManager.CONNECTION_STATUS.DISCONNECTED);
             done();
-          }, 5000);
+          }, castTimeout);
+        });
+
+        it('post connection status check', function(){
+
+        });
+
+        describe('cast control tests', function() {
+          before(function(done) {
+            castManager.queue.empty();
+            castManager.addItemsToQueue(processedMediaArray);
+            castManager.startCast();
+            setTimeout(function() {
+              done();
+            }, 15000);
+          });
+
+          it('pause should pause media', function(done) {
+            castManager.pause();
+            setTimeout(function() {
+              castManager.castMedia.playerState.should.equal(chrome.cast.media.PlayerState.PAUSED);
+              castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PAUSED);
+              done();
+            }, castTimeout);
+          });
+
+          it('play should play media again', function(done) {
+            castManager.play();
+            setTimeout(function() {
+              castManager.castMedia.playerState.should.equal(chrome.cast.media.PlayerState.PLAYING);
+              castManager.localMedia.state.should.equal(cast.MediaItem.STATE.PLAYING);
+              done();
+            }, castTimeout);
+          });
+        });
+
+        describe('cast queue insertion tests', function() {
+          var firstItemToInsert, secondItemtoInsert, queueSize;
+          before(function() {
+            queueSize = castManager.queue.getLength();
+            firstItemToInsert = processedMediaArray[2];
+            secondItemToInsert = processedMediaArray[3];
+          });
+
+          it('queue size should match', function(done) {
+            setTimeout(function() {
+              castManager.castMedia.items.should.have.a.lengthOf(queueSize);
+              done();
+            }, castTimeout);
+          });
+
+          it('queueInsert should add an item at the end', function(done) {
+            castManager.addItemsToQueue([firstItemToInsert]);
+            setTimeout(function() {
+              castManager.queue.items[castManager.queue.getLength()-1].url.should.equal(firstItemToInsert.url);
+              done();
+            }, castTimeout)
+          });
+
+          it('playNext should add an item as the next element', function(done) {
+            castManager.playNext(secondItemToInsert);
+            setTimeout(function() {
+              castManager.queue.peekNextItem().url.should.equal(secondItemToInsert.url);
+              done();
+            }, castTimeout);
+          });
+
+          it('video inserted as next video should play next after seek to current video duration', function(done) {
+            castManager.seek(castManager.localMedia.duration);
+            setTimeout(function() {
+              castManager.castMedia.media.contentId.should.equal(secondItemToInsert.url);
+              done();
+            }, castLongTimeout);
+          });
+
+          it('queuePlayItem second item should play the second item', function(done) {
+            castManager.queuePlayItem(castManager.queue.items[1], function(msg) {
+              console.log(JSON.stringify(msg));
+              //TODO(pying): fix this after filing bug.  Success callback occurs before media is updated
+              window.setTimeout(function() {
+                castManager.queue.getCurrentItem().url.should.equal(castManager.queue.items[1].url);
+                done();
+              }, castLongTimeout);
+            });
+          });
+
+          it('playNow should insert the video and play it', function(done) {
+            var currentIndex = castManager.queue.currentIndex;
+            var currentItem = castManager.queue.getCurrentItem();
+            castManager.playNow(firstItemToInsert);
+            setTimeout(function() {
+              castManager.castMedia.media.contentId.should.equal(firstItemToInsert.url);
+              castManager.queue.items[currentIndex].url.should.equal(firstItemToInsert.url);
+              castManager.queue.items[currentIndex + 1].url.should.equal(currentItem.url);
+              castManager.castMedia.playerState.should.equal(chrome.cast.media.PlayerState.PLAYING);
+              done();
+            }, castLongTimeout)
+          });
+        });
+
+        describe('cast queue deletion tests', function() {
+          after(function() {
+            castManager.stopCasting();
+          });
+
+          it('queue size should be 20', function(){
+            castManager.queue.items.should.have.a.lengthOf(20);
+          });
+
+          it('deleting a video should start the next video', function(done) {
+            var nextItem = castManager.queue.peekNextItem();
+            castManager.queueRemoveItem(castManager.queue.getCurrentItem());
+            setTimeout(function() {
+              castManager.castMedia.currentItemId.should.equal(nextItem.queueId);
+              done();
+            }, castLongTimeout);
+          });
+
+          it('playing the last video then deleting it should result in the splash screen', function(done) {
+            var lastItem = castManager.queue.items[castManager.queue.getLength() - 1];
+            castManager.queuePlayItem(lastItem);
+            setTimeout(function() {
+              castManager.queueRemoveItem(lastItem);
+              setTimeout(function() {
+                castManager.queue.items.should.not.containEql(lastItem);
+                Should.not.exist(castManager.castMedia.currentItemId);
+                castManager.hasCastMedia.should.be.false();
+                done();
+              }, castTimeout);
+            }, castLongTimeout)
+          });
+
+          it('playNow should add a video to the end of the queue and start it', function(done) {
+            var item = processedMediaArray[0];
+            castManager.playNow(item);
+            setTimeout(function() {
+              castManager.castMedia.media.contentId.should.equal(item.url);
+              castManager.queue.items.should.have.a.lengthOf(1);
+              castManager.castMedia.playerState.should.equal(chrome.cast.media.PlayerState.PLAYING);
+              done();
+            }, castLongTimeout);
+          });
+        });
+
+        describe('cast queue video play order tests', function() {
+
+
         });
       }
     });
