@@ -16,7 +16,9 @@ limitations under the License.
 
 The demo can be found [here](http://googlecast.github.io/CastVideos-chrome-material/).
 
-This sample showcases the UX compliant Chromecast polymer elements.  The main elements are:
+This sample showcases the UX compliant Chromecast polymer elements and the process for productionizing them.
+
+The main elements are:
 
 * [cast-manager](https://github.com/googlecast/cast-manager-polymer) - Controller for Cast 
 Polymer element.  Exposes properties that manage state, handles events and rotes them to 
@@ -37,24 +39,37 @@ Each of the elements can be used independently, the only requirement is the cast
 The polymer elements are meant to be a simple wrapper for Chromecast, they handle the rendering
 and most of the complexity.
 
-The demo can be found [here](http://pengying.github.io/CastVideos-material/).
+The demo can be found [here](http://googlecast.github.io/CastVideos-material-chrome/).
 
-##Requirements
+## Productionising
 
+The sample builds off [polymer-starter-kit](https://github.com/PolymerElements/polymer-starter-kit/).
+Productionising will minify CSS and HTML, uglifiy javascript and merge all of the elements into a single HTML file.
+
+To productionise your app run:
+    
+    gulp
+    
+The compiled files will be in the dist directory.
+
+## Requirements
+
+* [Node](https://nodejs.org/en/)
+* [npm](https://www.npmjs.com/)
 * [Bower](http://bower.io/)
-* Python or a webserver
 
-##Setup
+## Setup
 
 1. Clone repo
-2. `bower install`
-3. `python -m SimpleHTTPServer 8080`
-4. Open Chrome and navigate to localhost:8080
+2. `npm install`
+3. `bower install`
+4. `gulp serve:dist`
+5. Navigate your browser to localhost:5000
 
-##Cast Browser Support
+## Cast Browser Support
 * Chrome
 
-The elements will still work in browsers that support [Polymer](https://www.polymer-project.org/0.5/resources/compatibility.html) with out cast functionality.
+The elements will still work in browsers that support [Polymer](https://www.polymer-project.org/1.0/resources/compatibility.html) with out cast functionality.
 * Firefox
 * IE 10+
 * Safari 8+

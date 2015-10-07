@@ -86,7 +86,6 @@ gulp.task('copy', function () {
       .pipe($.size({title: 'copy'}));
 });
 
-
 // Lint JavaScript
 gulp.task('jshint', function () {
   return gulp.src([
