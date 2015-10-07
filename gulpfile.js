@@ -8,6 +8,7 @@ var browserSync = require('browser-sync');
 var reload = browserSync.reload;
 var merge = require('merge-stream');
 var path = require('path');
+var ghPages = require('gulp-gh-pages');
 //var fs = require('fs');
 //var glob = require('glob');
 var historyApiFallback = require('connect-history-api-fallback');
@@ -145,6 +146,11 @@ gulp.task('vulcanize', function () {
       .pipe(gulp.dest('dist/'));
 });
 
+gulp.task('gh-pages', function() {
+  return gulp.src('./dist/**/*')
+      .pipe(ghPages());
+});
+
 // Watch files for changes & reload
 gulp.task('serve', ['css', 'elements'], function () {
   browserSync({
@@ -202,6 +208,7 @@ gulp.task('serve:dist', ['default'], function () {
     middleware: [ historyApiFallback() ]
   });
 });
+
 
 // Build production files, the default task
 gulp.task('default',['clean'], function (cb) {
