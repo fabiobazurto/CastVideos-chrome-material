@@ -16,6 +16,6 @@
   "dependencies": {
     "polymer": "Polymer/polymer#^1.0.0",
     "paper-tooltip": "PolymerElements/paper-tooltip#~1.1.0",
-    "cast-manager-polymer": "pengying/cast-manager-polymer"
+    "cast-manager-polymer": "googlecast/cast-manager-polymer"
   }
 }

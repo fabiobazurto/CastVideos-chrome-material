@@ -160,8 +160,8 @@ The following custom properties are available for styling:
         padding: 0;
       };
 
-      --iron-icon-width:15px;
-      --iron-icon-height:15px;
+      --iron-icon-width: 15px;
+      --iron-icon-height: 15px;
     }
   </style>
   <template>
@@ -190,100 +190,99 @@ The following custom properties are available for styling:
       </div>
     </div>
   </template>
-
-
-  <script>
-    Polymer({
-      is: 'cast-queue-element',
-      properties: {
-        /**
-         * Media item to display
-         */
-        media: Object,
-
-        /**
-         * Currently playing local media item
-         */
-        localMedia: Object,
-
-        /**
-         * Message to display when media item matches what's currently playing
-         */
-        currentlyPlayingMessage: {
-          type: String,
-          value: 'Now Playing'
-        }
-      },
-      observers: [
-        '_mediaObserver(media)',
-        '_localMediaObserver(localMedia)'
-      ],
-      behaviors: [cast.HelperBehavior],
-      ready: function () {
-        this.addEventListener('click', function (event) {
-          this._queuePlayItem(this.media);
-        });
-
-        this.$.close.addEventListener('click', function() {
-          this._queueRemoveItem(this.media);
-        }.bind(this));
-
-        //Handle mouse over to indicate that clicking will play the video
-        this.addEventListener('mouseenter', function () {
-          this.classList.add('expand');
-
-          if (this.localMedia && this.media.queueId !== this.localMedia.queueId) {
-            this.$.play.classList.remove('hidden');
-          }
-        });
-
-        //Hide the expanded view when mouse leaves the element
-        this.addEventListener('mouseleave', function () {
-          this.$.play.classList.add('hidden');
-          this.classList.remove('expand');
-        });
-      },
-
-      /**
-       * Observes the locally playing media then checks if it matches media item
-       * on each media change.
-       *
-       * @param newVal updated locally playing media
-       * @private
-       */
-      _localMediaObserver: function (newVal) {
-        this._mediaChecker(this.media, newVal);
-      },
-
-      /**
-       * Observes the media item.  If it changes ie queue updates, it updates the thumbnail
-       * and checks the media item vs locally playing media.
-       *
-       * @param newVal updated media item
-       * @private
-       */
-      _mediaObserver: function (newVal) {
-        this._mediaChecker(newVal, this.localMedia);
-        this.$.thumbnail.style.backgroundImage = "url('" + newVal.thumbnailImageUrl + "')";
-        this.classList.remove('expand');
-      },
-
-      /**
-       * Checks the media item vs locally playing media to see if they match.  If they do,
-       * it displays the currently playing overlay.
-       *
-       * @param media media item
-       * @param localMedia currently playing media
-       * @private
-       */
-      _mediaChecker: function (media, localMedia) {
-        if (media && localMedia && media.queueId === localMedia.queueId) {
-          this.$.currently_playing_overlay.classList.remove('hidden');
-          this.$.play.classList.add('hidden');
-        } else {
-          this.$.currently_playing_overlay.classList.add('hidden');
-        }
-      },
-    });
-  </script>
 </dom-module>
+
+<script>
+  Polymer({
+    is: 'cast-queue-element',
+    properties: {
+      /**
+       * Media item to display
+       */
+      media: Object,
+
+      /**
+       * Currently playing local media item
+       */
+      localMedia: Object,
+
+      /**
+       * Message to display when media item matches what's currently playing
+       */
+      currentlyPlayingMessage: {
+        type: String,
+        value: 'Now Playing'
+      }
+    },
+    observers: [
+      '_mediaObserver(media)',
+      '_localMediaObserver(localMedia)'
+    ],
+    behaviors: [cast.HelperBehavior],
+    ready: function () {
+      this.addEventListener('click', function (event) {
+        this._queuePlayItem(this.media);
+      });
+
+      this.$.close.addEventListener('click', function() {
+        this._queueRemoveItem(this.media);
+      }.bind(this));
+
+      //Handle mouse over to indicate that clicking will play the video
+      this.addEventListener('mouseenter', function () {
+        this.classList.add('expand');
+
+        if (this.localMedia && this.media.queueId !== this.localMedia.queueId) {
+          this.$.play.classList.remove('hidden');
+        }
+      });
+
+      //Hide the expanded view when mouse leaves the element
+      this.addEventListener('mouseleave', function () {
+        this.$.play.classList.add('hidden');
+        this.classList.remove('expand');
+      });
+    },
+
+    /**
+     * Observes the locally playing media then checks if it matches media item
+     * on each media change.
+     *
+     * @param newVal updated locally playing media
+     * @private
+     */
+    _localMediaObserver: function (newVal) {
+      this._mediaChecker(this.media, newVal);
+    },
+
+    /**
+     * Observes the media item.  If it changes ie queue updates, it updates the thumbnail
+     * and checks the media item vs locally playing media.
+     *
+     * @param newVal updated media item
+     * @private
+     */
+    _mediaObserver: function (newVal) {
+      this._mediaChecker(newVal, this.localMedia);
+      this.$.thumbnail.style.backgroundImage = "url('" + newVal.thumbnailImageUrl + "')";
+      this.classList.remove('expand');
+    },
+
+    /**
+     * Checks the media item vs locally playing media to see if they match.  If they do,
+     * it displays the currently playing overlay.
+     *
+     * @param media media item
+     * @param localMedia currently playing media
+     * @private
+     */
+    _mediaChecker: function (media, localMedia) {
+      if (media && localMedia && media.queueId === localMedia.queueId) {
+        this.$.currently_playing_overlay.classList.remove('hidden');
+        this.$.play.classList.add('hidden');
+      } else {
+        this.$.currently_playing_overlay.classList.add('hidden');
+      }
+    }
+  });
+</script>

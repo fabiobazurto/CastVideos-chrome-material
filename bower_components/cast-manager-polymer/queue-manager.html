@@ -16,7 +16,7 @@ limitations under the License.
 <link rel="import" href="../polymer/polymer.html">
 
 <!--
-An Object representing the queue of media elements.
+An Object representing the local queue of media elements.
 -->
 
 <script>
@@ -30,9 +30,7 @@ An Object representing the queue of media elements.
       properties: {
 
         /**
-         * Array of {MediaItem} elements
-         *
-         * @type {Array}
+         * Array of `cast.MediaItem` elements
          */
         items: {
           type: Array,
@@ -44,8 +42,6 @@ An Object representing the queue of media elements.
 
         /**
          * Type of repetition: none, repeat singleitem , or repeat the queue.
-         *
-         * @type {number}
          */
         repeatMode: {
           type: Number,
@@ -55,8 +51,6 @@ An Object representing the queue of media elements.
 
         /**
          * Shuffle queue playback
-         *
-         * @type {boolean}
          */
         shuffle: {
           type: Boolean,
@@ -67,16 +61,12 @@ An Object representing the queue of media elements.
         /**
          * Index of currently playing media item
          *
-         * @type {number}
+         * @type {Number}
          */
         currentIndex: {
           type: Number,
           notify: true,
           value: null
-        },
-
-        for: {
-          type: String
         }
       },
 
@@ -121,6 +111,10 @@ An Object representing the queue of media elements.
         this.set('currentIndex', null);
       },
 
+      /**
+       * Returns the length of the queue
+       * @returns  {Number} length of queue
+       */
       getLength: function () {
         return this.items.length;
       },
@@ -129,8 +123,8 @@ An Object representing the queue of media elements.
        * Gets the index of an element in the array given it's ID.  Returns -1 if
        * ID doesn't exist
        *
-       * @param id
-       * @returns {number}
+       * @param {Number} id
+       * @returns {number} index of item
        */
       getIndexOfId: function (id) {
         for (var i = 0; i < this.items.length; i++) {
@@ -144,8 +138,8 @@ An Object representing the queue of media elements.
       /**
        * Gets an element in the queue by it's ID
        *
-       * @param id
-       * @returns {*}
+       * @param {Number} id
+       * @returns {cast.MediaItem} media item
        */
       getItemById: function (id) {
         return this.items[this.getIndexOfId(id)];
@@ -154,7 +148,7 @@ An Object representing the queue of media elements.
       /**
        * Returns the current media item.  If media items aren't defined t
        *
-       * @returns {*}
+       * @returns {cast.MediaItem} current item
        */
       getCurrentItem: function () {
         if (this.currentIndex === null) {
@@ -164,7 +158,9 @@ An Object representing the queue of media elements.
       },
 
       /**
-       * Gets the next item
+       * Gets the next item and resets next index
+       *
+       * @returns {cast.MediaItem} next media item
        */
       getNextItem: function () {
         if (this._nextIndex === null) {
@@ -177,7 +173,9 @@ An Object representing the queue of media elements.
       },
 
       /**
-       * Peeks at the next item
+       * Peeks at the next item with out resetting next item index
+       *
+       * @returns {cast.MediaItem} next media item
        */
       peekNextItem: function () {
         if (this._nextIndex === null) {
@@ -196,7 +194,7 @@ An Object representing the queue of media elements.
       /**
        * Gets the index of the next item based on shuffle and repeat mode selections
        *
-       * @returns {number} index of next item and -1 if end of queue.
+       * @returns {Number} index of next item and -1 if end of queue.
        */
       _getIndexOfNextItem: function () {
         //Check that the queue isn't empty
@@ -252,8 +250,8 @@ An Object representing the queue of media elements.
       /**
        * Moves an item to a new index
        *
-       * @param queueId item ID to move
-       * @param newIndex new index to place the item
+       * @param {Number} queueId item ID to move
+       * @param {Number} newIndex new index to place the item
        */
       moveItemToNewIndex: function (queueId, newIndex) {
         var index = this.getIndexOfId(queueId);
@@ -278,12 +276,12 @@ An Object representing the queue of media elements.
       },
 
       /**
-       * Removes item with given itemId
+       * Removes item with given queueId
        *
-       * @param {number} itemId
+       * @param {Number} queueId id of item to remove
        */
-      removeItemWithId: function (itemId) {
-        var index = this.getIndexOfId(itemId);
+      removeItemWithId: function (queueId) {
+        var index = this.getIndexOfId(queueId);
 
         //If item exists remove it
         if (index !== -1) {
@@ -299,8 +297,8 @@ An Object representing the queue of media elements.
       /**
        * Assigns an id to an item inserted into the array
        *
-       * @param {cast.Media} media to assign a queue Id to
-       * @returns {media}
+       * @param {cast.MediaItem} media to assign a queue Id to
+       * @returns {cast.MediaItem} item with assigned queueId
        */
       _assignQueueId: function (media) {
         //If the media element has no queueId, assign it one and increment the queueIdCounter
@@ -310,8 +308,9 @@ An Object representing the queue of media elements.
         }
         return media;
       },
+
       /**
-       * Toggle the repeat mode
+       * Toggles the repeat mode
        */
       toggleRepeatMode: function () {
         this.set('repeatMode', (this.repeatMode + 1) %
@@ -322,6 +321,8 @@ An Object representing the queue of media elements.
 
       /**
        * Set the repeat mode
+       *
+       * @param {cast.QueueManager.REPEAT_MODE} mode queue repeat mode
        */
       setRepeatMode: function(mode) {
         this.set('repeatMode', mode);
@@ -338,6 +339,8 @@ An Object representing the queue of media elements.
 
       /**
        * Set the shuffle
+       *
+       * @param {Boolean} shuffle boolean describing whether to shuffle
        */
       setShuffle: function(shuffle) {
         this.set('shuffle', shuffle);
@@ -346,8 +349,8 @@ An Object representing the queue of media elements.
       /**
        * Add a new media item clone to the queue.  Returns the new size of the queue.
        *
-       * @param media
-       * @returns {number} new size of queue
+       * @param {cast.MediaItem} media to push at the end
+       * @returns {Number} new size of queue
        */
       pushItem: function (media) {
         if (this.currentIndex === null && media !== null) {
@@ -367,7 +370,7 @@ An Object representing the queue of media elements.
        * it doesn't alter the original.
        *
        * @param {Array} media of cast.Media
-       * @returns {*} length of new array
+       * @returns {Number} length of new array
        */
       pushAll: function (media) {
         if (this.currentIndex === null && media.length > 0) {
@@ -392,7 +395,7 @@ An Object representing the queue of media elements.
        * Inserts items into queue at specific index
        *
        * @param {Array} media to insert
-       * @param {number} index to insert at
+       * @param {Number} index to insert at
        */
       insertItemsAtIndex: function (media, index) {
         //If queue has been cleared reset current Index and insert as first item
@@ -424,7 +427,8 @@ An Object representing the queue of media elements.
 
       /**
        * Generates a queue based on a chromecast queue
-       * @param items
+       *
+       * @param {Array} items array of `chrome.cast.media.QueueItem`s
        */
       parseCastQueue: function (items) {
         //If the chromecast queue isn't empty
@@ -455,7 +459,8 @@ An Object representing the queue of media elements.
 
       /**
        * Sets the queue currentIndex
-       * @param index
+       *
+       * @param {Number} index new current Index
        */
       setCurrentIndex: function(index) {
         if(index < this.items.length  && index >= 0) {

@@ -12,62 +12,41 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-#cast-video-polymer
+#cast-video
 This element represents the video player in the [CastVideos-chrome-material](https://github.com/googlecast/CastVideos-chrome-material) sample.
 
 [Demo](http://googlecast.github.io/cast-video-polymer/demo.html)
 
-It observes `castManager.localMedia` and automatically loads any HTML5 video that's set as 
-localMedia.
+## Overview
+`cast-video` observes handles mediaLoad iron events from [`cast-manager`](https://github.com/googlecast/cast-manager-polymer), then loads the video, set duration, and fires an event to notify that loading is complete.
+`cast-video` also observes other iron events from `cast-manager` to play, pause, seek and change volume.  This element serves as the source of truth for media currentTime and duration during local playback.
+
+This element supports any HTML5 video format.
 
 It encapsulates the [cast-player-bar](https://github.com/googlecast/cast-player-bar-polymer) element to handle controlling local media and casting.
 
-#Setup
+##Setup
 Use [Bower](http://bower.io/) to include the cast-video in your web app.
 
     bower install --save googlecast/cast-volume-controller-polymer
     
-#Integration
-You'll first need to include [Polymer](https://www.polymer-project.org/0.5/docs/start/getting-the-code.html).
+##Integration
+You'll need to first include [Polymer](https://www.polymer-project.org/).
 
-##Including the element
+###Including the element
 In your html include the element.
 
     <link rel="import"
-            href="bower_components/cast-volume-controller-polymer/cast-volume-controller-polymer.html">
+            href="bower_components/cast-video-polymer/cast-video.html">
 
-Add the element to your HTML defining the `appId`.
+Add the element to your DOM as a child of `cast-manager` and bind the required properties.
 
-    <cast-video appId="{{ appId }}"></cast-video>
-
-##Loading media
-Currently the video player only supports HTML5 video content.
- 
-To load media, first create a media object.
-
-    var media = {
-      "title": "Big Buck Bunny",
-      "description": "Fusce id nisi turpis. Praesent viverra bibendum semper. Donec tristique, orci sed semper lacinia, quam erat rhoncus massa, non congue tellus est quis tellus. Sed mollis orci venenatis quam scelerisque accumsan. Curabitur a massa sit amet mi accumsan mollis sed et magna. Vivamus sed aliquam risus. Nulla eget dolor in elit facilisis mattis. Ut aliquet luctus lacus. Phasellus nec commodo erat. Praesent tempus id lectus ac scelerisque. Maecenas pretium cursus lectus id volutpat.",
-      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      "studio": "Blender Foundation",
-      "thumbnailImageUrl": "//commondatastorage.googleapis.com/gtv-videos-bucket/sample/images_480x270/BigBuckBunny.jpg",
-      "largeImageUrl": "//commondatastorage.googleapis.com/gtv-videos-bucket/sample/images_780x1200/BigBuckBunny-780x1200.jpg"
-    };
-
-Create a `cast.Media` object.
-    
-    var castMedia = new cast.Media(media);
-
-##Instiantiate a `CastMedia` object in the polymer ready event.
-In the polymer ready event, create the castManager object and pass it to the video element.
-
-    window.addEventListener('polymer-ready', function() {
-      var video = document.querySelector('cast-video'); 
-      video.castManager = new cast.CastManager(castMedia);
-    }
-
-##Loading new media
-To set the video, call the `setLocalMedia` method of castManager.  The video element will 
-automatically detect the change and update the video content.
-
-    castManager.setLocalMedia(new cast.Media(media));
+    <cast-video id="video"
+                local-media="{{localMedia}}"
+                volume="{{volume}}"
+                current-time="{{currentTime}}"
+                is-fullscreen="{{isFullscreen}}"
+                cast-available="[[castAvailable]]"
+                connection-status="[[connectionStatus]]"
+                show-spinner="[[showSpinner]]"
+                cast-device-name="[[castDeviceName]]"></cast-video>

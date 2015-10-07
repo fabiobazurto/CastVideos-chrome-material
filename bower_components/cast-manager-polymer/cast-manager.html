@@ -19,6 +19,37 @@ limitations under the License.
 
 <link rel="import" href="media-item.html">
 <link rel="import" href="queue-manager.html">
+
+<!--
+The `cast-manager` element is the controller for all of the cast elements.  It routes events,
+manages and syncs states and handles all of the casting/local logic for controlling media.  It exposes
+state for other elements to then bind to.
+
+Example:
+    <cast-manager app-id="4F8B3483"
+                cast-available="{{castAvailable}}"
+                connection-status="{{connectionStatus}}"
+                local-media="{{localMedia}}"
+                queue="{{queue}}"
+                volume="{{volume}}"
+                has-cast-media="{{hasCastMedia}}"
+                show-queue="{{showQueue}}"
+                cast-device-name="{{castDeviceName}}"
+                current-time="{{currentTime}}"
+                is-fullscreen="{{isFullscreen}}"
+                show-spinner="{{showSpinner}}"
+                next-queue-media-item="{{nextQueueMediaItem}}"
+                countdown-to-next-media-item="{{countdownToNextMediaItem}}">
+    </cast-manager>
+
+`cast-manager` stores both state and fires events.  Events are meant to initiate actions.  For
+example if a user presses play on the player bar, that element bubbles up the event to `cast-manager`.  `cast-manager` then
+fires a iron event notifying any listening elements to take action.  Once the action has occured,
+ the element then updates state which is 2 way bound to update the property in `cast-manager`.
+
+Use the `helper-behavior` to easily add queueing and media control functionality into your app.
+-->
+
 <script>
   var cast = window.cast || {};
   (function () {
@@ -33,7 +64,7 @@ limitations under the License.
         appId: String,
 
         /**
-         * Media information to display
+         * Media object to display in format `cast.MediaItem`
          */
         localMedia: {
           type: Object,
@@ -41,7 +72,7 @@ limitations under the License.
         },
 
         /**
-         * Reference to loaded cast Media
+         * Reference to loaded `chrome.cast.media`
          */
         castMedia: {
           type: Object,
@@ -49,7 +80,7 @@ limitations under the License.
         },
 
         /**
-         * Queue representation
+         * `cast.QueueManager` instance to store the current state of the queue
          */
         queue: {
           type: Object,
@@ -60,7 +91,7 @@ limitations under the License.
         },
 
         /**
-         * Loading status
+         * Spinner state
          */
         showSpinner: {
           type: Boolean,
@@ -68,6 +99,11 @@ limitations under the License.
           value: false
         },
 
+        /**
+         * Cast connection state.
+         *
+         * Values defined by cast.CastManager.CONNECTION_STATUS
+         */
         connectionStatus: {
           type: Number,
           notify: true,
@@ -75,7 +111,7 @@ limitations under the License.
         },
 
         /**
-         * Chrome cast session reference
+         * Reference to loaded `chrome.cast.Session`
          */
         session: {
           type: Object,
@@ -91,12 +127,18 @@ limitations under the License.
           value: false
         },
 
+        /**
+         * Current media volume syncs to both local and cast media.
+         */
         volume: {
           type: Number,
           value: .5,
           notify: true
         },
 
+        /**
+         * `currentTime` of media syncs to both local and cast media
+         */
         currentTime: {
           type: Number,
           value: 0,
@@ -104,20 +146,26 @@ limitations under the License.
           observer: ['_currentTimeObserver']
         },
 
+        /**
+         * Name of the connected cast device
+         */
         castDeviceName: {
           type: String,
           value: 'Local Player',
           notify: true
         },
 
-        showQueue: {
+        /**
+         * State defining if the queue is shown or hidden
+         */
+        isQueueShown: {
           type: Boolean,
           value: false,
           notify: true
         },
 
         /**
-         * Attribute instead of function to share the state easier with other elements
+         * State defining if media is loaded onto the cast
          */
         hasCastMedia: {
           type: Boolean,
@@ -125,29 +173,66 @@ limitations under the License.
           notify: true
         },
 
+        /**
+         * State defining if the video element is fullscreened
+         */
         isFullscreen: {
           type: Boolean,
           value: false,
           notify: true
         },
 
+        /**
+         * `cast.MediaItem` defining the next item in queue
+         */
         nextQueueMediaItem: {
           type: Object,
           notify: true
         },
 
+        /**
+         * Time in seconds until the next video starts
+         */
         countdownToNextMediaItem: {
           type: Number,
           notify: true,
           value: null
         }
       },
+      /**
+       * Reference to the interval that polls and updates currentTime
+       */
       _timerHandle: null,
+
+      /**
+       * `cast.QueueManager` to store the local queue when casting.
+       *
+       * If the receiver has an existing queue and the local device has a queue, the local device
+       * queue will be saved when it connects to the receiver.  When the local device
+       * disconnects, the previous queue is restored.
+       *
+       * If reciever has no existing queue or if casting initiates a new session, the cast device
+       * queue will persist when the local device disconnects.
+       */
       _savedQueue: null,
+
+      /**
+       * Boolean describing whether or not to restore to previous saved queue.
+       */
       _loadSavedQueueOnDisconnect: true,
+
+      /**
+       * Time in seconds to display the upcoming video notification
+       */
       _preloadTime: 20,
+
+      /**
+       * Reference to an async task that tries reloading local media if it doesn't load
+       * the first time.
+       */
       _retryHandler: null,
 
+      //Listeners for fired events from sub elements
       listeners: {
         'toggleCastConnection': 'toggleCastConnection',
         'queueEvent': '_onQueueEvent',
@@ -155,19 +240,22 @@ limitations under the License.
       },
 
       ready: function () {
+        // Init cast
         this.init();
+        //TODO(pying): make sure this works for a single video
+        //TODO(pying): test against slow networks
       },
 
-      _repeatObserver: function (repeatmode) {
-        console.log('repeat observer' + repeatmode);
-      },
-
+      /**
+       * Init chromecast, and look for receivers
+       */
       init: function () {
         //Only init cast for chrome browsers
         if (this.appId !== null
             && window.chrome !== null
             && window.chrome !== undefined
             && window.navigator.vendor === 'Google Inc.') {
+          // Inject chromecast script
           var castScript = document.createElement('script');
           castScript.src = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js';
           document.getElementsByTagName('head')[0].appendChild(castScript);
@@ -186,18 +274,19 @@ limitations under the License.
           };
           initializeCastApi.call(this);
         } else {
-          console.log('No receiver found for app');
+          console.log('Browser is not Chrome, not enabling cast functionality');
         }
       },
-      /******* Event Listeners ************/
+      /********* Event Handlers & Callbacks  ********/
 
-     /**
+      /**
        * Listener invoked when a session is created or connected.
        */
       _sessionListener: function (session) {
         console.log('SessionListener: Session changed');
         if (session.status === chrome.cast.SessionStatus.CONNECTED) {
           console.log('SessionListener: Session connected');
+          //Listen for any changes to the session
           session.addUpdateListener(this._sessionUpdateListener.bind(this));
 
           this.set('connectionStatus', cast.CastManager.CONNECTION_STATUS.CONNECTED);
@@ -219,7 +308,11 @@ limitations under the License.
         }
       },
 
-      _sessionUpdateListener: function() {
+      /**
+       * Listens for session changes
+       */
+      _sessionUpdateListener: function () {
+        //If session is disconnected revert to local player
         if (this.session.status !== chrome.cast.SessionStatus.CONNECTED) {
           console.log('SessionListener: Session disconnected');
           this._onStopSuccess();
@@ -234,12 +327,17 @@ limitations under the License.
         this.set('castAvailable', e === chrome.cast.ReceiverAvailability.AVAILABLE);
       },
 
-      /****************** Event Handlers *******************************/
-      _initSuccess: function (e) {
+      /**
+       * Cast initialization success
+       */
+      _initSuccess: function () {
         console.log('Cast init success');
       },
 
-      _initFailure: function (e) {
+      /**
+       * Cast initialization failure
+       */
+      _initFailure: function () {
         console.long('Cast init failure' + JSON.stringify(e));
       },
 
@@ -258,8 +356,8 @@ limitations under the License.
         //Store reference to media object
         this.setCastMedia(media);
 
+        //Add listener for media changes
         media.addUpdateListener(this._onCastMediaUpdate.bind(this));
-        //TODO(pying): make sure this works for a single video
 
         //Copy over remote queue to local queue if it's not empty
         if (media.items !== null) {
@@ -269,7 +367,7 @@ limitations under the License.
       },
 
       /**
-       * Called when cast media changes
+       * Called when cast media changes.  Syncs the differences between cast media and local media
        */
       _onCastMediaUpdate: function () {
         console.log('Cast media changed');
@@ -287,7 +385,6 @@ limitations under the License.
 
           //Sync the volume
           this.volume = this.castMedia.volume.level;
-          //TODO(pying): make sure this works for a single video as well
 
           //Sync the repeat/shuffle state
           this._repeatModeSyncer();
@@ -305,6 +402,9 @@ limitations under the License.
             // Sync queue current index which is used sometimes after disconnect
             this.queue.setCurrentIndex(this.queue.getIndexOfId(this.castMedia.currentItemId));
           } else {
+            // When cast content ends the currentItemId is null but castMedia is still defined.
+            // In this case we need to load new media which is typically reserved for when cast
+            // media isn't loaded.
             this.set('hasCastMedia', false);
           }
         } else {
@@ -313,6 +413,9 @@ limitations under the License.
         }
       },
 
+      /**
+       * Syncs the cast repeat mode with the local repeat mode
+       */
       _repeatModeSyncer: function () {
         var repeatMode = this._castQueueRepeatModeToLocalRepeatMode(this.castMedia.repeatMode);
         var shuffle = this._castQueueRepeatModeToLocalShuffle(this.castMedia.repeatMode);
@@ -320,6 +423,9 @@ limitations under the License.
         this.queue.setShuffle(shuffle);
       },
 
+      /**
+       * Syncs remote player state with local player state
+       */
       _castPlayerStateSyncer: function () {
         //Sync local player state with cast player state
         this.localMedia.setState(
@@ -341,12 +447,18 @@ limitations under the License.
         }
       },
 
+      /**
+       * Media load error callback
+       * @param {Object} e error details
+       */
       _onMediaError: function (e) {
         console.log('Media error: ' + JSON.stringify(e));
       },
 
       /**
        * Called when a new session is created
+       *
+       * @param {chrome.cast.Session} session cast session
        */
       _onRequestSessionSuccess: function (session) {
         console.log('Request session success');
@@ -355,20 +467,36 @@ limitations under the License.
         this._sessionListener(session);
       },
 
-      _onGenericSuccess: function (msg) {
-        console.log('Generic success: ' + JSON.stringify(msg));
-      },
-
-      _onGenericFailure: function (msg) {
-        console.log('Generic failure: ' + JSON.stringify(msg));
-      },
-
+      /**
+       * Called when session request fails
+       * @param {Object} e error
+       */
       _onRequestSessionFailure: function (e) {
         console.log('Request session failure: ' + JSON.stringify(e));
 
         this.set('connectionStatus', cast.CastManager.CONNECTION_STATUS.DISCONNECTED);
       },
 
+      /**
+       * Generic success callback
+       * @param {Object} msg callback data
+       */
+      _onGenericSuccess: function (msg) {
+        console.log('Generic success: ' + JSON.stringify(msg));
+      },
+
+      /**
+       * Generic failure callback
+       * @param {Object} msg callback data
+       */
+      _onGenericFailure: function (msg) {
+        console.log('Generic failure: ' + JSON.stringify(msg));
+      },
+
+
+      /**
+       * Handles disconnection and updates states to control local content
+       */
       _onStopSuccess: function () {
         // Clear timer
         window.clearInterval(this._timerHandle);
@@ -376,6 +504,7 @@ limitations under the License.
         // Set connection status to disconnected
         this.set('connectionStatus', cast.CastManager.CONNECTION_STATUS.DISCONNECTED);
         this.set('hasCastMedia', false);
+        this.set('session', null);
 
         if (this._loadSavedQueueOnDisconnect && this._savedQueue !== null) {
           // Revert to previous queue
@@ -394,17 +523,33 @@ limitations under the License.
         console.log('Disconnecting succeeded');
       },
 
+      /**
+       * Stop request failure callback
+       * @param {Object} e error response
+       */
       _onStopFailure: function (e) {
         console.log('Disconnecting failure: ' + JSON.stringify(e));
       },
+
+      /**
+       * Event dispatcher for queue events from child elements.  Covers adding and removing items
+       * from queue etc.
+       * @param {Object} event event details including method and params
+       */
       _onQueueEvent: function (event) {
         this[event.detail.type].apply(this, event.detail.args);
       },
+
+      /**
+       * Event dispatcher for media action events from child elements.  Covers play, pause, seek,
+       * etc.
+       * @param {Object} event event details including method and params
+       */
       _onMediaActionEvent: function (event) {
         this[event.detail.type].apply(this, event.detail.args);
       },
 
-      /********************** Compute methods ************************/
+      /********************** Actions & public methods ************************/
       /**
        * Start a casting session
        */
@@ -417,11 +562,21 @@ limitations under the License.
             this._onRequestSessionFailure.bind(this));
       },
 
+      /**
+       * Sets a local reference to `chrome.cast.Session` and the device name
+       *
+       * @param {chrome.cast.Session} session chromecast session
+       */
       setSession: function (session) {
         this.set('session', session);
         this.set('castDeviceName', session.receiver.friendlyName);
       },
 
+      /**
+       * Sets a local reference to `chrome.cast.media`
+       *
+       * @param {chrome.cast.media} media chromecast media
+       */
       setCastMedia: function (media) {
         this._hideSpinner();
         this.set('hasCastMedia', true);
@@ -430,58 +585,61 @@ limitations under the License.
 
       /**
        * Sets local media and fires an iron event to notify elements of the change
+       *
+       * @param {cast.MediaItem} media item to load
        */
       setLocalMedia: function (media) {
         this.queue.resetNextItem();
         this.set('localMedia', new cast.MediaItem(media));
 
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'loadMedia',
-              'thumbnailImageUrl': media.thumbnailImageUrl,
-              'url': media.url
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'loadMedia',
+            'thumbnailImageUrl': media.thumbnailImageUrl,
+            'url': media.url
           }
         });
 
-        this._retryHandler = this.async(function() {
+        // Retry loading the item if an issue occurs
+        this._retryHandler = this.async(function () {
           console.log('retrying setting the local media');
           this.setLocalMedia(media);
-        }, 1000);
+        }, 2000);
       },
 
+      /**
+       * Loads a `cast.MediaItem` onto cast when a session exists.
+       *
+       * @param {cast.MediaItem} media media to load
+       * @param {Boolean} autoplay boolean defining whether the media should auto play
+       */
       loadMediaOntoCast: function (media, autoplay) {
+        // Convert local media to cast media
         var mediaInfo = this._localMediaToCastMedia(media);
+
+        // Create a load request
         var request = new chrome.cast.media.LoadRequest(mediaInfo);
         request.autoplay = autoplay;
         request.currentTime = this.currentTime;
 
+        // Load the media
         this.session.loadMedia(request, this._onMediaDiscovered.bind(this),
             this._onMediaError.bind(this));
       },
 
+      /**
+       * Returns true if a receiver is currently connected
+       *
+       * @returns {Boolean} returns true if a receiver is currently connected
+       */
       isCasting: function () {
         return this.connectionStatus === cast.CastManager.CONNECTION_STATUS.CONNECTED;
       },
 
       /**
-       * Sets the content currentTime and updates the time remaining string
+       * Toggles the cast connection
        */
-      _currentTimeObserver: function (newVal, oldVal) {
-        if (this.localMedia && !this.hasCastMedia) {
-          var timeRemaining = this.localMedia.duration - this.currentTime;
-          if (timeRemaining < 20 && timeRemaining > 0) {
-            this.set('nextQueueMediaItem', this.queue.peekNextItem());
-            this.set('countdownToNextMediaItem', timeRemaining);
-          }
-        } else if (this.hasCastMedia && this.castMedia.preloadedItemId !== null) {
-          this.set('nextQueueMediaItem', this.queue.getItemById(this.castMedia.preloadedItemId));
-          this.set('countdownToNextMediaItem', this.localMedia.duration - this.currentTime);
-        }
-      },
-
       toggleCastConnection: function () {
         //If connected, disconnected
         if (this.isCasting()) {
@@ -493,35 +651,36 @@ limitations under the License.
         }
       },
 
+      /**
+       * Fires an iron event to toggle the queue controller from hidden to shown
+       */
       toggleQueueElement: function () {
         console.log('Toggle queue element');
 
-        this.set('showQueue', !this.showQueue);
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'toggleQueueElement',
-              'showQueue': this.showQueue
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'toggleQueueElement',
+            "isQueueShown": this.isQueueShown
           }
         });
       },
 
+      /**
+       * Inserts media into queue and immediately plays it.  Also fires a playNow iron event
+       *
+       * @param {cast.MediaItem} media media to play
+       */
       playNow: function (media) {
         console.log('Play now: ' + media.url);
-        //Send playNow Event to listening elements
-        this._fireIronEvent(
-            {
-              'detail': {
-                'name': 'media-action',
-                'data': {
-                  'action': 'playNow',
-                  'media': media
-                }
-              }
-            }
-        );
+        // Send playNow Event to listening elements
+        this._fireIronEvent({
+          'name': 'media-action',
+          'data': {
+            'action': 'playNow',
+            'media': media
+          }
+        });
 
         if (this.hasCastMedia) {
           //Get the id of the current index
@@ -553,15 +712,19 @@ limitations under the License.
         }
       },
 
+      /**
+       * Inserts an item as the next item in queue.  Also fires an iron even to notify of the
+       * insertion
+       *
+       * @param {cast.MediaItem} media media to insert
+       */
       playNext: function (media) {
         console.log('Play next: ' + media.url);
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'playNext',
-              'media': media
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'playNext',
+            'media': media
           }
         });
 
@@ -584,16 +747,20 @@ limitations under the License.
         }
       },
 
+      /**
+       * Move a queue item to a new index.  Also fires an iron event to notify of the move
+       *
+       * @param {Number} itemId id of item to move
+       * @param {newIndex} index index to insert item at
+       */
       queueMoveItemToNewIndex: function (itemId, newIndex) {
         console.log('Move item to new index id: ' + itemId + ' index: ' + newIndex);
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'queueMoveItemToNewIndex',
-              'itemId': itemId,
-              'newIndex': newIndex
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'queueMoveItemToNewIndex',
+            'itemId': itemId,
+            'newIndex': newIndex
           }
         });
 
@@ -604,20 +771,22 @@ limitations under the License.
         }
       },
 
-      queuePlayItem: function (media) {
+      /**
+       * Plays a specific item in the queue
+       * @param {cast.MediaItem} media queue item to play
+       */
+      queuePlayItem: function (media, optionalCb) {
         console.log('Playing queue item with id: ' + media.queueId);
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'queuePlayItem',
-              'media': media
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'queuePlayItem',
+            'media': media
           }
         });
 
         if (this.hasCastMedia) {
-          this.castQueuePlayItem(media.queueId);
+          this.castQueuePlayItem(media.queueId, optionalCb);
         } else {
           this.queue.setCurrentIndex(this.queue.getIndexOfId(media.queueId));
           this.setAutoPlayTrigger(true);
@@ -625,105 +794,116 @@ limitations under the License.
         }
       },
 
+      /**
+       * Empty the current queue
+       */
       queueEmpty: function () {
         console.log('Queue empty');
 
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'queueEmpty'
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'queueEmpty'
           }
         });
 
         if (this.hasCastMedia) {
           var itemIdsToRemove = [];
+          // Get IDs of queue elements to remove
           for (var i = 0; i < this.castMedia.items.length; i++) {
             itemIdsToRemove.push(this.castMedia.items[i].itemId);
           }
+          // Pass the IDs as an array to cast
           this.castQueueRemoveItems(itemIdsToRemove);
         } else {
           this.queue.empty();
         }
       },
 
+      /**
+       * Toggle the queue shuffle mode
+       */
       queueToggleShuffle: function () {
         console.log('Toggling shuffle mode');
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'queueToggleShuffle'
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'queueToggleShuffle'
           }
         });
         this.queue.toggleShuffle();
+
+        //Cast has no toggle concept so we set it to a specific value
         if (this.isCasting()) {
           this.castSetRepeat(this._localQueueToCastQueueRepeatMode(this.queue));
         }
       },
 
+      /**
+       * Toggle the queue repeat mode
+       */
       queueToggleRepeatMode: function () {
         console.log('Toggling repeat mode');
 
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'queueToggleRepeatMode'
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'queueToggleRepeatMode'
           }
         });
         this.queue.toggleRepeatMode();
 
+        //Cast has no toggle concept so we set it to a specific value
         if (this.isCasting()) {
           this.castSetRepeat(this._localQueueToCastQueueRepeatMode(this.queue));
         }
       },
 
-      queuePlayItemWithId: function (id) {
-        console.log('Playing queue item with id: ' + id);
-      },
-
+      /**
+       * Sends a request to cast to disconnect
+       */
       stopCasting: function () {
         this.session.stop(this._onStopSuccess.bind(this),
             this._onStopFailure.bind(this));
       },
 
+      /**
+       * Fires an iron event to request full screen.  Typically the video element handles this
+       * request and fullscreens itself.
+       */
       fullscreen: function () {
         console.log('Fullscreen');
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'fullscreen'
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'fullscreen'
           }
         });
       },
+
       /**
        * Fire an event to exit full screen
        */
       exitFullscreen: function () {
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'exitFullscreen'
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'exitFullscreen'
           }
         });
       },
 
+      /**
+       * Add an array of `cast.MediaItem`s to the queue
+       *
+       * @param {Array} items array of `cast.MediaItem`s to add to the queue at the end
+       */
       addItemsToQueue: function (items) {
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'addItemsToQueue',
-              'items': items
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'addItemsToQueue',
+            'items': items
           }
         });
 
@@ -740,15 +920,19 @@ limitations under the License.
         }
       },
 
+      /**
+       * Removes an item from the queue.  It does so by looking at the item's queueId so, the
+       * queueId must match not a reference comparison.
+       *
+       * @param {cast.MediaItem} media queue item to remove
+       */
       queueRemoveItem: function (media) {
         console.log('Removing item from queue: ', media.queueId);
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'queueRemoveItem',
-              'media': media
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'queueRemoveItem',
+            'media': media
           }
         });
         if (this.hasCastMedia) {
@@ -758,6 +942,9 @@ limitations under the License.
         }
       },
 
+      /**
+       * Loads the next item from the queue
+       */
       queueLoadNextItem: function () {
         var mediaItem = this.queue.getNextItem();
         if (mediaItem) {
@@ -765,8 +952,13 @@ limitations under the License.
         }
       },
 
+      /**
+       * Covert Array of `cast.MediaItem` to `chrome.cast.media.MediaInfo` and load them onto cast
+       *
+       * @param {Array} items Array of `cast.MediaItem`s to load.
+       */
       castLoadItems: function (items) {
-        if(items.length > 0) {
+        if (items.length > 0) {
           this._showSpinner();
 
           //Convert local queue items to cast queue Items
@@ -776,7 +968,7 @@ limitations under the License.
                 this._localMediaToCastMedia(items[i]));
             itemsToAdd[i].preloadTime = 20;
             if (this.localMedia.queueId && items[i].queueId === this.localMedia.queueId &&
-            this.currentTime !== 0) {
+                this.currentTime !== 0) {
               itemsToAdd[i].startTime = this.currentTime;
             }
           }
@@ -788,13 +980,19 @@ limitations under the License.
         }
       },
 
-      
-      castQueueInsertAndPlayItem: function (media, insertBefore, autoplay) {
+
+      /**
+       * Inserts an item and immediately plays it when casting
+       *
+       * @param {cast.MediaItem} media media to play
+       * @param {Number} insertBefore Id of element to insert before
+       */
+      castQueueInsertAndPlayItem: function (media, insertBefore) {
         var queueItem, request;
-        if(this.castMedia.queueInsertAndPlayItem){
+        if (this.castMedia.queueInsertAndPlayItem) {
 
           queueItem = new chrome.cast.media.QueueItem(this._localMediaToCastMedia(media));
-          queueItem.autoplay = autoplay;
+          queueItem.autoplay = true;
           queueItem.preloadTime = this._preloadTime;
 
           request = new chrome.cast.media.QueueInsertAndPlayItemRequest(queueItem);
@@ -808,11 +1006,16 @@ limitations under the License.
       /**
        * Converts local media items to cast items then inserts them.  If insertBefore is
        * defined it inserts the items before the insertBefore itemId.  Otherwise it inserts the
-       * items ath the beginning.
+       * items at the beginning.
+       *
+       * @param {cast.MediaItem} media media to play
+       * @param {Number} insertBefore Id of element to insert before
+       * @param {Function} successCallback callback on insert success
+       * @param {Boolean} autoplay boolean defining if the media should be autoplayed
        */
       castQueueInsertItems: function (media, insertBefore, successCallback, autoplay) {
         var queueItem, request;
-        
+
         //Convert local media items to cast media items
         var itemsToAdd = [];
         for (var i = 0; i < media.length; i++) {
@@ -831,19 +1034,29 @@ limitations under the License.
 
         //Insert the media
         this.castMedia.queueInsertItems(request, successCallback,
-              this._onGenericFailure.bind(this));
-        
+            this._onGenericFailure.bind(this));
+
       },
 
-      castQueuePlayItem: function (itemId) {
+      /**
+       * Plays the item matching the specified ID.
+       *
+       * @param {Number} itemId ID of item to play
+       */
+      castQueuePlayItem: function (itemId, optionalCb) {
         if (this.hasCastMedia) {
-          this.castMedia.queueJumpToItem(itemId, this._onGenericSuccess.bind(this),
-              this._onGenericFailure.bind(this));
+          if (optionalCb) {
+            this.castMedia.queueJumpToItem(itemId, optionalCb,
+                this._onGenericFailure.bind(this));
+          } else {
+            this.castMedia.queueJumpToItem(itemId, this._onGenericSuccess.bind(this),
+                this._onGenericFailure.bind(this));
+          }
         }
       },
 
       /**
-       * Removes items from queue
+       * Removes items from queue from an array of IDs.
        *
        * @param itemIds {array} itemIds of elements to remove
        */
@@ -854,33 +1067,47 @@ limitations under the License.
             , this._onGenericFailure.bind(this));
       },
 
+      /**
+       * Moves an item in the cast queue to a new index
+       *
+       * @param {Number} itemId id of item to move
+       * @param {Number} newIndex index to move item to
+       */
       castQueueMoveItem: function (itemId, newIndex) {
         this.castMedia.queueMoveItemToNewIndex(itemId, newIndex, this._onGenericSuccess.bind(this),
             this._onGenericFailure.bind(this));
       },
 
+      /**
+       * Handles local media loaded event fired by the video element
+       */
       mediaLoaded: function () {
         console.log('Media finished loading locally');
+        // Prevent the load media retry
         this.cancelAsync(this._retryHandler);
         this._retryHandler = null;
+
+        // Reset local spinners
         this._resetState();
+
+        // Fire an event to notify other elements that media has completed loading
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'mediaLoaded'
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'mediaLoaded'
           }
         });
       },
 
+      /**
+       * Returns true if the casting media matches local media
+       *
+       * @return {Boolean} True if the casting media exists and matches local media
+       */
       isMediaMatch: function () {
         return !!(this.castMedia && this.castMedia.media.contentId === this.localMedia.url);
       },
 
-      urlMatchesLocalMedia: function (url) {
-        return url === this.localMedia.url;
-      },
       /**
        * Returns true if cast has a session media and the local media matches remote media
        */
@@ -891,21 +1118,19 @@ limitations under the License.
       /************* Control functions ****************/
 
       /**
-       * Fire a seek iron signals event
+       * Fire a seek iron signals event and seek the video to the request time in seconds
        *
-       * @param time {number} time in seconds to seek to
-       * @param sender {CastManager.SENDER}
+       * @param {Number} time time in seconds to seek to
+       * @param {cast.CastManager.SENDER} sender requesting element
        */
       seek: function (time, sender) {
         console.log('Seek: ' + time + ' ' + sender);
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'seek',
-              'currentTime': time,
-              'sender': sender
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'seek',
+            'currentTime': time,
+            'sender': sender
           }
         });
 
@@ -916,15 +1141,17 @@ limitations under the License.
         }
       },
 
+      /**
+       * Play
+       * @param {cast.CastManager.SENDER} sender requesting element
+       */
       play: function (sender) {
         console.log('Play: ' + JSON.stringify(sender));
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'play',
-              'sender': sender
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'play',
+            'sender': sender
           }
         });
         // If the action is cast actionable, play the cast media
@@ -938,16 +1165,18 @@ limitations under the License.
         }
       },
 
+      /**
+       * Pause
+       * @param {cast.CastManager.SENDER} sender requesting element
+       */
       pause: function (sender) {
         console.log('Pause: ' + JSON.stringify(sender));
 
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'pause',
-              'sender': sender
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'pause',
+            'sender': sender
           }
         });
 
@@ -956,18 +1185,22 @@ limitations under the License.
         }
       },
 
+      /**
+       * Set Volume
+       *
+       * @param {Number} volume number between 0 - 1 representing volume
+       * @param {cast.CastManager.SENDER} sender requesting element
+       */
       setVolume: function (volume, sender) {
         console.log('Setting volume: ' + volume);
 
         // Fire an event to notify elements of the volume change
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'volume',
-              'volume': volume,
-              'sender': sender
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'volume',
+            'volume': volume,
+            'sender': sender
           }
         });
         if (this.isCastActionable(sender)) {
@@ -975,49 +1208,67 @@ limitations under the License.
         }
       },
 
+      /**
+       * Sets the current video duration.
+       *
+       * @param {Number} time duration of content in seconds
+       */
       setDuration: function (time) {
         console.log('Setting duration: ' + time);
         this.localMedia.setDuration(time);
       },
 
+      /**
+       * Displays the preload dialog which notifies users of the next video in queue.
+       *
+       * @param {cast.MediaItem} media next video in queue
+       * @param {Number} time time until next video starts
+       */
       showPreloadDialog: function (media, time) {
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'preload',
-              'media': media,
-              'timeRemaining': timeRemaining
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'preload',
+            'media': media,
+            'timeRemaining': timeRemaining
           }
         });
       },
 
+      /**
+       * Hide the preload dialog.  Fires an iron event to notify all subscribed elements
+       */
       hidePreloadDialog: function () {
         console.log('Hiding preload dialog');
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'hideDialog'
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'hideDialog'
           }
         });
       },
 
+      /**
+       * Sets the autoplay trigger for the next loaded local video
+       *
+       * @param {Boolean} trigger whether the next video should autoplay
+       */
       setAutoPlayTrigger: function (trigger) {
         console.log('Setting auto play trigger to: ' + trigger);
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'autoPlayTrigger',
-              'value': trigger
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'autoPlayTrigger',
+            'value': trigger
           }
         });
       },
       /************* Cast control methods *************/
+      /**
+       * Seek
+       *
+       * @param {Number} time time in seconds to seek to
+       */
       castSeek: function (time) {
         var request = new chrome.cast.media.SeekRequest();
         request.currentTime = Math.round(time);
@@ -1025,16 +1276,28 @@ limitations under the License.
             this._onGenericSuccess.bind(this), this._onGenericFailure.bind(this));
       },
 
-      castPause: function (data) {
-        this.castMedia.pause(data, this._onGenericSuccess.bind(this),
+      /**
+       * Pause media on cast
+       */
+      castPause: function () {
+        this.castMedia.pause(new chrome.cast.media.PauseRequest(),
+            this._onGenericSuccess.bind(this),
             this._onGenericFailure.bind(this));
       },
 
-      castPlay: function (data) {
-        this.castMedia.play(data, this._onGenericSuccess.bind(this),
+      /**
+       * Play media on cast
+       */
+      castPlay: function () {
+        this.castMedia.play(new chrome.cast.media.PlayRequest(),
+            this._onGenericSuccess.bind(this),
             this._onGenericFailure.bind(this));
       },
 
+      /**
+       * Set the cast volume
+       * @param {Number} volume number 0 - 1 representing volume
+       */
       castVolume: function (volume) {
         var vol = new chrome.cast.Volume(volume, false);
         var request = new chrome.cast.media.VolumeRequest(vol);
@@ -1042,40 +1305,72 @@ limitations under the License.
             this._onGenericFailure.bind(this));
       },
 
+      /**
+       * Set the cast repeat mode
+       * @param {Number} mode cast repeat mode
+       */
       castSetRepeat: function (mode) {
-        this.castMedia.queueSetRepeatMode(mode, this._onGenericSuccess.bind(this),
+        this.castMedia.queueSetRepeatMode(chrome.cast.media.RepeatMode, this._onGenericSuccess.bind(this),
             this._onGenericFailure.bind(this));
       },
 
       /************* Helper methods *******************/
+      /**
+       * Hide the spinner and fire an iron event to notify other elements
+       */
       _hideSpinner: function () {
         this.set('showSpinner', false);
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'spinner',
-              'show': false
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'spinner',
+            'show': false
           }
         });
       },
 
+      /**
+       * Show the spinner and fire an iron event to notify other elements
+       */
       _showSpinner: function () {
         this.set('showSpinner', true);
         this._fireIronEvent({
-          'detail': {
-            'name': 'media-action',
-            'data': {
-              'action': 'spinner',
-              'show': true
-            }
+          'name': 'media-action',
+          'data': {
+            'action': 'spinner',
+            'show': true
           }
         })
       },
 
-      /********************* METHODS TO CONVERT BETWEEN LOCAL MEDIA AND CAST MEDIA ***************/
+      /******** Observers ********/
 
+      /**
+       * Checks the remaining time to determine if the next video preview needs to show.
+       *
+       * @param {Number} newVal current time in seconds
+       * @param {Number} oldVal preious time in seconds
+       */
+      _currentTimeObserver: function (newVal, oldVal) {
+        if (this.localMedia && !this.hasCastMedia) {
+          var timeRemaining = this.localMedia.duration - this.currentTime;
+          if (timeRemaining < 20 && timeRemaining > 0) {
+            this.set('nextQueueMediaItem', this.queue.peekNextItem());
+            this.set('countdownToNextMediaItem', timeRemaining);
+          }
+        } else if (this.hasCastMedia && this.castMedia.preloadedItemId) {
+          this.set('nextQueueMediaItem', this.queue.getItemById(this.castMedia.preloadedItemId));
+          this.set('countdownToNextMediaItem', this.localMedia.duration - this.currentTime);
+        }
+      },
+
+      /********************* Conversion methods ***************/
+
+      /**
+       * Convert from  `chrome.cast.media.QueueItem` to `cast.MediaItem`
+       * @param {chrome.cast.media.QueueItem} media item to convert
+       * @return {cast.MediaItem} converted item
+       */
       _castMediaToLocalMedia: function (media) {
         return new cast.MediaItem({
           'title': media.media.metadata.title,
@@ -1088,6 +1383,12 @@ limitations under the License.
         });
       },
 
+      /**
+       * Convert from `cast.MediaItem` to `chrome.cast.media.MediaInfo`
+       *
+       * @param {cast.MediaItem} media item to convert
+       * @return {chrome.cast.media.MediaInfo} converted item
+       */
       _localMediaToCastMedia: function (media) {
         var castMedia = new chrome.cast.media.MediaInfo(media.url);
 
@@ -1103,6 +1404,12 @@ limitations under the License.
         return castMedia;
       },
 
+      /**
+       * Gets mimeType from extension
+       *
+       * @param {String} url file name
+       * @return {String} mimeType
+       */
       _fileExtensionToMimeType: function (url) {
         var extension = url.split('.').pop();
         var mimeType;
@@ -1126,6 +1433,11 @@ limitations under the License.
         return mimeType;
       },
 
+      /**
+       * Convert cast player state to local player state
+       * @param {chrome.cast.media.PlayerState} state cast player state
+       * @return {cast.MediaItem.STATE} local player state
+       */
       _castPlayerStateToLocalPlayerState: function (state) {
         switch (state) {
           case chrome.cast.media.PlayerState.PAUSED:
@@ -1143,32 +1455,44 @@ limitations under the License.
       },
 
 
+      /**
+       * Switch from local queue to cast queue and save the previous local queue
+       *
+       * @param {Array} queueItems array of new `chrome.cast.media.QueueItems` to insert into the
+       * queue
+       */
       _queueSwitchFromLocalToCast: function (queueItems) {
         this._savedQueue = this.queue;
         this.set('queue', new cast.QueueManager());
         this.queue.parseCastQueue(queueItems);
       },
 
+      /**
+       * Hide the spinner and reset the next video preview
+       */
       _resetState: function () {
         this._hideSpinner();
         this.set('countdownToNextMediaItem', null);
         this.set('nextQueueMediaItem', null);
       },
 
+      /**
+       * Shortcut to fire an iron event
+       * @param {Object} event event details
+       */
       _fireIronEvent: function (event) {
-        var ironEvent = new CustomEvent('iron-signal', event);
-        document.dispatchEvent(ironEvent);
+        this.fire('iron-signal', event);
       },
 
       /**
        * Converts local queue repeat mode and shuffle mode to {chrome.cast.media.RepeatMode}
        *
-       * @param queue
-       * @returns {*}
+       * @param {cast.QueueManager} queue local queue
+       * @returns {chrome.cast.media.RepeatMode} cast repeat mode
        */
       _localQueueToCastQueueRepeatMode: function (queue) {
         if (queue.shuffle) {
-//          return chrome.cast.media.RepeatMode.ALL_AND_SHUFFLE;
+//          return chrome.cast.media.RepeatMode.ALL_AND_SHUFFLE;  // bug in extension
           return 'REPEAT_ALL_AND_SHUFFLE';
         } else {
           switch (queue.repeatMode) {
@@ -1185,6 +1509,11 @@ limitations under the License.
         }
       },
 
+      /**
+       * Converts cast repeat mode to local repeat mode
+       * @param {chrome.cast.media.RepeatMode} mode cast repeat mode
+       * @return {cast.QueueManager.REPEAT_MODE} local repeat mode
+       */
       _castQueueRepeatModeToLocalRepeatMode: function (mode) {
         switch (mode) {
           case chrome.cast.media.RepeatMode.OFF:
@@ -1201,6 +1530,11 @@ limitations under the License.
         }
       },
 
+      /**
+       * Converts cast repeat mode to local shuffle mode
+       * @param {chrome.cast.media.RepeatMode} mode  cast repeat mode
+       * @return {Boolean} boolean describing if shuffle is on.
+       */
       _castQueueRepeatModeToLocalShuffle: function (mode) {
         return mode === chrome.cast.media.RepeatMode.ALL_AND_SHUFFLE;
       }

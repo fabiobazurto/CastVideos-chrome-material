@@ -104,19 +104,6 @@ Custom property | Description | Default
   <script>
     Polymer({
       is: 'cast-button',
-      /**
-       * Animation counter to indicate which portion of the icon is highlighted
-       * during connection.
-       */
-      _connectingCounter: -1,
-      /**
-       * Id of interval tracking the animation
-       */
-      _intervalId: null,
-      /**
-       * Tooltip string to display
-       */
-      _tooltip: 'Click to cast videos to your TV',
       properties: {
         /**
          * Main icon color options are white/black
@@ -135,15 +122,30 @@ Custom property | Description | Default
         },
 
         /**
-         * Cast device availability from cast-manager
+         * Cast device availability from `cast-manager`
          */
         castAvailable: Boolean,
 
         /**
-         * Current connection status from cast-manager
+         * Current connection status from `cast-manager`
          */
         connectionStatus: Number
       },
+      /**
+       * Animation counter to indicate which portion of the icon is highlighted
+       * during connection.
+       */
+      _connectingCounter: -1,
+
+      /**
+       * Id of interval tracking the animation
+       */
+      _intervalId: null,
+
+      /**
+       * Tooltip string to display
+       */
+      _tooltip: 'Click to cast videos to your TV',
       observers: [
         '_connectionStatusObserver(connectionStatus)',
         '_castAvailableObserver(castAvailable)'
@@ -202,7 +204,7 @@ Custom property | Description | Default
        * Observes connection status and updates the connecting counter to animate
        * the cast icon.
        *
-       * @parameter {number} newVal
+       * @parameter {Number} newVal
        * @private
        */
       _connectionStatusObserver: function (newVal) {

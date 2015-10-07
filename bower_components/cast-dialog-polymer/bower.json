@@ -19,6 +19,6 @@
     "iron-signals": "polymerElements/iron-signals#~1.0.2",
     "paper-styles": "polymerElements/paper-styles#~1.0.11",
     "iron-flex-layout": "polymerElements/iron-flex-layout#~1.0.3",
-    "cast-theme-polymer": "googlecast/cast-theme-polymer"
+    "cast-theme-polymer": "pengying/cast-theme-polymer"
   }
 }

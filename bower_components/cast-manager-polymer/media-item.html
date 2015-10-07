@@ -89,12 +89,18 @@ Properties need to be modified by set methods to notify elements of updates.
           notify: true
         },
 
+        /**
+         * Current media playing player state `cast.MediaItem.STATE`
+         */
         state: {
           type: Number,
           notify: true,
           value: 0 // Default state is stopped
         },
 
+        /**
+         * Duration of the content in seconds
+         */
         duration: {
           type: Number,
           notify: true,
@@ -117,29 +123,37 @@ Properties need to be modified by set methods to notify elements of updates.
 
       /**
        * Sets the queue Id of the element
+       *
+       * @param {Number} id new queueId of media item
        */
-      setQueueId: function (newId) {
-        this.set('queueId', newId);
+      setQueueId: function (id) {
+        this.set('queueId', id);
       },
 
-      setState: function (newState) {
-        this.set('state', newState);
+      /**
+       * Sets the playback state
+       *
+       * @param {cast.MediaItem.STATE} state new playback state
+       */
+      setState: function (state) {
+        this.set('state', state);
       },
 
       /**
        * Sets the content duration
        *
-       * @param duration {number}
+       * @param {Number} duration duration in seconds
        */
-      setDuration: function (newDuration) {
-        this.set('duration', newDuration);
+      setDuration: function (duration) {
+        this.set('duration', duration);
       },
 
       /**
-       * Converts a percentage to duration of video content time
+       * Converts a percentage to duration of video content time.  Used to calculate slider to
+       * actual time.
        *
-       * @param floatVal {number}
-       * @returns {number}
+       * @param {Number} floatVal value between 0 - 1
+       * @returns {Number} time in seconds
        */
       floatToTime: function (floatVal) {
         return floatVal * this.duration;

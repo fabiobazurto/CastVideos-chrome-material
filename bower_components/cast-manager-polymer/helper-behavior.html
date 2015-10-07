@@ -2,15 +2,18 @@
   var cast = cast || {};
 
   /**
-   * These are commonly used functions across the elements.
+   * These are commonly used functions across the elements.  To extend these behaviors in your
+   * own element include helper-behavior.html and add the following line to your element definition.
+   *
+   *    behaviors: [cast.HelperBehavior],
    */
   cast.HelperBehavior = {
 
     /**
      * Converts time in seconds to HH:MM:SS
      *
-     * @param newSeconds {number}
-     * @returns {string}
+     * @param {Number} newSeconds time in seconds to convert
+     * @returns {String} String in HH:MM:SS format representing time
      */
     _secondsToHHMMSS: function(newSeconds) {
       var hours = Math.floor(newSeconds / 3600);
@@ -54,6 +57,11 @@
       });
     },
 
+    /**
+     * Fires a pause event to parent element.  Targets cast-manager
+     *
+     * @param {cast.CastManager.SENDER} sender defines the sending element
+     */
     _pause: function(sender) {
       this.fire('mediaActionEvent', {
         type: 'pause',
@@ -61,6 +69,12 @@
       });
     },
 
+    /**
+     * Fires a seek event to parent element.  Targets cast-manager
+     *
+     * @param {Number} time time in seconds to seek to
+     * @param {cast.CastManager.SENDER} sender defines the sending element
+     */
     _seek: function(time, sender) {
       this.fire('mediaActionEvent', {
         type: 'seek',
@@ -68,12 +82,20 @@
       });
     },
 
+    /**
+     * Fire an event to load the next queue item
+     */
     _queueLoadNextItem: function() {
       this.fire('mediaActionEvent', {
         type: 'queueLoadNextItem'
       });
     },
 
+    /**
+     * Fire an event to play the specified item from the queue.
+     *
+     * @param {cast.MediaItem} media queue element to play
+     */
     _queuePlayItem:function(media) {
       this.fire('mediaActionEvent', {
         type: 'queuePlayItem',
@@ -84,8 +106,7 @@
     /**
      * Fires an event to remove the media item from queue
      *
-     * @param event
-     * @private
+     * @param {cast.MediaItem} media queue element to remove
      */
     _queueRemoveItem: function (media) {
       this.fire('queueEvent', {
@@ -94,6 +115,10 @@
       });
     },
 
+    /**
+     * Fires a playNow event to insert the item and immediately play it
+     * @param {cast.MediaItem} media item to insert and play
+     */
     _queueAddAsCurrentItem: function(media) {
       this.fire('queueEvent', {
         type: 'playNow',
@@ -101,6 +126,10 @@
       });
     },
 
+    /**
+     * Fires a playNext event to insert the item as the next item in queue
+     * @param {cast.MediaItem} media item to insert
+     */
     _queueAddAsNextItem: function(media) {
       this.fire('queueEvent', {
         type: 'playNext',
@@ -108,6 +137,10 @@
       });
     },
 
+    /**
+     * Add an array of media items to the queue
+     * @param {Array} items array of `cast.MediaItem`s
+     */
     _queueAddItemsToQueue: function(items) {
       this.fire('queueEvent', {
         type: 'addItemsToQueue',
@@ -115,6 +148,10 @@
       });
     },
 
+    /**
+     * Set the local media
+     * @param {cast.MediaItem} media media to set as current localMedia
+     */
     _setLocalMedia:function(media) {
       this.fire('mediaActionEvent', {
         type: 'setLocalMedia',
@@ -122,12 +159,18 @@
       })
     },
 
+    /**
+     * Fire an event to exit screen
+     */
     _exitFullscreen: function() {
       this.fire('mediaActionEvent', {
         type: 'exitFullscreen'
       });
     },
 
+    /**
+     * Fire an event to full screen the video element
+     */
     _fullscreen: function() {
       this.fire('mediaActionEvent', {
         type: 'fullscreen'
@@ -136,8 +179,6 @@
 
     /**
      * Fires an event to toggle the queue.
-     *
-     * @private
      */
     _toggleQueueElement: function(){
       this.fire('queueEvent', {
@@ -145,6 +186,12 @@
       });
     },
 
+    /**
+     * Helper function to determine if cast is connected
+     *
+     * @param {cast.CastManager.CONNECTION_STATUS} status connection status
+     * @returns {boolean} True if status is connected
+     */
     _isConnected: function(status) {
       return status === cast.CastManager.CONNECTION_STATUS.CONNECTED;
     }
