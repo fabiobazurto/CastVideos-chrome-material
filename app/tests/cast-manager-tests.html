@@ -6,20 +6,6 @@
   <title>cast-manager-tests</title>
   <script src="../../bower_components/webcomponentsjs/webcomponents.min.js"></script>
 
-  <!--<script>-->
-  <!--WCT = {-->
-  <!--environmentScripts: [-->
-  <!--// Mocha and Stacky are required dependencies-->
-  <!--'stacky/lib/parsing.js',-->
-  <!--'stacky/lib/formatting.js',-->
-  <!--'stacky/lib/normalization.js',-->
-  <!--'mocha/mocha.js',-->
-  <!--'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js'-->
-  <!--// Include anything else that you like!-->
-  <!--]-->
-  <!--};-->
-
-  <!--</script>-->
   <script src="../../bower_components/web-component-tester/browser.js"></script>
   <script src="../../bower_components/should/should.js"></script>
 
@@ -33,7 +19,6 @@
 
 </head>
 <body>
-<!--<test-fixture id="basic">-->
   <template id="t" is="dom-bind">
     <cast-manager app-id="4F8B3483"
                   cast-available="{{castAvailable}}"
@@ -63,7 +48,6 @@
       </div>
     </cast-manager>
   </template>
-<!--</test-fixture>-->
 <script>
   var media = {
     "categories": [{
@@ -567,9 +551,6 @@
         });
 
         describe('cast queue deletion tests', function() {
-          after(function() {
-            castManager.stopCasting();
-          });
 
           it('queue size should be 20', function(){
             castManager.queue.items.should.have.a.lengthOf(20);
@@ -611,8 +592,56 @@
         });
 
         describe('cast queue video play order tests', function() {
+          var itemToMove, previousItem;
 
+          before(function(done) {
+            castManager.addItemsToQueue(processedMediaArray.slice(0, 5));
+            setTimeout(function() {
+              itemToMove = castManager.queue.items[castManager.queue.getLength()-2];
+              done();
+            }, castTimeout);
+          });
 
+          after(function() {
+            castManager.stopCasting();
+          });
+
+          it('next video starts after seek to end of current video', function(done) {
+            var nextItem = castManager.queue.peekNextItem();
+            castManager.seek(castManager.localMedia.duration);
+            setTimeout(function() {
+              castManager.castMedia.currentItemId.should.equal(nextItem.queueId);
+              castManager.localMedia.url.should.equal(nextItem.url);
+              done();
+            }, castLongTimeout);
+          });
+
+          it('queueMoveItemToNewIndex moves item', function(done) {
+            var newIndex = castManager.queue.currentIndex + 1;
+            previousItem = castManager.queue.items[newIndex];
+
+            castManager.queueMoveItemToNewIndex(itemToMove.queueId, newIndex);
+            setTimeout(function() {
+              castManager.queue.items[newIndex].url.should.equal(itemToMove.url);
+              done();
+            }, castTimeout);
+          });
+
+          it('correct video starts after seek to end of current video', function(done) {
+            castManager.seek(castManager.localMedia.duration);
+            setTimeout(function() {
+              castManager.castMedia.currentItemId.should.equal(itemToMove.queueId);
+              done();
+            }, castLongTimeout);
+          });
+
+          it('correct video starts after seek to end of moved video', function(done) {
+            castManager.seek(castManager.localMedia.duration);
+            setTimeout(function() {
+              castManager.castMedia.currentItemId.should.equal(previousItem.queueId);
+              done();
+            }, castLongTimeout);
+          });
         });
       }
     });
