@@ -73,3 +73,7 @@ The elements will still work in browsers that support [Polymer](https://www.poly
 * Firefox
 * IE 10+
 * Safari 8+
+* 
+
+## Terms
+Your use of this sample is subject to, and by using or downloading the sample files you agree to comply with, the [Google APIs Terms of Service](https://developers.google.com/terms/) and the [Google Cast SDK Additional Developer Terms of Service](https://developers.google.com/cast/docs/terms/).
