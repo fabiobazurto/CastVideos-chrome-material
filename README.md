@@ -39,7 +39,7 @@ Each of the elements can be used independently, the only requirement is the cast
 The polymer elements are meant to be a simple wrapper for Chromecast, they handle the rendering
 and most of the complexity.
 
-The demo can be found [here](http://googlecast.github.io/CastVideos-material-chrome/).
+The demo can be found [here](https://googlecast.github.io/CastVideos-chrome-material/).
 
 ## Productionising
 
